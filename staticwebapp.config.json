@@ -3,10 +3,6 @@
     {
       "route": "/admin",
       "rewrite": "/admin.html"
-    },
-    {
-      "route": "/admin/",
-      "rewrite": "/admin.html"
     }
   ],
   "navigationFallback": {
