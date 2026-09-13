@@ -484,15 +484,10 @@
       setStatus('Celular incompleto.', 'err');
       return false;
     }
-    var temNome = !!(payload.nome_pai || payload.nome_mae || payload.nome_responsavel);
+    var temNome = !!(payload.nome_pai || payload.nome_mae || payload.nome_responsavel || (payload.adultos && payload.adultos.length));
     if (!temNome) {
-      await mostrarAviso('Informe o nome do responsável.', 'Atenção');
-      setStatus('Informe o responsável.', 'err');
-      return false;
-    }
-    if (!recusar && !payload.filhos.length) {
-      await mostrarAviso('Inclua ao menos um filho(a), ou toque em “Não vou poder ir”.', 'Atenção');
-      setStatus('Inclua ao menos um filho(a), ou toque em “Não vou poder ir”.', 'err');
+      await mostrarAviso('Informe o nome do responsável ou de outro adulto.', 'Atenção');
+      setStatus('Informe o responsável ou outro adulto.', 'err');
       return false;
     }
     return true;

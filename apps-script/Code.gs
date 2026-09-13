@@ -12,7 +12,7 @@ var ABA = 'Familias';
 var ABA_ACESSOS = 'Acessos';
 var ADMIN_SENHA_FIXA = '19122019@';
 var SHEET_ID_FIXO = '1ZFZ_UjSaF4BXecf0TizKXLt8EeCpErpPwmqWQJBGyok';
-var VERSAO = 'v8.3-celular2';
+var VERSAO = 'v8.4-filhos-opcional';
 
 var CABECALHO = [
   'celular',
@@ -241,18 +241,15 @@ function salvarFamilia(body, isPre) {
 
   var celularGravar = juntarCelulares(celulares);
   var nomes = montarNomes(body, null);
-  if (!nomes.pai && !nomes.mae) {
-    return { ok: false, erro: 'Informe o nome do responsável (pai e/ou mãe).' };
-  }
-
   var filhos = normalizarListaNomes(body.filhos);
   var adultos = normalizarListaNomes(body.adultos);
   var pediuNaoVai = String(body.status || '').toLowerCase() === 'nao_vai';
 
-  if (!pediuNaoVai && !filhos.length) {
-    return { ok: false, erro: 'Informe ao menos um filho(a), ou marque que não vai.' };
+  if (!nomes.pai && !nomes.mae && !adultos.length) {
+    return { ok: false, erro: 'Informe ao menos um adulto (pai, mãe ou outro adulto).' };
   }
 
+  // Filhos são opcionais (pode cadastrar só adultos)
   var status = isPre ? 'pre_cadastro' : (pediuNaoVai ? 'nao_vai' : 'confirmado');
   var origem = isPre ? 'admin' : (body.origem || 'convidado');
   var observacao = limparTexto(body.observacao || '');

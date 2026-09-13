@@ -535,8 +535,7 @@
       faltando.push('• Celular 2 completo com DDD (10 ou 11 dígitos), ou deixe em branco');
     }
 
-    if (!pai && !mae) faltando.push('• Pai e/ou Mãe');
-    if (!filhos.length) faltando.push('• Pelo menos 1 filho(a)');
+    if (!pai && !mae && !adultos.length) faltando.push('• Pai, Mãe e/ou outro adulto');
 
     if (faltando.length) {
       await mostrarAviso(
@@ -545,7 +544,7 @@
       );
       setStatus('Preencha os campos obrigatórios.', 'err');
       if (celular && (celular.length < 10 || celular.length > 11)) celularInput.focus();
-      else if (!pai && !mae) paiInput.focus();
+      else if (!pai && !mae && !adultos.length) paiInput.focus();
       else kidsBox.querySelector('.kid-name') && kidsBox.querySelector('.kid-name').focus();
       return;
     }
