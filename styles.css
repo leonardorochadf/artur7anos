@@ -1351,7 +1351,7 @@ body.modo-rsvp #painel-rsvp {
 .hero-party-badge {
   position: absolute;
   left: 10px;
-  bottom: 10px;
+  bottom: 36px;
   z-index: 2;
   font-family: var(--font-display);
   font-size: 0.55rem;
