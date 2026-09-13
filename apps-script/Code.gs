@@ -12,7 +12,7 @@ var ABA = 'Familias';
 var ABA_ACESSOS = 'Acessos';
 var ADMIN_SENHA_FIXA = '19122019@';
 var SHEET_ID_FIXO = '1ZFZ_UjSaF4BXecf0TizKXLt8EeCpErpPwmqWQJBGyok';
-var VERSAO = 'v8.4-filhos-opcional';
+var VERSAO = 'v8.5-filhos-opcional-admin';
 
 var CABECALHO = [
   'celular',
@@ -265,9 +265,8 @@ function salvarFamilia(body, isPre) {
     ultimoAcesso = isPre ? (atual.ultimo_acesso_em || '') : agora;
 
     if (isPre && (atual.status === 'confirmado' || atual.status === 'nao_vai' || atual.status === 'presente')) {
+      // Admin envia a lista completa (filhos/adultos podem ficar vazios de propósito)
       status = atual.status;
-      if (!filhos.length) filhos = atual.filhos;
-      if (!adultos.length && atual.adultos) adultos = atual.adultos;
       qtdMeias = status === 'nao_vai' ? 0 : filhos.length;
     }
     if (!isPre) {

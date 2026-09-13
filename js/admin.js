@@ -577,7 +577,7 @@
       classeSim: 'btn-grass'
     });
     if (!ok) {
-      setStatus('Para cadastrar mais um filho, clique em “+ Filho(a)”.', 'warn');
+      setStatus('Cadastro não salvo.', 'warn');
       return;
     }
 
@@ -1920,7 +1920,18 @@
       }
       mostrarApp();
       renderLista(window.__familias);
-      setStatus(fromLogin ? 'Lista carregada por telefone.' : 'Lista atualizada.', 'ok');
+      var apiVer = data.versao || '';
+      window.__apiVersao = apiVer;
+      if (apiVer && apiVer.indexOf('filhos-opcional') < 0 && apiVer.indexOf('v8.5') < 0 && apiVer.indexOf('v8.4') < 0) {
+        var avisoApi = 'API desatualizada (' + apiVer + '). Abra o site com Ctrl+F5 ou confira config.js.';
+        setStatus(avisoApi, 'err');
+        if (fromLogin) setLoginStatus(avisoApi, 'err');
+      } else {
+        setStatus(
+          (fromLogin ? 'Lista carregada.' : 'Lista atualizada.') + (apiVer ? ' API ' + apiVer : ''),
+          'ok'
+        );
+      }
       return true;
     } catch (err) {
       var erro = err.message || 'Erro ao listar';
