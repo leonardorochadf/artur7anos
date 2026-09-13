@@ -1236,11 +1236,13 @@
         '<div class="card"><strong>Famílias</strong><span>' + familias.length + '</span></div>' +
         '<div class="card"><strong>Pessoas</strong><span>' + tot.pessoas + ' · ' + tot.adultos + ' adultos · ' + tot.criancas + ' crianças</span></div>' +
         '<div class="card"><strong>Confirmados</strong><span>' + tot.confTotal + ' (' + pct(tot.confTotal, tot.pessoas) + ')</span></div>' +
+        '<div class="card card-warn"><strong>Não confirmaram</strong><span>' + tot.naoConfTotal + ' (' + pct(tot.naoConfTotal, tot.pessoas) + ')</span></div>' +
       '</div>' +
       '<div class="grade">' + blocos + '</div>';
 
     var cssExtra =
       '.grade{display:grid;grid-template-columns:1fr 1fr;gap:10px}' +
+      '.resumo .card-warn{background:#fff8e1;border-color:#e0c36a}' +
       '.fam{border:1.5px solid #2d4a2a;border-radius:6px;overflow:hidden;background:#fff;' +
         'page-break-inside:avoid;break-inside:avoid;-webkit-column-break-inside:avoid}' +
       '.fam header{display:flex;gap:10px;align-items:center;background:#e8f2e4;border-bottom:1px solid #b7cbb0;padding:8px 10px}' +
@@ -1279,6 +1281,10 @@
     var criancas = 0;
     var confAdultos = 0;
     var confCriancas = 0;
+    var naoConfAdultos = 0;
+    var naoConfCriancas = 0;
+    var naoVaiAdultos = 0;
+    var naoVaiCriancas = 0;
 
     (familias || []).forEach(function (f) {
       var nA = 0;
@@ -1293,6 +1299,12 @@
       if (f.status === 'confirmado' || f.status === 'presente') {
         confAdultos += nA;
         confCriancas += nC;
+      } else if (f.status === 'nao_vai') {
+        naoVaiAdultos += nA;
+        naoVaiCriancas += nC;
+      } else {
+        naoConfAdultos += nA;
+        naoConfCriancas += nC;
       }
     });
 
@@ -1302,7 +1314,13 @@
       criancas: criancas,
       confAdultos: confAdultos,
       confCriancas: confCriancas,
-      confTotal: confAdultos + confCriancas
+      confTotal: confAdultos + confCriancas,
+      naoConfAdultos: naoConfAdultos,
+      naoConfCriancas: naoConfCriancas,
+      naoConfTotal: naoConfAdultos + naoConfCriancas,
+      naoVaiAdultos: naoVaiAdultos,
+      naoVaiCriancas: naoVaiCriancas,
+      naoVaiTotal: naoVaiAdultos + naoVaiCriancas
     };
   }
 
@@ -1580,9 +1598,15 @@
         '</div>' +
         '<div class="box">' +
           '<strong>Confirmados</strong>' +
-          'Pessoas: ' + tot.confTotal + '<br>' +
-          'Adultos: ' + tot.confAdultos + ' <span class="pct">(' + pct(tot.confAdultos, tot.confTotal) + ')</span><br>' +
-          'Crianças: ' + tot.confCriancas + ' <span class="pct">(' + pct(tot.confCriancas, tot.confTotal) + ')</span>' +
+          'Pessoas: ' + tot.confTotal + ' <span class="pct">(' + pct(tot.confTotal, tot.pessoas) + ')</span><br>' +
+          'Adultos: ' + tot.confAdultos + '<br>' +
+          'Crianças: ' + tot.confCriancas +
+        '</div>' +
+        '<div class="box">' +
+          '<strong>Não confirmaram</strong>' +
+          'Pessoas: ' + tot.naoConfTotal + ' <span class="pct">(' + pct(tot.naoConfTotal, tot.pessoas) + ')</span><br>' +
+          'Adultos: ' + tot.naoConfAdultos + '<br>' +
+          'Crianças: ' + tot.naoConfCriancas +
         '</div>';
     }
 
@@ -1770,6 +1794,8 @@
       '<div class="resumo">' +
         '<div class="card"><strong>Totais</strong><span>' + tot.pessoas + ' pessoas · ' + tot.adultos + ' adultos · ' + tot.criancas + ' crianças</span></div>' +
         '<div class="card"><strong>Confirmados</strong><span>' + tot.confTotal + ' (' + pct(tot.confTotal, tot.pessoas) + ')</span></div>' +
+        '<div class="card card-warn"><strong>Não confirmaram</strong><span>' + tot.naoConfTotal + ' (' + pct(tot.naoConfTotal, tot.pessoas) + ')</span></div>' +
+        '<div class="card"><strong>Não vão</strong><span>' + tot.naoVaiTotal + ' (' + pct(tot.naoVaiTotal, tot.pessoas) + ')</span></div>' +
         '<div class="card"><strong>Famílias</strong><span>' + ordenadas.length + '</span></div>' +
       '</div>' +
       '<div class="porta-wrap">' +
@@ -1786,6 +1812,7 @@
     var cssExtra =
       '.sheet{font-size:11pt;padding:12px 24px 20px 12px;box-sizing:border-box}' +
       '.topo h1{font-size:18pt}' +
+      '.resumo .card-warn{background:#fff8e1;border-color:#e0c36a}' +
       '.porta-wrap{border:2px solid #2d4a2a;background:#fff;overflow:visible;box-sizing:border-box;margin:0 2px 0 0}' +
       '.porta-head,.porta-row{display:grid;grid-template-columns:52px 52px 1fr 90px;align-items:stretch}' +
       '.porta-head{background:#1f5c2e;color:#fff;font-size:10pt;font-weight:700}' +
