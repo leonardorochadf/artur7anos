@@ -4,6 +4,9 @@
   var celularInput = document.getElementById('celular');
   var paiInput = document.getElementById('nome-pai');
   var maeInput = document.getElementById('nome-mae');
+  var responsavelInput = document.getElementById('nome-responsavel');
+  var wrapUnico = document.getElementById('wrap-responsavel-unico');
+  var wrapPais = document.getElementById('wrap-pais');
   var kidsBox = document.getElementById('kids');
   var addKidBtn = document.getElementById('add-kid');
   var btnBuscar = document.getElementById('btn-buscar');
@@ -278,8 +281,8 @@
   function montarBadgeStatus(f, encontrado) {
     if (!encontrado || !f) {
       badgeCadastro.innerHTML =
-        '<span class="badge-titulo">AINDA NÃO CONFIRMADO</span>' +
-        '<span class="badge-texto">Telefone novo. Preencha pai/mãe e filhos e confirme a presença.</span>';
+        '<span class="badge-titulo">NOVO CADASTRO</span>' +
+        '<span class="badge-texto">Informe 1 responsável e adicione as crianças que vão brincar. Depois confirme a presença.</span>';
       badgeCadastro.className = 'found-badge pendente';
       return;
     }
@@ -298,23 +301,43 @@
     } else {
       badgeCadastro.innerHTML =
         '<span class="badge-titulo">AINDA NÃO CONFIRMADO</span>' +
-        '<span class="badge-texto">Pré-cadastro encontrado. Confira os dados e confirme a presença.</span>';
+        '<span class="badge-texto">Cadastro encontrado. Confira os dados (pai/mãe e filhos) e confirme a presença.</span>';
       badgeCadastro.className = 'found-badge pendente';
     }
+  }
+
+  function modoFormulario(encontrado) {
+    if (encontrado) {
+      if (wrapUnico) wrapUnico.classList.add('hidden');
+      if (wrapPais) wrapPais.classList.remove('hidden');
+    } else {
+      if (wrapUnico) wrapUnico.classList.remove('hidden');
+      if (wrapPais) wrapPais.classList.add('hidden');
+    }
+  }
+
+  function familiaTemCelular(f, celular) {
+    if (!f || !celular) return false;
+    var lista = f.celulares || [];
+    if (lista.length) return lista.indexOf(celular) >= 0;
+    return String(f.celular || '') === celular;
   }
 
   function abrirFormulario(f, encontrado) {
     familiaAtual = f || null;
     blocoFamilia.classList.remove('hidden');
     entrarModoRsvp();
+    modoFormulario(!!encontrado);
 
     if (encontrado && f) {
-      paiInput.value = f.nome_pai || '';
-      maeInput.value = f.nome_mae || '';
+      if (paiInput) paiInput.value = f.nome_pai || '';
+      if (maeInput) maeInput.value = f.nome_mae || '';
+      if (responsavelInput) responsavelInput.value = '';
       setFilhos(f.filhos || []);
     } else {
-      paiInput.value = '';
-      maeInput.value = '';
+      if (paiInput) paiInput.value = '';
+      if (maeInput) maeInput.value = '';
+      if (responsavelInput) responsavelInput.value = '';
       setFilhos(['']);
     }
     montarBadgeStatus(f, encontrado);
@@ -345,17 +368,16 @@
     try {
       var data = await ArturApi.buscar('', celular);
       var results = data.resultados || [];
-      var exact = results.find(function (r) { return r.celular === celular; });
+      var exact = results.find(function (r) { return familiaTemCelular(r, celular); });
 
       await fecharProgresso();
 
       if (exact) {
-        celularInput.value = ArturApi.formatPhone(exact.celular);
         abrirFormulario(exact, true);
         setStatus('Família carregada. Confirme, ajuste ou informe que não vai.', 'ok');
       } else {
         abrirFormulario(null, false);
-        setStatus('Não achamos pré-cadastro neste telefone. Preencha e confirme.', 'warn');
+        setStatus('Novo telefone: cadastre 1 responsável e os filhos, depois confirme.', 'warn');
       }
     } catch (err) {
       await fecharProgresso();
@@ -370,13 +392,23 @@
   }
 
   function payloadBase() {
-    return {
+    var encontrado = !!(familiaAtual && familiaTemCelular(familiaAtual, ArturApi.onlyDigits(celularInput.value)));
+    var payload = {
       celular: ArturApi.onlyDigits(celularInput.value),
-      nome_pai: paiInput.value.trim(),
-      nome_mae: maeInput.value.trim(),
       filhos: getFilhos(),
       origem: 'convidado'
     };
+
+    if (encontrado) {
+      payload.nome_pai = paiInput ? paiInput.value.trim() : '';
+      payload.nome_mae = maeInput ? maeInput.value.trim() : '';
+    } else {
+      var resp = responsavelInput ? responsavelInput.value.trim() : '';
+      payload.nome_responsavel = resp;
+      payload.nome_pai = resp;
+      payload.nome_mae = '';
+    }
+    return payload;
   }
 
   async function validarConfirmacao(payload, recusar) {
@@ -385,9 +417,10 @@
       setStatus('Celular incompleto.', 'err');
       return false;
     }
-    if (!payload.nome_pai && !payload.nome_mae) {
-      await mostrarAviso('Informe o nome do pai e/ou da mãe.', 'Atenção');
-      setStatus('Informe o pai e/ou a mãe.', 'err');
+    var temNome = !!(payload.nome_pai || payload.nome_mae || payload.nome_responsavel);
+    if (!temNome) {
+      await mostrarAviso('Informe o nome do responsável.', 'Atenção');
+      setStatus('Informe o responsável.', 'err');
       return false;
     }
     if (!recusar && !payload.filhos.length) {

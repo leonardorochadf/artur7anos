@@ -2,6 +2,7 @@
   var senhaInput = document.getElementById('senha');
   var form = document.getElementById('form-admin');
   var celularInput = document.getElementById('celular');
+  var celular2Input = document.getElementById('celular2');
   var paiInput = document.getElementById('nome-pai');
   var maeInput = document.getElementById('nome-mae');
   var kidsBox = document.getElementById('kids');
@@ -235,6 +236,85 @@
     telaApp.classList.remove('hidden');
   }
 
+  function formatarDataHora(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) {
+      var s = String(iso);
+      return s.length > 19 ? s.slice(0, 19).replace('T', ' ') : s;
+    }
+    return d.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  function diaCurto(isoDia) {
+    // yyyy-MM-dd -> dd/MM
+    var p = String(isoDia || '').split('-');
+    if (p.length !== 3) return isoDia;
+    return p[2] + '/' + p[1];
+  }
+
+  function ordenarDias(map) {
+    return Object.keys(map || {}).sort();
+  }
+
+  function renderGraficoBarras(el, map, cor) {
+    if (!el) return;
+    var dias = ordenarDias(map);
+    if (!dias.length) {
+      el.innerHTML = '<p class="chart-empty">Sem dados ainda.</p>';
+      return;
+    }
+    // mostra no máximo os últimos 14 dias
+    if (dias.length > 14) dias = dias.slice(dias.length - 14);
+    var max = 1;
+    dias.forEach(function (d) {
+      var n = Number(map[d] || 0);
+      if (n > max) max = n;
+    });
+    el.innerHTML = dias.map(function (d) {
+      var n = Number(map[d] || 0);
+      var h = Math.max(6, Math.round((n / max) * 100));
+      return (
+        '<div class="chart-bar-item" title="' + esc(d) + ': ' + n + '">' +
+          '<div class="chart-bar" style="height:' + h + '%;background:' + (cor || '#1f5c2e') + '"></div>' +
+          '<span class="chart-n">' + n + '</span>' +
+          '<span class="chart-d">' + esc(diaCurto(d)) + '</span>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function celularesDaFamilia(f) {
+    if (!f) return [];
+    if (f.celulares && f.celulares.length) return f.celulares.slice();
+    if (f.celular) return [f.celular];
+    return [];
+  }
+
+  function chaveFamilia(f) {
+    var list = celularesDaFamilia(f);
+    return list[0] || '';
+  }
+
+  function familiaPorCelular(cel) {
+    var dig = ArturApi.onlyDigits(cel);
+    return (window.__familias || []).find(function (f) {
+      return celularesDaFamilia(f).indexOf(dig) >= 0 || f.celular === dig;
+    });
+  }
+
+  function exibirCelulares(f) {
+    var list = celularesDaFamilia(f).filter(function (c) { return !ehSemCelular(c); });
+    if (!list.length) return 'Sem celular';
+    return list.map(function (c) { return ArturApi.formatPhone(c); }).join(' · ');
+  }
+
   function nomeFamilia(f) {
     if (!f) return '';
     if (f.nome_pai && f.nome_mae) return f.nome_pai + ' / ' + f.nome_mae;
@@ -371,14 +451,17 @@
     if (!logado || salvando) return;
 
     var celular = ArturApi.onlyDigits(celularInput.value);
+    var celular2 = celular2Input ? ArturApi.onlyDigits(celular2Input.value) : '';
     var pai = paiInput.value.trim();
     var mae = maeInput.value.trim();
     var filhos = getFilhos();
     var faltando = [];
 
-    // Celular é opcional no admin; se informado, precisa estar completo
     if (celular && (celular.length < 10 || celular.length > 11)) {
-      faltando.push('• Celular completo com DDD (10 ou 11 dígitos), ou deixe em branco');
+      faltando.push('• Celular 1 completo com DDD (10 ou 11 dígitos), ou deixe em branco');
+    }
+    if (celular2 && (celular2.length < 10 || celular2.length > 11)) {
+      faltando.push('• Celular 2 completo com DDD (10 ou 11 dígitos), ou deixe em branco');
     }
 
     if (!pai && !mae) faltando.push('• Pai e/ou Mãe');
@@ -396,17 +479,15 @@
       return;
     }
 
-    // Celular opcional: se vazio, gera ID interno de 11 dígitos (aceito pelo Apps Script)
     var celularEnviar = celular;
-    if (!celularEnviar && editandoCelularKey) {
+    var celular2Enviar = celular2;
+    if (!celularEnviar && !celular2Enviar && editandoCelularKey) {
       celularEnviar = editandoCelularKey;
-    } else if (!celularEnviar) {
+    } else if (!celularEnviar && !celular2Enviar) {
       celularEnviar = gerarIdSemCelularLocal();
     }
 
-    var editando = !!(celularEnviar && (window.__familias || []).find(function (f) {
-      return f.celular === celularEnviar;
-    }));
+    var editando = !!(editandoCelularKey || (celularEnviar && familiaPorCelular(celularEnviar)) || (celular2Enviar && familiaPorCelular(celular2Enviar)));
     var pergunta = editando
       ? 'Deseja salvar as alterações deste cadastro?'
       : 'Deseja cadastrar esta família agora?';
@@ -429,6 +510,8 @@
       var data = await ArturApi.preCadastro({
         senha: senha(),
         celular: celularEnviar,
+        celular2: celular2Enviar,
+        celular_chave: editandoCelularKey || '',
         nome_pai: pai,
         nome_mae: mae,
         filhos: filhos
@@ -441,6 +524,7 @@
 
       form.reset();
       editandoCelularKey = null;
+      if (celular2Input) celular2Input.value = '';
       var checkPai = document.getElementById('check-pai');
       var checkMae = document.getElementById('check-mae');
       if (checkPai) checkPai.checked = false;
@@ -484,6 +568,12 @@
   function exibirCelular(celular) {
     if (!celular || ehSemCelular(celular)) return 'Sem celular';
     return ArturApi.formatPhone(celular);
+  }
+
+  function whatsappUrlLista(f) {
+    var list = celularesDaFamilia(f).filter(function (c) { return !ehSemCelular(c); });
+    if (!list.length) return '';
+    return whatsappUrl(list[0]);
   }
 
   function pct(parte, total) {
@@ -555,6 +645,9 @@
         ? ('Ad ' + naoAdultos + ' (' + pct(naoAdultos, naoConfirmados) + ') · Cr ' + naoCriancas + ' (' + pct(naoCriancas, naoConfirmados) + ')')
         : '';
     }
+
+    renderGraficoBarras(document.getElementById('chart-cadastros'), window.__cadastrosPorDia || {}, '#1f5c2e');
+    renderGraficoBarras(document.getElementById('chart-acessos'), window.__acessosPorDia || {}, '#0b4a7a');
   }
 
   function pessoasDoTelefone(f) {
@@ -663,9 +756,9 @@
       return (
         '<article class="presenca-grupo' + (f.status === 'presente' ? ' presente' : '') + '">' +
           '<div class="presenca-fone-titulo">' +
-            '<span>' + esc(exibirCelular(f.celular)) + '</span>' +
-            (whatsappUrl(f.celular)
-              ? '<a class="btn btn-grass btn-wa" href="' + esc(whatsappUrl(f.celular)) + '" target="_blank" rel="noopener">WhatsApp</a>'
+            '<span>' + esc(exibirCelulares(f)) + '</span>' +
+            (whatsappUrlLista(f)
+              ? '<a class="btn btn-grass btn-wa" href="' + esc(whatsappUrlLista(f)) + '" target="_blank" rel="noopener">WhatsApp</a>'
               : '') +
           '</div>' +
           linhas +
@@ -1087,12 +1180,11 @@
     for (var h = 1; h <= colsFilhos; h++) {
       headCols += '<th>☐ Filho ' + h + '</th>';
     }
-    headCols += '<th>Status</th></tr>';
+    headCols += '<th>Status</th><th>Cadastro</th><th>Último acesso</th></tr>';
     tabelaHeadEl.innerHTML = headCols;
 
     if (!ordenadas.length) {
-      tabelaBodyEl.innerHTML = '<tr><td colspan="' + (6 + colsFilhos) + '">Nenhum cadastro.</td></tr>';
-      // ainda assim mostra linhas em branco abaixo
+      tabelaBodyEl.innerHTML = '<tr><td colspan="' + (8 + colsFilhos) + '">Nenhum cadastro.</td></tr>';
     }
 
     var linhasHtml = ordenadas.map(function (f, i) {
@@ -1108,11 +1200,13 @@
         '<tr class="' + esc(f.status) + '">' +
           '<td class="num">' + (i + 1) + '</td>' +
           '<td class="num">' + qtd + '</td>' +
-          '<td>' + esc(exibirCelular(f.celular)) + '</td>' +
+          '<td>' + esc(exibirCelulares(f)) + '</td>' +
           pessoaCelulaHtml(f, f.nome_pai || '', 'pai', checks) +
           pessoaCelulaHtml(f, f.nome_mae || '', 'mae', checks) +
           cols +
           '<td>' + esc(f.status || '') + '</td>' +
+          '<td>' + esc(formatarDataHora(f.criado_em)) + '</td>' +
+          '<td>' + esc(formatarDataHora(f.ultimo_acesso_em)) + '</td>' +
         '</tr>'
       );
     }).join('');
@@ -1129,6 +1223,8 @@
           '<td class="num"></td>' +
           '<td class="linha-branco"></td>' +
           colsVazias +
+          '<td class="linha-branco"></td>' +
+          '<td class="linha-branco"></td>' +
           '<td class="linha-branco"></td>' +
         '</tr>';
     }
@@ -1302,7 +1398,10 @@
 
     var filtered = ordenadas.filter(function (f) {
       if (!filtro) return true;
-      if (filtroDigitos && String(f.celular || '').indexOf(filtroDigitos) !== -1) return true;
+      if (filtroDigitos) {
+        var phones = celularesDaFamilia(f).join(' ');
+        if (phones.indexOf(filtroDigitos) !== -1) return true;
+      }
       var blob = [f.nome_pai, f.nome_mae, f.nome_responsavel, (f.filhos || []).join(' '), f.status].join(' ').toLowerCase();
       return blob.indexOf(filtro) !== -1;
     });
@@ -1343,11 +1442,12 @@
 
     listaEl.innerHTML = filtered.map(function (f) {
       var checks = getChecksLocais();
+      var celKey = chaveFamilia(f);
       var pessoas = pessoasDoTelefone(f).map(function (p) {
         var checked = checks[p.key] ? ' checked' : '';
         return (
           '<div class="presenca-linha ' + p.tipo + '">' +
-            '<input type="checkbox" class="presenca-check lista-check" data-key="' + esc(p.key) + '" data-cel="' + esc(f.celular) + '"' + checked + ' />' +
+            '<input type="checkbox" class="presenca-check lista-check" data-key="' + esc(p.key) + '" data-cel="' + esc(celKey) + '"' + checked + ' />' +
             '<span class="papel">' + esc(p.papel) + ':</span>' +
             '<span class="nome">' + esc(p.nome) + '</span>' +
           '</div>'
@@ -1355,19 +1455,23 @@
       }).join('');
 
       return (
-        '<article class="phone-card" data-cel="' + esc(f.celular) + '">' +
+        '<article class="phone-card" data-cel="' + esc(celKey) + '">' +
           '<div class="phone-card-top">' +
-            '<strong class="phone-number">' + esc(exibirCelular(f.celular)) + '</strong>' +
+            '<strong class="phone-number">' + esc(exibirCelulares(f)) + '</strong>' +
             '<span class="badge ' + esc(f.status) + '">' + esc(f.status) + '</span>' +
           '</div>' +
           pessoas +
           '<p class="phone-meias">Meias: ' + esc(f.qtd_meias || (f.filhos || []).length || 0) + '</p>' +
+          '<div class="phone-meta">' +
+            '<span>Cadastro: <strong>' + esc(formatarDataHora(f.criado_em)) + '</strong></span>' +
+            '<span>Último acesso: <strong>' + esc(formatarDataHora(f.ultimo_acesso_em)) + '</strong></span>' +
+          '</div>' +
           '<div class="phone-actions">' +
-            (whatsappUrl(f.celular)
-              ? '<a class="btn btn-grass" href="' + esc(whatsappUrl(f.celular)) + '" target="_blank" rel="noopener">WhatsApp</a>'
+            (whatsappUrlLista(f)
+              ? '<a class="btn btn-grass" href="' + esc(whatsappUrlLista(f)) + '" target="_blank" rel="noopener">WhatsApp</a>'
               : '') +
-            '<button type="button" class="btn btn-wood" data-act="editar" data-cel="' + esc(f.celular) + '">Editar</button>' +
-            '<button type="button" class="btn btn-danger" data-act="excluir" data-cel="' + esc(f.celular) + '">Excluir</button>' +
+            '<button type="button" class="btn btn-wood" data-act="editar" data-cel="' + esc(celKey) + '">Editar</button>' +
+            '<button type="button" class="btn btn-danger" data-act="excluir" data-cel="' + esc(celKey) + '">Excluir</button>' +
           '</div>' +
         '</article>'
       );
@@ -1401,15 +1505,17 @@
       btn.addEventListener('click', async function () {
         var act = btn.getAttribute('data-act');
         var cel = btn.getAttribute('data-cel');
-        var familia = (window.__familias || []).find(function (x) { return x.celular === cel; });
+        var familia = familiaPorCelular(cel);
 
         try {
           if (act === 'editar' && familia) {
-            editandoCelularKey = familia.celular || null;
-            celularInput.value = ehSemCelular(familia.celular) ? '' : ArturApi.formatPhone(familia.celular);
+            editandoCelularKey = chaveFamilia(familia) || null;
+            var phones = celularesDaFamilia(familia).filter(function (c) { return !ehSemCelular(c); });
+            celularInput.value = phones[0] ? ArturApi.formatPhone(phones[0]) : '';
+            if (celular2Input) celular2Input.value = phones[1] ? ArturApi.formatPhone(phones[1]) : '';
             paiInput.value = familia.nome_pai || '';
             maeInput.value = familia.nome_mae || '';
-            setFilhos(familia.filhos, getChecksLocais(), familia.celular);
+            setFilhos(familia.filhos, getChecksLocais(), chaveFamilia(familia));
             syncChecksFormulario(familia);
             abrirCadastro();
             setStatus('Cadastro carregado. Use os checks de presença e salve se alterar dados.', 'warn');
@@ -1417,7 +1523,7 @@
           }
           if (act === 'excluir') {
             var nome = familia ? nomeFamilia(familia) : '';
-            var fone = exibirCelular(cel);
+            var fone = familia ? exibirCelulares(familia) : exibirCelular(cel);
             var msg =
               'Deseja realmente EXCLUIR este cadastro?\n\n' +
               'Telefone: ' + fone +
@@ -1460,6 +1566,19 @@
     try {
       var data = await ArturApi.listar(senha());
       window.__familias = ordenarPorTelefone(data.familias || []);
+      window.__acessosPorDia = data.acessos_por_dia || {};
+      window.__cadastrosPorDia = data.cadastros_por_dia || {};
+      // fallback se API antiga ainda não tiver cadastros_por_dia
+      if (!Object.keys(window.__cadastrosPorDia).length) {
+        var mapCad = {};
+        window.__familias.forEach(function (f) {
+          var dia = String(f.criado_em || '').slice(0, 10);
+          if (/^\d{4}-\d{2}-\d{2}$/.test(dia)) {
+            mapCad[dia] = (mapCad[dia] || 0) + 1;
+          }
+        });
+        window.__cadastrosPorDia = mapCad;
+      }
       mostrarApp();
       renderLista(window.__familias);
       setStatus(fromLogin ? 'Lista carregada por telefone.' : 'Lista atualizada.', 'ok');
@@ -1480,6 +1599,11 @@
   celularInput.addEventListener('input', function () {
     celularInput.value = ArturApi.formatPhone(celularInput.value);
   });
+  if (celular2Input) {
+    celular2Input.addEventListener('input', function () {
+      celular2Input.value = ArturApi.formatPhone(celular2Input.value);
+    });
+  }
 
   addKidBtn.addEventListener('click', function () {
     kidsBox.appendChild(kidInput(''));

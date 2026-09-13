@@ -29,7 +29,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=13" />
+  <link rel="stylesheet" href="styles.css?v=14" />
 </head>
 <body>
   <div class="mc-fx" aria-hidden="true">
@@ -136,7 +136,7 @@
         <button type="button" class="btn btn-wood hidden" id="btn-voltar-rsvp">Fechar e voltar</button>
       </div>
       <div class="panel" id="painel-rsvp">
-        <p id="rsvp-intro">Digite o celular cadastrado. Se já houver pré-cadastro, carregamos a família para você confirmar, ajustar ou informar que não vai.</p>
+        <p id="rsvp-intro">Digite o celular. Se já existir cadastro (pai ou mãe), abrimos a família. Se for novo, cadastre <strong>1 responsável</strong> e os filhos que vão brincar.</p>
 
         <label for="celular">Celular do responsável</label>
         <div class="phone-lookup">
@@ -148,11 +148,19 @@
           <div id="badge-cadastro" class="found-badge" role="status"></div>
 
           <form id="form-rsvp">
-            <label for="nome-pai">Pai</label>
-            <input id="nome-pai" name="nome_pai" placeholder="Nome do pai" maxlength="80" />
+            <div id="wrap-responsavel-unico">
+              <label for="nome-responsavel">Nome do responsável</label>
+              <input id="nome-responsavel" name="nome_responsavel" placeholder="Seu nome (1 responsável por cadastro)" maxlength="80" />
+              <p class="rsvp-hint">Neste auto-cadastro vale <strong>1 responsável</strong>. Depois você adiciona as crianças abaixo.</p>
+            </div>
 
-            <label for="nome-mae">Mãe</label>
-            <input id="nome-mae" name="nome_mae" placeholder="Nome da mãe" maxlength="80" />
+            <div id="wrap-pais" class="hidden">
+              <label for="nome-pai">Pai</label>
+              <input id="nome-pai" name="nome_pai" placeholder="Nome do pai" maxlength="80" />
+
+              <label for="nome-mae">Mãe</label>
+              <input id="nome-mae" name="nome_mae" placeholder="Nome da mãe" maxlength="80" />
+            </div>
 
             <label>Filhos que vão brincar</label>
             <div id="kids" class="kids"></div>
@@ -201,7 +209,7 @@
   </div>
 
   <script src="config.js?v=4"></script>
-  <script src="js/api.js?v=3"></script>
-  <script src="js/app.js?v=5"></script>
+  <script src="js/api.js?v=4"></script>
+  <script src="js/app.js?v=6"></script>
 </body>
 </html>
