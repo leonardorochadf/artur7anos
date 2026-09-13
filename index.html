@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=27" />
+  <link rel="stylesheet" href="styles.css?v=28" />
 </head>
 <body>
   <div class="mc-fx" aria-hidden="true">
@@ -162,11 +162,25 @@
             </div>
 
             <div id="wrap-pais" class="hidden">
-              <label for="nome-pai">Pai</label>
-              <input id="nome-pai" name="nome_pai" placeholder="Nome do pai" maxlength="80" />
+              <label>Responsáveis</label>
+              <p class="rsvp-hint" style="margin:0 0 8px">Pode remover pai ou mãe, mas precisa ficar ao menos 1 responsável.</p>
 
-              <label for="nome-mae">Mãe</label>
-              <input id="nome-mae" name="nome_mae" placeholder="Nome da mãe" maxlength="80" />
+              <div id="row-pai" class="resp-row">
+                <span class="resp-tag">Pai</span>
+                <input id="nome-pai" name="nome_pai" placeholder="Nome do pai" maxlength="80" />
+                <button type="button" class="btn btn-danger" id="btn-remover-pai" aria-label="Remover pai">X</button>
+              </div>
+
+              <div id="row-mae" class="resp-row">
+                <span class="resp-tag">Mãe</span>
+                <input id="nome-mae" name="nome_mae" placeholder="Nome da mãe" maxlength="80" />
+                <button type="button" class="btn btn-danger" id="btn-remover-mae" aria-label="Remover mãe">X</button>
+              </div>
+
+              <div class="resp-add-actions">
+                <button type="button" class="btn btn-wood hidden" id="btn-add-pai">+ Incluir pai</button>
+                <button type="button" class="btn btn-wood hidden" id="btn-add-mae">+ Incluir mãe</button>
+              </div>
             </div>
 
             <div id="wrap-filhos" class="hidden" style="margin-top:14px">
@@ -237,6 +251,6 @@
 
   <script src="config.js?v=7"></script>
   <script src="js/api.js?v=6"></script>
-  <script src="js/app.js?v=21"></script>
+  <script src="js/app.js?v=22"></script>
 </body>
 </html>

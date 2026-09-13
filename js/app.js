@@ -7,6 +7,12 @@
   var responsavelInput = document.getElementById('nome-responsavel');
   var wrapUnico = document.getElementById('wrap-responsavel-unico');
   var wrapPais = document.getElementById('wrap-pais');
+  var rowPai = document.getElementById('row-pai');
+  var rowMae = document.getElementById('row-mae');
+  var btnRemoverPai = document.getElementById('btn-remover-pai');
+  var btnRemoverMae = document.getElementById('btn-remover-mae');
+  var btnAddPai = document.getElementById('btn-add-pai');
+  var btnAddMae = document.getElementById('btn-add-mae');
   var wrapFilhos = document.getElementById('wrap-filhos');
   var wrapAdultos = document.getElementById('wrap-adultos');
   var wrapMeias = document.getElementById('wrap-meias');
@@ -445,6 +451,96 @@
     }
   }
 
+  function paiVisivel() {
+    return !!(rowPai && !rowPai.classList.contains('hidden'));
+  }
+
+  function maeVisivel() {
+    return !!(rowMae && !rowMae.classList.contains('hidden'));
+  }
+
+  function atualizarBotoesResponsaveis() {
+    var nPai = paiVisivel() ? 1 : 0;
+    var nMae = maeVisivel() ? 1 : 0;
+    var total = nPai + nMae;
+
+    if (btnRemoverPai) {
+      btnRemoverPai.disabled = !paiVisivel() || total <= 1;
+      btnRemoverPai.title = total <= 1
+        ? 'É preciso manter ao menos 1 responsável'
+        : 'Remover pai';
+    }
+    if (btnRemoverMae) {
+      btnRemoverMae.disabled = !maeVisivel() || total <= 1;
+      btnRemoverMae.title = total <= 1
+        ? 'É preciso manter ao menos 1 responsável'
+        : 'Remover mãe';
+    }
+    if (btnAddPai) btnAddPai.classList.toggle('hidden', paiVisivel());
+    if (btnAddMae) btnAddMae.classList.toggle('hidden', maeVisivel());
+  }
+
+  function configurarResponsaveis(pai, mae) {
+    var nomePai = String(pai || '').trim();
+    var nomeMae = String(mae || '').trim();
+
+    if (paiInput) paiInput.value = nomePai;
+    if (maeInput) maeInput.value = nomeMae;
+
+    if (rowPai) {
+      // Se só tem mãe, esconde pai; se tem os dois ou só pai (ou nenhum), mostra pai para editar
+      if (!nomePai && nomeMae) rowPai.classList.add('hidden');
+      else rowPai.classList.remove('hidden');
+    }
+    if (rowMae) {
+      if (!nomeMae && nomePai) rowMae.classList.add('hidden');
+      else rowMae.classList.remove('hidden');
+    }
+
+    // Sem nenhum nome ainda: mostra os dois campos
+    if (!nomePai && !nomeMae) {
+      if (rowPai) rowPai.classList.remove('hidden');
+      if (rowMae) rowMae.classList.remove('hidden');
+    }
+
+    atualizarBotoesResponsaveis();
+  }
+
+  async function removerResponsavel(tipo) {
+    var outroVisivel = tipo === 'pai' ? maeVisivel() : paiVisivel();
+    if (!outroVisivel) {
+      await mostrarAviso('É preciso manter ao menos 1 responsável (pai ou mãe).', 'Atenção');
+      return;
+    }
+
+    var nome = tipo === 'pai'
+      ? (paiInput ? paiInput.value.trim() : '')
+      : (maeInput ? maeInput.value.trim() : '');
+    var rotulo = tipo === 'pai' ? 'pai' : 'mãe';
+    var msg = nome
+      ? ('Remover ' + rotulo + ' "' + nome + '" deste cadastro?')
+      : ('Remover o campo de ' + rotulo + '?');
+
+    var ok = await pedirConfirmacao(msg, {
+      titulo: 'Remover ' + rotulo,
+      textoSim: 'Sim, remover',
+      textoNao: 'Cancelar',
+      classeSim: 'btn-danger',
+      perigo: true
+    });
+    if (!ok) return;
+
+    if (tipo === 'pai') {
+      if (paiInput) paiInput.value = '';
+      if (rowPai) rowPai.classList.add('hidden');
+    } else {
+      if (maeInput) maeInput.value = '';
+      if (rowMae) rowMae.classList.add('hidden');
+    }
+    atualizarBotoesResponsaveis();
+    setStatus('Responsável removido. Confirme a presença para salvar.', 'warn');
+  }
+
   function familiaTemCelular(f, celular) {
     if (!f || !celular) return false;
     var lista = f.celulares || [];
@@ -460,9 +556,8 @@
     modoFormulario(!!encontrado);
 
     if (encontrado && f) {
-      if (paiInput) paiInput.value = f.nome_pai || '';
-      if (maeInput) maeInput.value = f.nome_mae || '';
       if (responsavelInput) responsavelInput.value = '';
+      configurarResponsaveis(f.nome_pai || '', f.nome_mae || '');
       setFilhos(f.filhos || []);
       setAdultos(f.adultos || []);
       if (blocoFamilia && blocoFamilia.scrollIntoView) {
@@ -471,9 +566,8 @@
         }, 50);
       }
     } else {
-      if (paiInput) paiInput.value = '';
-      if (maeInput) maeInput.value = '';
       if (responsavelInput) responsavelInput.value = '';
+      configurarResponsaveis('', '');
       setFilhos([]);
       setAdultos([]);
     }
@@ -574,8 +668,8 @@
     };
 
     if (encontrado) {
-      payload.nome_pai = paiInput ? paiInput.value.trim() : '';
-      payload.nome_mae = maeInput ? maeInput.value.trim() : '';
+      payload.nome_pai = (paiVisivel() && paiInput) ? paiInput.value.trim() : '';
+      payload.nome_mae = (maeVisivel() && maeInput) ? maeInput.value.trim() : '';
     } else {
       var resp = responsavelInput ? responsavelInput.value.trim() : '';
       payload.nome_responsavel = resp;
@@ -587,14 +681,14 @@
 
   async function validarConfirmacao(payload, recusar) {
     if (payload.celular.length < 10) {
-      await mostrarAviso('Celular incompleto. Digite com DDD.', 'Atenção');
+      await mostrarAviso('Digite o celular completo com DDD.', 'Atenção');
       setStatus('Celular incompleto.', 'err');
       return false;
     }
     var temNome = !!(payload.nome_pai || payload.nome_mae || payload.nome_responsavel);
     if (!temNome) {
-      await mostrarAviso('Informe o nome do responsável.', 'Atenção');
-      setStatus('Informe o nome do responsável.', 'err');
+      await mostrarAviso('É preciso manter ao menos 1 responsável (pai ou mãe).', 'Atenção');
+      setStatus('Informe ao menos 1 responsável.', 'err');
       return false;
     }
     return true;
@@ -669,6 +763,33 @@
     updateMeias();
     atualizarVisibilidadeListas();
   });
+
+  if (btnRemoverPai) {
+    btnRemoverPai.addEventListener('click', function () { removerResponsavel('pai'); });
+  }
+  if (btnRemoverMae) {
+    btnRemoverMae.addEventListener('click', function () { removerResponsavel('mae'); });
+  }
+  if (btnAddPai) {
+    btnAddPai.addEventListener('click', function () {
+      if (rowPai) rowPai.classList.remove('hidden');
+      if (paiInput) {
+        paiInput.value = '';
+        paiInput.focus();
+      }
+      atualizarBotoesResponsaveis();
+    });
+  }
+  if (btnAddMae) {
+    btnAddMae.addEventListener('click', function () {
+      if (rowMae) rowMae.classList.remove('hidden');
+      if (maeInput) {
+        maeInput.value = '';
+        maeInput.focus();
+      }
+      atualizarBotoesResponsaveis();
+    });
+  }
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();

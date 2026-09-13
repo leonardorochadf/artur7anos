@@ -1,18 +1,19 @@
 /**
  * Backend: Google Apps Script + planilha do Artur 7 anos
- * Versao: v8.2-outros-adultos
+ * Versao: v8.8-remover-pai-mae
  *
  * - Varios celulares por familia (coluna celular: "fone1 | fone2")
  * - ultimo_acesso_em atualizado a cada busca/confirmacao
  * - Aba Acessos para grafico dia x acessos
  * - outros adultos alem de pai/mae (coluna adultos)
+ * - convite pode limpar pai OU mae (sempre resta 1 responsavel)
  */
 
 var ABA = 'Familias';
 var ABA_ACESSOS = 'Acessos';
 var ADMIN_SENHA_FIXA = '19122019@';
 var SHEET_ID_FIXO = '1ZFZ_UjSaF4BXecf0TizKXLt8EeCpErpPwmqWQJBGyok';
-var VERSAO = 'v8.7-celular-55';
+var VERSAO = 'v8.8-remover-pai-mae';
 
 var CABECALHO = [
   'celular',
@@ -141,6 +142,8 @@ function respostaListar() {
 }
 
 function montarNomes(body, atual) {
+  var paiEnviado = Object.prototype.hasOwnProperty.call(body, 'nome_pai');
+  var maeEnviado = Object.prototype.hasOwnProperty.call(body, 'nome_mae');
   var pai = limparTexto(body.nome_pai || '');
   var mae = limparTexto(body.nome_mae || '');
 
@@ -156,9 +159,11 @@ function montarNomes(body, atual) {
     mae = limparTexto(partes[1] || '');
   }
 
+  // Só completa do cadastro atual se o campo NÃO veio no body
+  // (permite limpar pai ou mãe de propósito no convite/admin)
   if (atual) {
-    if (!pai && atual.nome_pai) pai = atual.nome_pai;
-    if (!mae && atual.nome_mae) mae = atual.nome_mae;
+    if (!paiEnviado && !pai && atual.nome_pai) pai = atual.nome_pai;
+    if (!maeEnviado && !mae && atual.nome_mae) mae = atual.nome_mae;
   }
 
   return { pai: pai, mae: mae };
@@ -252,7 +257,10 @@ function salvarFamilia(body, isPre) {
   var adultos = normalizarListaNomes(body.adultos);
   var pediuNaoVai = String(body.status || '').toLowerCase() === 'nao_vai';
 
-  if (!nomes.pai && !nomes.mae && !adultos.length) {
+  if (!isPre && !nomes.pai && !nomes.mae) {
+    return { ok: false, erro: 'Mantenha ao menos um responsável (pai ou mãe).' };
+  }
+  if (isPre && !nomes.pai && !nomes.mae && !adultos.length) {
     return { ok: false, erro: 'Informe ao menos um adulto (pai, mãe ou outro adulto).' };
   }
 
@@ -269,6 +277,12 @@ function salvarFamilia(body, isPre) {
     nomes = montarNomes(body, atual);
     pai = nomes.pai;
     mae = nomes.mae;
+    if (!isPre && !pai && !mae) {
+      return { ok: false, erro: 'Mantenha ao menos um responsável (pai ou mãe).' };
+    }
+    if (isPre && !pai && !mae && !adultos.length) {
+      return { ok: false, erro: 'Informe ao menos um adulto (pai, mãe ou outro adulto).' };
+    }
     ultimoAcesso = isPre ? (atual.ultimo_acesso_em || '') : agora;
 
     if (isPre && (atual.status === 'confirmado' || atual.status === 'nao_vai' || atual.status === 'presente')) {

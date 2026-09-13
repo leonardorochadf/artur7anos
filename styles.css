@@ -473,6 +473,44 @@ input:focus, textarea:focus {
   width: 100%;
 }
 
+.resp-row {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.resp-row .resp-tag {
+  font-family: var(--font-display);
+  font-size: 0.42rem;
+  line-height: 1.2;
+  color: #10240f;
+}
+
+.resp-row input {
+  margin: 0;
+  min-width: 0;
+}
+
+.resp-row .btn {
+  padding: 10px 12px;
+  min-width: 44px;
+}
+
+.resp-row .btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.resp-add-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+
 .suggestions {
   margin-top: 8px;
   display: grid;
