@@ -558,6 +558,14 @@
       celularEnviar = gerarIdSemCelularLocal();
     }
 
+    var listaCelularesEnvio = [celularEnviar, celular2Enviar].filter(function (c) {
+      return !!c && String(c).replace(/\D/g, '').length >= 10;
+    });
+    // se só IDs internos
+    if (!listaCelularesEnvio.length && celularEnviar) {
+      listaCelularesEnvio = [celularEnviar];
+    }
+
     var editando = !!(editandoCelularKey || (celularEnviar && familiaPorCelular(celularEnviar)) || (celular2Enviar && familiaPorCelular(celular2Enviar)));
     var pergunta = editando
       ? 'Deseja salvar as alterações deste cadastro?'
@@ -580,9 +588,10 @@
     try {
       var data = await ArturApi.preCadastro({
         senha: senha(),
-        celular: celularEnviar,
-        celular2: celular2Enviar,
-        celular_chave: editandoCelularKey || '',
+        celular: listaCelularesEnvio[0] || celularEnviar,
+        celular2: listaCelularesEnvio[1] || '',
+        celulares: listaCelularesEnvio,
+        celular_chave: editandoCelularKey || listaCelularesEnvio[0] || '',
         nome_pai: pai,
         nome_mae: mae,
         filhos: filhos,
@@ -590,7 +599,14 @@
       });
       await fecharProgresso();
       var msg = (data && data.msg) || (editando ? 'Cadastro atualizado.' : 'Pré-cadastro criado.');
-      setStatus(msg, 'ok');
+      var salvos = (data && data.familia && data.familia.celulares) ? data.familia.celulares : [];
+      var reais = salvos.filter(function (c) { return c && !ehSemCelular(c); });
+      if (listaCelularesEnvio.length >= 2 && reais.length < 2) {
+        msg += '\n\nAtenção: o Celular 2 não gravou. Republiche o Apps Script (v8.3) e salve de novo.';
+      } else if (reais.length >= 2) {
+        msg += '\n\nCelulares: ' + reais.map(function (c) { return ArturApi.formatPhone(c); }).join(' · ');
+      }
+      setStatus(msg.replace(/\n\n/g, ' '), reais.length >= 2 || listaCelularesEnvio.length < 2 ? 'ok' : 'warn');
 
       await mostrarAviso(msg, 'Pré-cadastro');
 

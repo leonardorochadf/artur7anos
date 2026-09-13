@@ -12,7 +12,7 @@ var ABA = 'Familias';
 var ABA_ACESSOS = 'Acessos';
 var ADMIN_SENHA_FIXA = '19122019@';
 var SHEET_ID_FIXO = '1ZFZ_UjSaF4BXecf0TizKXLt8EeCpErpPwmqWQJBGyok';
-var VERSAO = 'v8.2-outros-adultos';
+var VERSAO = 'v8.3-celular2';
 
 var CABECALHO = [
   'celular',
@@ -164,18 +164,20 @@ function nomeExibicao(pai, mae) {
 
 function coletarCelularesDoBody(body, atual, isPre) {
   var lista = [];
-  if (body.celulares && Object.prototype.toString.call(body.celulares) === '[object Array]') {
+
+  // Preferência: array explícito enviado pelo admin
+  if (body.celulares && Object.prototype.toString.call(body.celulares) === '[object Array]' && body.celulares.length) {
     lista = lista.concat(body.celulares);
+  } else {
+    if (body.celular) lista.push(body.celular);
+    if (body.celular2) lista.push(body.celular2);
   }
-  if (body.celular) lista.push(body.celular);
-  if (body.celular2) lista.push(body.celular2);
 
   var limpos = listaCelulares(lista.join('|'));
 
   if (isPre) {
     // Admin define a lista final (pode trocar/remover). Se vazio, gera ID.
     if (!limpos.length && atual && atual.celulares && atual.celulares.length) {
-      // edição sem telefone informado: mantém IDs internos se já existiam
       var soIds = atual.celulares.filter(function (c) { return ehIdSemCelular(c); });
       if (soIds.length && !atual.celulares.some(function (c) { return !ehIdSemCelular(c); })) {
         return soIds;
@@ -200,13 +202,19 @@ function salvarFamilia(body, isPre) {
   var agora = new Date().toISOString();
 
   var celularBusca = normalizarCelular(body.celular || '');
-  var rowIndex = celularBusca ? acharLinhaPorCelular(sheet, celularBusca) : -1;
-  if (rowIndex < 0 && body.celular2) {
-    rowIndex = acharLinhaPorCelular(sheet, normalizarCelular(body.celular2));
+  var celular2Busca = normalizarCelular(body.celular2 || '');
+  var celularChave = normalizarCelular(body.celular_chave || '');
+  var rowIndex = -1;
+
+  // Prioriza a chave de edição do admin (evita gravar no registro errado)
+  if (celularChave) {
+    rowIndex = acharLinhaPorCelular(sheet, celularChave);
   }
-  // Admin editando pelo celular "chave" antigo
-  if (rowIndex < 0 && body.celular_chave) {
-    rowIndex = acharLinhaPorCelular(sheet, normalizarCelular(body.celular_chave));
+  if (rowIndex < 0 && celularBusca) {
+    rowIndex = acharLinhaPorCelular(sheet, celularBusca);
+  }
+  if (rowIndex < 0 && celular2Busca) {
+    rowIndex = acharLinhaPorCelular(sheet, celular2Busca);
   }
 
   var atual = rowIndex > 0 ? lerLinha(sheet, rowIndex) : null;
@@ -280,7 +288,7 @@ function salvarFamilia(body, isPre) {
     }
 
     sheet.getRange(rowIndex, 1, 1, CABECALHO.length).setValues([[
-      celularGravar,
+      '', // celular gravado em seguida como texto puro
       pai,
       mae,
       filhos.join(' | '),
@@ -309,7 +317,7 @@ function salvarFamilia(body, isPre) {
   }
 
   sheet.appendRow([
-    celularGravar,
+    '', // celular gravado em seguida como texto puro
     pai,
     mae,
     filhos.join(' | '),
@@ -763,6 +771,7 @@ function gerarIdSemCelular(sheet) {
 function gravarCelularNaLinha(sheet, rowIndex, celular) {
   var cell = sheet.getRange(rowIndex, col('celular'));
   cell.setNumberFormat('@');
+  // força texto para não perder o segundo número (ex.: "2799... | 2788...")
   cell.setValue(String(celular || ''));
 }
 
