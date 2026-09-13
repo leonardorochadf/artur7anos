@@ -613,6 +613,14 @@ body.modo-rsvp #painel-rsvp {
   box-shadow: 6px 6px 0 rgba(0,0,0,.28);
 }
 
+#painel-rsvp.rsvp-dados-abertos #rsvp-lookup-wrap {
+  display: none;
+}
+
+#painel-rsvp.rsvp-dados-abertos #badge-cadastro {
+  display: none !important;
+}
+
 .rsvp-head {
   align-items: center;
   gap: 10px;

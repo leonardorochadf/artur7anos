@@ -29,7 +29,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=15" />
+  <link rel="stylesheet" href="styles.css?v=16" />
 </head>
 <body>
   <div class="mc-fx" aria-hidden="true">
@@ -136,22 +136,23 @@
         <button type="button" class="btn btn-wood hidden" id="btn-voltar-rsvp">Fechar e voltar</button>
       </div>
       <div class="panel" id="painel-rsvp">
-        <p id="rsvp-intro">Digite o celular.<br />Depois: <strong>1 responsável</strong> e o(s) filho(s) que vão brincar.</p>
+        <div id="rsvp-lookup-wrap">
+          <p id="rsvp-intro">Digite o celular.<br />Depois: <strong>1 responsável</strong> e o(s) filho(s) que vão brincar.</p>
 
-        <label for="celular">Celular do responsável</label>
-        <div class="phone-lookup">
-          <input id="celular" name="celular" inputmode="tel" autocomplete="tel" placeholder="(27) 99999-9999" required />
-          <button type="button" class="btn btn-secondary" id="btn-buscar">Buscar</button>
+          <label for="celular">Celular do responsável</label>
+          <div class="phone-lookup">
+            <input id="celular" name="celular" inputmode="tel" autocomplete="tel" placeholder="(27) 99999-9999" required />
+            <button type="button" class="btn btn-secondary" id="btn-buscar">Buscar</button>
+          </div>
         </div>
 
         <div id="bloco-familia" class="hidden">
-          <div id="badge-cadastro" class="found-badge" role="status"></div>
+          <div id="badge-cadastro" class="found-badge hidden" role="status" aria-hidden="true"></div>
 
           <form id="form-rsvp">
             <div id="wrap-responsavel-unico">
               <label for="nome-responsavel">Nome do responsável</label>
-              <input id="nome-responsavel" name="nome_responsavel" placeholder="Seu nome (1 responsável por cadastro)" maxlength="80" />
-              <p class="rsvp-hint">Neste auto-cadastro vale <strong>1 responsável</strong>. Depois você adiciona as crianças abaixo.</p>
+              <input id="nome-responsavel" name="nome_responsavel" placeholder="Seu nome" maxlength="80" />
             </div>
 
             <div id="wrap-pais" class="hidden">
@@ -210,6 +211,6 @@
 
   <script src="config.js?v=4"></script>
   <script src="js/api.js?v=4"></script>
-  <script src="js/app.js?v=8"></script>
+  <script src="js/app.js?v=9"></script>
 </body>
 </html>

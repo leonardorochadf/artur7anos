@@ -261,6 +261,7 @@
 
   var btnVoltarRsvp = document.getElementById('btn-voltar-rsvp');
   var secaoConfirmar = document.getElementById('confirmar');
+  var painelRsvp = document.getElementById('painel-rsvp');
 
   function entrarModoRsvp() {
     document.body.classList.add('modo-rsvp');
@@ -270,10 +271,19 @@
     }
   }
 
+  function mostrarLookup() {
+    if (painelRsvp) painelRsvp.classList.remove('rsvp-dados-abertos');
+  }
+
+  function ocultarLookup() {
+    if (painelRsvp) painelRsvp.classList.add('rsvp-dados-abertos');
+  }
+
   function sairModoRsvp() {
     document.body.classList.remove('modo-rsvp');
     if (btnVoltarRsvp) btnVoltarRsvp.classList.add('hidden');
     blocoFamilia.classList.add('hidden');
+    mostrarLookup();
     familiaAtual = null;
     setStatus('', '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -310,33 +320,12 @@
   }
 
   function montarBadgeStatus(f, encontrado) {
-    if (!encontrado || !f) {
-      badgeCadastro.innerHTML =
-        '<span class="badge-titulo">NOVO CADASTRO</span>' +
-        '<span class="badge-texto">Informe 1 responsável e adicione as crianças que vão brincar. Depois confirme a presença.</span>';
-      badgeCadastro.className = 'found-badge pendente';
-      atualizarBotoesRsvp(null, false);
-      return;
+    // Badge visual removido da tela: o estado fica nos botões + status
+    if (badgeCadastro) {
+      badgeCadastro.classList.add('hidden');
+      badgeCadastro.innerHTML = '';
     }
-
-    var st = f.status || 'pre_cadastro';
-    if (st === 'confirmado' || st === 'presente') {
-      badgeCadastro.innerHTML =
-        '<span class="badge-titulo">PRESENÇA CONFIRMADA</span>' +
-        '<span class="badge-texto">Tudo certo! Você ainda pode ajustar os dados e salvar de novo.</span>';
-      badgeCadastro.className = 'found-badge ok';
-    } else if (st === 'nao_vai') {
-      badgeCadastro.innerHTML =
-        '<span class="badge-titulo">NÃO VAI</span>' +
-        '<span class="badge-texto">Estava marcado que não vão. Pode mudar e confirmar se quiser.</span>';
-      badgeCadastro.className = 'found-badge nao-vai';
-    } else {
-      badgeCadastro.innerHTML =
-        '<span class="badge-titulo">AINDA NÃO CONFIRMADO</span>' +
-        '<span class="badge-texto">Cadastro encontrado. Confira os dados (pai/mãe e filhos) e confirme a presença.</span>';
-      badgeCadastro.className = 'found-badge pendente';
-    }
-    atualizarBotoesRsvp(f, true);
+    atualizarBotoesRsvp(encontrado ? f : null, !!encontrado);
   }
 
   function modoFormulario(encontrado) {
@@ -359,6 +348,7 @@
   function abrirFormulario(f, encontrado) {
     familiaAtual = f || null;
     blocoFamilia.classList.remove('hidden');
+    ocultarLookup();
     entrarModoRsvp();
     modoFormulario(!!encontrado);
 
@@ -477,6 +467,7 @@
       debounceTimer = setTimeout(buscarPorTelefone, 400);
     } else {
       blocoFamilia.classList.add('hidden');
+      mostrarLookup();
     }
   });
 
