@@ -1171,6 +1171,8 @@
       winStatsEl.textContent = `LEVEL ${state.level}/${MAX_LEVEL} · ${state.coins} moedas`;
     }
     winScreen.classList.remove("hidden");
+    winScreen.scrollTop = 0;
+    document.body.classList.add("showing-win");
     touchUI.classList.add("hidden");
   }
 
@@ -1181,6 +1183,7 @@
     beep(80, 0.35, "sawtooth", 0.06);
     setTimeout(() => beep(60, 0.4, "triangle", 0.05), 180);
     overScreen.classList.remove("hidden");
+    overScreen.scrollTop = 0;
     touchUI.classList.add("hidden");
   }
 
@@ -1206,6 +1209,7 @@
     menu.classList.add("hidden");
     winScreen.classList.add("hidden");
     overScreen.classList.add("hidden");
+    document.body.classList.remove("showing-win");
     hud.classList.remove("hidden");
     if (isTouch) {
       touchUI.classList.remove("hidden");

@@ -52,23 +52,169 @@ html, body {
   inset: 0;
   z-index: 20;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 18px;
+  padding: max(16px, env(safe-area-inset-top)) 12px max(20px, env(safe-area-inset-bottom));
   background: rgba(10, 25, 40, 0.55);
   backdrop-filter: blur(2px);
+  overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+  overscroll-behavior: contain;
 }
 
 .panel {
   width: min(100%, 440px);
+  margin: 0 auto 24px;
   background: var(--panel);
   border: 5px solid var(--ink);
   box-shadow: 8px 8px 0 var(--ink);
-  padding: 22px 18px 18px;
+  padding: 18px 16px 16px;
   text-align: center;
+  flex-shrink: 0;
+}
+
+.win-panel {
+  position: relative;
+  overflow: visible;
+  max-width: min(100%, 440px);
+}
+
+.prize-hero {
+  position: relative;
+  margin: 0 0 14px;
+  padding: 14px 10px 10px;
+  min-height: 140px;
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  background: radial-gradient(circle at 50% 40%, #fff7b0 0%, #ffe27a 35%, #7ec8ff 70%, #3d9be9 100%);
+  border: 4px solid var(--ink);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.35), 4px 4px 0 var(--ink);
+  overflow: hidden;
+}
+
+.prize-sun {
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  background: radial-gradient(circle at 35% 30%, #fffce8, #ffd24a 48%, #f0a202 78%);
+  border: 4px solid var(--ink);
+  box-shadow:
+    0 0 0 6px rgba(255, 210, 74, 0.35),
+    0 0 20px 6px rgba(255, 230, 120, 0.7),
+    4px 4px 0 var(--ink);
+  animation: sun-pop 0.9s cubic-bezier(0.2, 1.4, 0.4, 1) both, sun-pulse 2.2s ease-in-out 0.9s infinite;
+  z-index: 1;
+  top: 10px;
+}
+
+.prize-sun-core {
+  position: absolute;
+  inset: 14px;
+  background: #fff7b0;
+  border: 2px solid rgba(26, 18, 8, 0.2);
+}
+
+.prize-percent {
+  position: relative;
+  z-index: 2;
+  margin-top: 58px;
+  text-align: center;
+  animation: prize-bounce 0.85s cubic-bezier(0.2, 1.5, 0.4, 1) 0.15s both;
+}
+
+.prize-number {
+  display: block;
+  font-family: var(--font-pixel);
+  font-size: clamp(1.8rem, 11vw, 2.8rem);
+  line-height: 1;
+  color: #fff8dc;
+  text-shadow:
+    4px 4px 0 #1a1208,
+    -2px 0 0 #1a1208,
+    2px 0 0 #1a1208,
+    0 0 18px rgba(255, 210, 74, 1);
+  animation: percent-shine 1.8s ease-in-out infinite;
+}
+
+.prize-label {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 5px 8px;
+  font-family: var(--font-pixel);
+  font-size: 0.48rem;
+  letter-spacing: 0.04em;
+  color: #1a1208;
+  background: #ffd24a;
+  border: 3px solid #1a1208;
+  box-shadow: 3px 3px 0 #1a1208;
+}
+
+.prize-won {
+  position: relative;
+  z-index: 2;
+  margin: 6px 0 0;
+  font-family: var(--font-pixel);
+  font-size: clamp(0.42rem, 2.4vw, 0.52rem);
+  line-height: 1.45;
+  color: #153d12;
+  background: rgba(244, 247, 239, 0.92);
+  border: 3px solid #1a1208;
+  padding: 7px 8px;
+  box-shadow: 3px 3px 0 #1a1208;
+}
+
+.win-panel h2 {
+  font-size: clamp(0.52rem, 2.6vw, 0.7rem);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.win-panel .lead {
+  font-size: clamp(1.05rem, 4.2vw, 1.2rem);
+  margin-bottom: 12px;
+}
+
+.win-panel .btn-cta {
+  min-height: 56px;
+  margin-bottom: 8px;
+}
+
+body.showing-win .game-top-title {
+  display: none;
+}
+
+@media (max-height: 720px) {
+  .prize-hero {
+    min-height: 120px;
+    padding: 10px 8px 8px;
+    margin-bottom: 10px;
+  }
+  .prize-sun {
+    width: 56px;
+    height: 56px;
+    top: 8px;
+  }
+  .prize-sun-core {
+    inset: 12px;
+  }
+  .prize-percent {
+    margin-top: 44px;
+  }
+  .prize-number {
+    font-size: clamp(1.5rem, 9vw, 2.2rem);
+  }
+  .win-panel {
+    padding: 14px 12px 12px;
+  }
+  .win-stats {
+    margin-bottom: 8px;
+    padding: 6px 8px;
+    font-size: 0.42rem;
+  }
 }
 
 .brand {
@@ -570,4 +716,64 @@ body.is-mobile .hud-chip {
 
 body.is-mobile .game-top-title {
   font-size: 0.5rem;
+}
+
+/* Tela de prêmio: evita corte no topo e compacta no celular */
+#screen-win.screen,
+#screen-over.screen,
+#screen-menu.screen {
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding-top: max(16px, env(safe-area-inset-top)) !important;
+  overflow-y: auto !important;
+}
+
+#screen-win .win-panel {
+  overflow: visible !important;
+  margin-top: 0 !important;
+}
+
+#screen-win .prize-hero {
+  min-height: 130px !important;
+  margin-bottom: 12px !important;
+  padding: 12px 8px 8px !important;
+}
+
+#screen-win .prize-sun {
+  width: 64px !important;
+  height: 64px !important;
+  top: 8px !important;
+}
+
+#screen-win .prize-sun-core {
+  inset: 12px !important;
+}
+
+#screen-win .prize-percent {
+  margin-top: 48px !important;
+}
+
+#screen-win .prize-number {
+  font-size: clamp(1.6rem, 10vw, 2.4rem) !important;
+}
+
+body.showing-win .game-top-title {
+  display: none !important;
+}
+
+@media (max-height: 700px) {
+  #screen-win .prize-hero {
+    min-height: 110px !important;
+  }
+  #screen-win .prize-number {
+    font-size: clamp(1.4rem, 8vw, 2rem) !important;
+  }
+  #screen-win .lead {
+    font-size: 1.05rem !important;
+    margin-bottom: 10px !important;
+  }
+  #screen-win h2 {
+    font-size: 0.52rem !important;
+    margin-bottom: 8px !important;
+  }
 }
