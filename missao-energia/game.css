@@ -94,19 +94,6 @@ html, body {
   pointer-events: none;
 }
 
-#hud {
-  position: absolute;
-  top: max(36px, calc(env(safe-area-inset-top) + 28px));
-  left: 10px;
-  right: 10px;
-  z-index: 12;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: flex-start;
-  pointer-events: none;
-}
-
 h1, h2 {
   margin: 0 0 14px;
   font-family: var(--font-pixel);
@@ -380,26 +367,30 @@ h1, h2 {
 
 #hud {
   position: absolute;
-  top: max(10px, env(safe-area-inset-top));
+  top: max(40px, calc(env(safe-area-inset-top) + 32px));
   left: 10px;
   right: 10px;
   z-index: 12;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  align-items: flex-start;
+  align-items: stretch;
   pointer-events: none;
 }
 
 .hud-chip {
   pointer-events: none;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 42px;
   background: rgba(244, 247, 239, 0.94);
   border: 3px solid var(--ink);
   box-shadow: 3px 3px 0 var(--ink);
-  padding: 8px 10px;
+  padding: 0 10px;
   font-family: var(--font-pixel);
   font-size: 0.42rem;
-  line-height: 1.45;
+  line-height: 1.2;
   max-width: min(72vw, 340px);
 }
 
@@ -414,14 +405,18 @@ h1, h2 {
 }
 
 .hud-progress {
-  display: grid;
-  gap: 6px;
-  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 118px;
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 
 .hud-bar {
   display: block;
-  height: 8px;
+  height: 6px;
   background: #d7d2c4;
   border: 2px solid #1a1208;
 }
@@ -448,13 +443,18 @@ h1, h2 {
 .hud-mute {
   pointer-events: auto;
   margin-left: auto;
+  align-self: stretch;
   border: 3px solid var(--ink);
   background: #fff;
   box-shadow: 3px 3px 0 var(--ink);
-  width: 44px;
-  height: 44px;
+  min-width: 42px;
+  min-height: 42px;
+  height: auto;
   font-size: 1.2rem;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .touch {
