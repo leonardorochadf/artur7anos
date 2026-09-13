@@ -12,7 +12,7 @@ var ABA = 'Familias';
 var ABA_ACESSOS = 'Acessos';
 var ADMIN_SENHA_FIXA = '19122019@';
 var SHEET_ID_FIXO = '1ZFZ_UjSaF4BXecf0TizKXLt8EeCpErpPwmqWQJBGyok';
-var VERSAO = 'v8.5-filhos-opcional-admin';
+var VERSAO = 'v8.6-check-confirma';
 
 var CABECALHO = [
   'celular',
@@ -110,6 +110,13 @@ function handlePost(body) {
       return { ok: false, erro: 'Senha admin inválida' };
     }
     return desmarcarPresente(body.celular);
+  }
+
+  if (action === 'admin_status') {
+    if (!senhaOk(body.senha)) {
+      return { ok: false, erro: 'Senha admin inválida' };
+    }
+    return adminSetStatus(body.celular, body.status);
   }
 
   if (action === 'excluir') {
@@ -373,11 +380,12 @@ function marcarPresente(celularRaw) {
   }
 
   var agora = new Date().toISOString();
+  // Check no admin = pessoa vai + família confirmada/presente
   sheet.getRange(rowIndex, col('status')).setValue('presente');
   sheet.getRange(rowIndex, col('presente_em')).setValue(agora);
   sheet.getRange(rowIndex, col('atualizado_em')).setValue(agora);
 
-  return { ok: true, msg: 'Presença no local marcada.', familia: lerLinha(sheet, rowIndex) };
+  return { ok: true, msg: 'Confirmado e marcado no local.', familia: lerLinha(sheet, rowIndex) };
 }
 
 function desmarcarPresente(celularRaw) {
@@ -389,13 +397,44 @@ function desmarcarPresente(celularRaw) {
   }
 
   var atual = lerLinha(sheet, rowIndex);
+  // Mantém como confirmado (vai), só tira o "no local"
   var novoStatus = atual.status === 'nao_vai' ? 'nao_vai' : 'confirmado';
   var agora = new Date().toISOString();
   sheet.getRange(rowIndex, col('status')).setValue(novoStatus);
   sheet.getRange(rowIndex, col('presente_em')).setValue('');
   sheet.getRange(rowIndex, col('atualizado_em')).setValue(agora);
 
-  return { ok: true, msg: 'Presença desmarcada.', familia: lerLinha(sheet, rowIndex) };
+  return { ok: true, msg: 'Presença no local desmarcada (família continua confirmada).', familia: lerLinha(sheet, rowIndex) };
+}
+
+function adminSetStatus(celularRaw, statusRaw) {
+  var celular = normalizarCelular(celularRaw);
+  var status = String(statusRaw || '').toLowerCase();
+  if (status !== 'confirmado' && status !== 'nao_vai' && status !== 'pre_cadastro' && status !== 'presente') {
+    return { ok: false, erro: 'Status inválido.' };
+  }
+  var sheet = getSheet();
+  var rowIndex = acharLinhaPorCelular(sheet, celular);
+  if (rowIndex < 0) {
+    return { ok: false, erro: 'Cadastro não encontrado para este celular.' };
+  }
+
+  var agora = new Date().toISOString();
+  sheet.getRange(rowIndex, col('status')).setValue(status);
+  if (status === 'presente') {
+    sheet.getRange(rowIndex, col('presente_em')).setValue(agora);
+  } else {
+    sheet.getRange(rowIndex, col('presente_em')).setValue('');
+  }
+  sheet.getRange(rowIndex, col('atualizado_em')).setValue(agora);
+
+  var msgs = {
+    confirmado: 'Família confirmada (vão à festa).',
+    nao_vai: 'Registrado que não vão.',
+    pre_cadastro: 'Voltou para pré-cadastro.',
+    presente: 'Marcado como presente no local.'
+  };
+  return { ok: true, msg: msgs[status] || 'Status atualizado.', familia: lerLinha(sheet, rowIndex) };
 }
 
 function excluirFamilia(celularRaw) {

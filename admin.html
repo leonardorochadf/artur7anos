@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=25" />
+  <link rel="stylesheet" href="styles.css?v=26" />
 </head>
 <body>
   <div class="app">
@@ -43,20 +43,38 @@
               <strong class="dash-value"><span id="dash-adultos">0</span><span class="dash-pct" id="dash-adultos-pct"></span></strong>
             </div>
             <div class="dash-item">
-              <span class="dash-label">Crianças</span>
+              <span class="dash-label">Crianças / meias</span>
               <strong class="dash-value"><span id="dash-criancas">0</span><span class="dash-pct" id="dash-criancas-pct"></span></strong>
             </div>
           </div>
-          <div class="dash-grid dash-grid-2" id="dash-confirmacao">
+          <p class="dash-resumo" id="dash-resumo-familias">Ex.: 4 de 5 famílias confirmaram</p>
+          <div class="dash-grid dash-grid-3" id="dash-confirmacao">
             <div class="dash-item dash-ok">
-              <span class="dash-label">Confirmados</span>
+              <span class="dash-label">Confirmaram (vão)</span>
               <strong class="dash-value" id="dash-confirmados">0</strong>
               <span class="dash-sub" id="dash-confirmados-detalhe"></span>
             </div>
             <div class="dash-item dash-warn">
-              <span class="dash-label">Não confirmados</span>
+              <span class="dash-label">Ainda não confirmaram</span>
               <strong class="dash-value" id="dash-nao-confirmados">0</strong>
               <span class="dash-sub" id="dash-nao-confirmados-detalhe"></span>
+            </div>
+            <div class="dash-item dash-muted">
+              <span class="dash-label">Não vão</span>
+              <strong class="dash-value" id="dash-nao-vao">0</strong>
+              <span class="dash-sub" id="dash-nao-vao-detalhe"></span>
+            </div>
+          </div>
+          <div class="dash-grid dash-grid-2" style="margin-top:10px">
+            <div class="dash-item">
+              <span class="dash-label">Marcados no check</span>
+              <strong class="dash-value" id="dash-marcados">0</strong>
+              <span class="dash-sub">pessoas com ✓ no admin</span>
+            </div>
+            <div class="dash-item dash-ok">
+              <span class="dash-label">No local (presente)</span>
+              <strong class="dash-value" id="dash-presentes-fam">0</strong>
+              <span class="dash-sub" id="dash-presentes-detalhe"></span>
             </div>
           </div>
         </div>
@@ -122,7 +140,7 @@
           <button type="button" class="btn btn-wood" id="btn-pdf-presenca">Download PDF</button>
         </div>
         <div class="panel">
-          <p>Por telefone: responsáveis um abaixo do outro e crianças com check ao lado.</p>
+          <p>Marque ✓ em cada pessoa que vai / chegou. Isso confirma a família e marca presença. Use também os botões Confirmar / Não vai na lista por telefone.</p>
           <div id="lista-presenca" class="presenca-grupos"></div>
           <button type="button" class="btn btn-wood btn-block" id="btn-fechar-presenca" style="margin-top:12px">Fechar lista</button>
         </div>
@@ -134,7 +152,7 @@
           <button type="button" class="btn btn-wood" id="btn-pdf-tabela">Download PDF</button>
         </div>
         <div class="panel">
-          <p>Mesma lista da porta: ☐ ao lado de cada pessoa. Se a família estiver confirmada, todos vêm marcados. Toque em Download PDF para baixar o arquivo no celular.</p>
+          <p>Marque ✓ em cada pessoa. O check confirma que a pessoa vai e atualiza a família. Família só confirmada no convite <strong>não</strong> marca todo mundo automaticamente — você escolhe quem vai.</p>
           <div class="tabela-resumo" id="tabela-resumo"></div>
           <div class="tabela-scroll-top" id="tabela-scroll-top" aria-hidden="true">
             <div class="tabela-scroll-top-inner" id="tabela-scroll-top-inner"></div>
@@ -244,7 +262,7 @@
   </div>
 
   <script src="config.js?v=7"></script>
-  <script src="js/api.js?v=4"></script>
-  <script src="js/admin.js?v=31"></script>
+  <script src="js/api.js?v=5"></script>
+  <script src="js/admin.js?v=32"></script>
 </body>
 </html>

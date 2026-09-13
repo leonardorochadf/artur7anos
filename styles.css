@@ -1037,6 +1037,26 @@ body.modo-rsvp #painel-rsvp {
   margin-top: 8px;
 }
 
+.dash-grid-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+  margin-top: 8px;
+}
+
+@media (max-width: 520px) {
+  .dash-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dash-resumo {
+  margin: 10px 0 0;
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.35;
+  color: #1a2e14;
+  text-align: center;
+}
+
 .dash-item {
   border: 3px solid #000;
   background: #fff;
@@ -1055,6 +1075,7 @@ body.modo-rsvp #painel-rsvp {
 
 .dash-item.dash-ok { background: #e8ffe0; }
 .dash-item.dash-warn { background: #fff1c2; }
+.dash-item.dash-muted { background: #f0f0f0; }
 
 .dash-label {
   display: block;

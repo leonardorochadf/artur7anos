@@ -480,27 +480,15 @@
 
     setCheckLocal(key, box.checked);
 
-    var aindaTem = false;
-    if (document.getElementById('check-pai').checked) aindaTem = true;
-    if (document.getElementById('check-mae').checked) aindaTem = true;
-    kidsBox.querySelectorAll('.kid-check').forEach(function (b) {
-      if (b.checked) aindaTem = true;
-    });
-    if (adultsBox) {
-      adultsBox.querySelectorAll('.adult-check').forEach(function (b) {
-        if (b.checked) aindaTem = true;
-      });
-    }
-
     try {
-      if (aindaTem) await ArturApi.marcarPresente(senha(), cel);
-      else await ArturApi.desmarcarPresente(senha(), cel);
+      var msg = await sincronizarStatusPeloCheck(cel, box.checked);
+      setStatus(msg, box.checked ? 'ok' : 'warn');
       await refresh(false);
-      setStatus('Presença atualizada.', aindaTem ? 'ok' : 'warn');
     } catch (err) {
       box.checked = !box.checked;
       setCheckLocal(key, box.checked);
       alert(err.message || 'Erro ao atualizar presença');
+      setStatus(err.message || 'Erro', 'err');
     }
   }
 
@@ -669,6 +657,29 @@
     return Math.round((parte / total) * 100) + '%';
   }
 
+  function statusLabel(status) {
+    var map = {
+      pre_cadastro: 'Pré-cadastro',
+      confirmado: 'Confirmou',
+      presente: 'No local',
+      nao_vai: 'Não vai'
+    };
+    return map[status] || (status || '—');
+  }
+
+  function familiaConfirmou(f) {
+    return f && (f.status === 'confirmado' || f.status === 'presente');
+  }
+
+  function contarChecksFamilia(f) {
+    var checks = getChecksLocais();
+    var n = 0;
+    pessoasDoTelefone(f).forEach(function (p) {
+      if (checks[p.key]) n += 1;
+    });
+    return n;
+  }
+
   function atualizarDashboard(familias) {
     var lista = familias || [];
     var qtdFamilias = lista.length;
@@ -677,10 +688,16 @@
     var criancas = 0;
     var confirmados = 0;
     var naoConfirmados = 0;
+    var naoVaoPessoas = 0;
     var confAdultos = 0;
     var confCriancas = 0;
     var naoAdultos = 0;
     var naoCriancas = 0;
+    var famConf = 0;
+    var famPend = 0;
+    var famNao = 0;
+    var famPres = 0;
+    var marcados = 0;
 
     lista.forEach(function (f) {
       var nAdultos = 0;
@@ -693,12 +710,19 @@
       adultos += nAdultos;
       criancas += nCriancas;
       cadastrados += totalPessoas;
+      marcados += contarChecksFamilia(f);
 
-      if (f.status === 'confirmado' || f.status === 'presente') {
+      if (f.status === 'nao_vai') {
+        famNao += 1;
+        naoVaoPessoas += totalPessoas;
+      } else if (familiaConfirmou(f)) {
+        famConf += 1;
+        if (f.status === 'presente') famPres += 1;
         confirmados += totalPessoas;
         confAdultos += nAdultos;
         confCriancas += nCriancas;
       } else {
+        famPend += 1;
         naoConfirmados += totalPessoas;
         naoAdultos += nAdultos;
         naoCriancas += nCriancas;
@@ -713,8 +737,14 @@
     var elCriPct = document.getElementById('dash-criancas-pct');
     var elCon = document.getElementById('dash-confirmados');
     var elNao = document.getElementById('dash-nao-confirmados');
+    var elNaoVao = document.getElementById('dash-nao-vao');
     var elConDet = document.getElementById('dash-confirmados-detalhe');
     var elNaoDet = document.getElementById('dash-nao-confirmados-detalhe');
+    var elNaoVaoDet = document.getElementById('dash-nao-vao-detalhe');
+    var elResumo = document.getElementById('dash-resumo-familias');
+    var elMarcados = document.getElementById('dash-marcados');
+    var elPresFam = document.getElementById('dash-presentes-fam');
+    var elPresDet = document.getElementById('dash-presentes-detalhe');
 
     if (elFam) elFam.textContent = String(qtdFamilias);
     if (elCad) elCad.textContent = String(cadastrados);
@@ -722,17 +752,33 @@
     if (elCri) elCri.textContent = String(criancas);
     if (elAduPct) elAduPct.textContent = cadastrados ? ' ' + pct(adultos, cadastrados) : '';
     if (elCriPct) elCriPct.textContent = cadastrados ? ' ' + pct(criancas, cadastrados) : '';
-    if (elCon) elCon.textContent = String(confirmados);
-    if (elNao) elNao.textContent = String(naoConfirmados);
+    if (elCon) elCon.textContent = String(famConf);
+    if (elNao) elNao.textContent = String(famPend);
+    if (elNaoVao) elNaoVao.textContent = String(famNao);
+    if (elMarcados) elMarcados.textContent = String(marcados);
+    if (elPresFam) elPresFam.textContent = String(famPres);
+    if (elResumo) {
+      elResumo.textContent = qtdFamilias
+        ? (famConf + ' de ' + qtdFamilias + ' famílias confirmaram' +
+          (famPend ? (' · ' + famPend + ' pendente' + (famPend === 1 ? '' : 's')) : '') +
+          (famNao ? (' · ' + famNao + ' não vão') : ''))
+        : 'Nenhuma família cadastrada ainda.';
+    }
     if (elConDet) {
       elConDet.textContent = confirmados
-        ? ('Ad ' + confAdultos + ' (' + pct(confAdultos, confirmados) + ') · Cr ' + confCriancas + ' (' + pct(confCriancas, confirmados) + ')')
-        : '';
+        ? (confirmados + ' pessoas · Ad ' + confAdultos + ' · Cr ' + confCriancas)
+        : '0 pessoas';
     }
     if (elNaoDet) {
       elNaoDet.textContent = naoConfirmados
-        ? ('Ad ' + naoAdultos + ' (' + pct(naoAdultos, naoConfirmados) + ') · Cr ' + naoCriancas + ' (' + pct(naoCriancas, naoConfirmados) + ')')
-        : '';
+        ? (naoConfirmados + ' pessoas · Ad ' + naoAdultos + ' · Cr ' + naoCriancas)
+        : '0 pessoas';
+    }
+    if (elNaoVaoDet) {
+      elNaoVaoDet.textContent = naoVaoPessoas ? (naoVaoPessoas + ' pessoas') : '0 pessoas';
+    }
+    if (elPresDet) {
+      elPresDet.textContent = famPres ? (famPres + ' família' + (famPres === 1 ? '' : 's')) : 'Nenhuma ainda';
     }
 
     renderGraficoBarras(document.getElementById('chart-cadastros'), window.__cadastrosPorDia || {}, '#1f5c2e');
@@ -907,36 +953,53 @@
     localStorage.setItem('artur_presenca_checks', JSON.stringify(map));
   }
 
+  function familiaTemAlgumCheck(cel) {
+    var f = familiaPorCelular(cel);
+    if (f) return contarChecksFamilia(f) > 0;
+    var dig = ArturApi.onlyDigits(cel);
+    var checks = getChecksLocais();
+    var prefix = dig + '|';
+    return Object.keys(checks).some(function (k) {
+      return k.indexOf(prefix) === 0 && checks[k];
+    });
+  }
+
+  async function sincronizarStatusPeloCheck(cel, checkedAgora) {
+    if (checkedAgora || familiaTemAlgumCheck(cel)) {
+      var data = await ArturApi.marcarPresente(senha(), cel);
+      return (data && data.msg) || 'Confirmado e marcado.';
+    }
+    var dataOff = await ArturApi.desmarcarPresente(senha(), cel);
+    return (dataOff && dataOff.msg) || 'Check removido.';
+  }
+
+  async function onCheckPessoaChange(box, afterOk) {
+    var cel = box.getAttribute('data-cel');
+    var key = box.getAttribute('data-key');
+    if (!cel || !key) return;
+
+    setCheckLocal(key, box.checked);
+    try {
+      var msg = await sincronizarStatusPeloCheck(cel, box.checked);
+      setStatus(msg, box.checked ? 'ok' : 'warn');
+      await refresh(false);
+      if (typeof afterOk === 'function') afterOk();
+    } catch (err) {
+      box.checked = !box.checked;
+      setCheckLocal(key, box.checked);
+      alert(err.message || 'Erro ao atualizar');
+      setStatus(err.message || 'Erro', 'err');
+    }
+  }
+
   function bindChecksPresenca() {
     listaPresencaEl.querySelectorAll('.presenca-check').forEach(function (box) {
-      box.addEventListener('change', async function () {
-        var cel = box.getAttribute('data-cel');
-        var key = box.getAttribute('data-key');
-        setCheckLocal(key, box.checked);
-
-        var aindaTemCheck = false;
-        listaPresencaEl.querySelectorAll('.presenca-check[data-cel="' + cel + '"]').forEach(function (b) {
-          if (b.checked) aindaTemCheck = true;
-        });
-
-        try {
-          if (aindaTemCheck) {
-            await ArturApi.marcarPresente(senha(), cel);
-            setStatus('Presença atualizada no local.', 'ok');
-          } else {
-            await ArturApi.desmarcarPresente(senha(), cel);
-            setStatus('Presença da família desmarcada.', 'warn');
-          }
-          await refresh(false);
+      box.addEventListener('change', function () {
+        onCheckPessoaChange(box, function () {
           if (!secaoPresenca.classList.contains('hidden')) {
             renderPresenca(window.__familias || []);
           }
-        } catch (err) {
-          box.checked = !box.checked;
-          setCheckLocal(key, box.checked);
-          alert(err.message || 'Erro ao atualizar presença');
-          setStatus(err.message || 'Erro', 'err');
-        }
+        });
       });
     });
   }
@@ -1110,12 +1173,11 @@
   function pessoaCelulaHtml(f, nome, tipoKey, checks) {
     if (!nome) return '<td class="pessoa-vazia"></td>';
     var key = (f.celular || '') + '|' + tipoKey + '|' + nome;
-    var familiaOk = f.status === 'confirmado' || f.status === 'presente';
-    var marcado = familiaOk || !!checks[key];
+    var marcado = !!checks[key];
     return (
       '<td class="pessoa-cell">' +
         '<label class="pessoa-check-linha">' +
-          '<input type="checkbox" class="presenca-check tabela-check" data-key="' + esc(key) + '" data-cel="' + esc(f.celular) + '"' + (marcado ? ' checked' : '') + ' />' +
+          '<input type="checkbox" class="presenca-check tabela-check" data-key="' + esc(key) + '" data-cel="' + esc(chaveFamilia(f) || f.celular) + '"' + (marcado ? ' checked' : '') + ' />' +
           '<span>' + esc(nome) + '</span>' +
         '</label>' +
       '</td>'
@@ -1338,29 +1400,12 @@
   function bindChecksTabela() {
     if (!tabelaBodyEl) return;
     tabelaBodyEl.querySelectorAll('.tabela-check').forEach(function (box) {
-      box.addEventListener('change', async function () {
-        var cel = box.getAttribute('data-cel');
-        var key = box.getAttribute('data-key');
-        setCheckLocal(key, box.checked);
-
-        var aindaTem = false;
-        tabelaBodyEl.querySelectorAll('.tabela-check[data-cel="' + cel + '"]').forEach(function (b) {
-          if (b.checked) aindaTem = true;
-        });
-
-        try {
-          if (aindaTem) await ArturApi.marcarPresente(senha(), cel);
-          else await ArturApi.desmarcarPresente(senha(), cel);
-          setStatus('Presença atualizada na tabela.', aindaTem ? 'ok' : 'warn');
-          await refresh(false);
+      box.addEventListener('change', function () {
+        onCheckPessoaChange(box, function () {
           if (secaoTabela && !secaoTabela.classList.contains('hidden')) {
             renderTabelaDados(window.__familias || []);
           }
-        } catch (err) {
-          box.checked = !box.checked;
-          setCheckLocal(key, box.checked);
-          alert(err.message || 'Erro ao atualizar presença');
-        }
+        });
       });
     });
   }
@@ -1424,11 +1469,10 @@
           '<td class="pessoa-cell">' +
           adultos.map(function (nome) {
             var key = (f.celular || '') + '|adulto|' + nome;
-            var familiaOk = f.status === 'confirmado' || f.status === 'presente';
-            var marcado = familiaOk || !!checks[key];
+            var marcado = !!checks[key];
             return (
               '<label class="pessoa-check-linha">' +
-                '<input type="checkbox" class="presenca-check tabela-check" data-key="' + esc(key) + '" data-cel="' + esc(f.celular) + '"' + (marcado ? ' checked' : '') + ' />' +
+                '<input type="checkbox" class="presenca-check tabela-check" data-key="' + esc(key) + '" data-cel="' + esc(chaveFamilia(f) || f.celular) + '"' + (marcado ? ' checked' : '') + ' />' +
                 '<span>' + esc(nome) + '</span>' +
               '</label>'
             );
@@ -1444,7 +1488,7 @@
           pessoaCelulaHtml(f, f.nome_mae || '', 'mae', checks) +
           adultosHtml +
           cols +
-          '<td>' + esc(f.status || '') + '</td>' +
+          '<td>' + esc(statusLabel(f.status)) + '</td>' +
           '<td>' + esc(formatarDataHora(f.criado_em)) + '</td>' +
           '<td>' + esc(formatarDataHora(f.ultimo_acesso_em)) + '</td>' +
         '</tr>'
@@ -1804,7 +1848,7 @@
               '<input type="checkbox" class="excluir-check" data-cel="' + esc(celKey) + '" aria-label="Selecionar para excluir" />' +
               '<strong class="phone-number">' + esc(exibirCelulares(f)) + '</strong>' +
             '</label>' +
-            '<span class="badge ' + esc(f.status) + '">' + esc(f.status) + '</span>' +
+            '<span class="badge ' + esc(f.status) + '">' + esc(statusLabel(f.status)) + '</span>' +
           '</div>' +
           pessoas +
           '<p class="phone-meias">Meias: ' + esc(f.qtd_meias || (f.filhos || []).length || 0) + '</p>' +
@@ -1815,6 +1859,12 @@
           '<div class="phone-actions">' +
             (whatsappUrlLista(f)
               ? '<a class="btn btn-grass" href="' + esc(whatsappUrlLista(f)) + '" target="_blank" rel="noopener">WhatsApp</a>'
+              : '') +
+            (f.status !== 'confirmado' && f.status !== 'presente'
+              ? '<button type="button" class="btn btn-grass" data-act="confirmar" data-cel="' + esc(celKey) + '">Confirmar</button>'
+              : '') +
+            (f.status !== 'nao_vai'
+              ? '<button type="button" class="btn btn-wood" data-act="nao-vai" data-cel="' + esc(celKey) + '">Não vão</button>'
               : '') +
             '<button type="button" class="btn btn-wood" data-act="editar" data-cel="' + esc(celKey) + '">Editar</button>' +
             '<button type="button" class="btn btn-danger" data-act="excluir" data-cel="' + esc(celKey) + '">Excluir</button>' +
@@ -1829,26 +1879,10 @@
     atualizarBarraExcluir();
 
     listaEl.querySelectorAll('.lista-check').forEach(function (box) {
-      box.addEventListener('change', async function () {
-        var cel = box.getAttribute('data-cel');
-        var key = box.getAttribute('data-key');
-        setCheckLocal(key, box.checked);
-
-        var aindaTemCheck = false;
-        listaEl.querySelectorAll('.lista-check[data-cel="' + cel + '"]').forEach(function (b) {
-          if (b.checked) aindaTemCheck = true;
+      box.addEventListener('change', function () {
+        onCheckPessoaChange(box, function () {
+          renderLista(window.__familias || []);
         });
-
-        try {
-          if (aindaTemCheck) await ArturApi.marcarPresente(senha(), cel);
-          else await ArturApi.desmarcarPresente(senha(), cel);
-          setStatus('Presença atualizada.', aindaTemCheck ? 'ok' : 'warn');
-          await refresh(false);
-        } catch (err) {
-          box.checked = !box.checked;
-          setCheckLocal(key, box.checked);
-          alert(err.message || 'Erro ao atualizar presença');
-        }
       });
     });
 
@@ -1859,6 +1893,25 @@
         var familia = familiaPorCelular(cel);
 
         try {
+          if (act === 'confirmar') {
+            await ArturApi.adminStatus(senha(), cel, 'confirmado');
+            setStatus('Família confirmada (vão à festa).', 'ok');
+            await refresh(false);
+            return;
+          }
+          if (act === 'nao-vai') {
+            var okNao = await pedirConfirmacao('Marcar esta família como NÃO VÃO?', {
+              titulo: 'Não vão',
+              textoSim: 'Sim, não vão',
+              textoNao: 'Cancelar',
+              classeSim: 'btn-danger'
+            });
+            if (!okNao) return;
+            await ArturApi.adminStatus(senha(), cel, 'nao_vai');
+            setStatus('Registrado que não vão.', 'warn');
+            await refresh(false);
+            return;
+          }
           if (act === 'editar' && familia) {
             editandoCelularKey = chaveFamilia(familia) || null;
             var phones = celularesDaFamilia(familia).filter(function (c) { return !ehSemCelular(c); });
@@ -1870,7 +1923,7 @@
             setAdultos(familia.adultos, getChecksLocais(), chaveFamilia(familia));
             syncChecksFormulario(familia);
             abrirCadastro();
-            setStatus('Cadastro carregado. Use os checks de presença e salve se alterar dados.', 'warn');
+            setStatus('Cadastro carregado. Use os checks para confirmar quem vai.', 'warn');
             return;
           }
           if (act === 'excluir') {
@@ -1924,8 +1977,8 @@
       renderLista(window.__familias);
       var apiVer = data.versao || '';
       window.__apiVersao = apiVer;
-      if (apiVer && apiVer.indexOf('filhos-opcional') < 0 && apiVer.indexOf('v8.5') < 0 && apiVer.indexOf('v8.4') < 0) {
-        var avisoApi = 'API desatualizada (' + apiVer + '). Abra o site com Ctrl+F5 ou confira config.js.';
+      if (apiVer && !/v8\.[4-9]|filhos-opcional|check-confirma/.test(apiVer)) {
+        var avisoApi = 'API desatualizada (' + apiVer + '). Abra o site com Ctrl+F5 e republiche o Apps Script.';
         setStatus(avisoApi, 'err');
         if (fromLogin) setLoginStatus(avisoApi, 'err');
       } else {

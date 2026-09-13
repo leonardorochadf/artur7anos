@@ -72,6 +72,9 @@
     desmarcarPresente: function (senha, celular) {
       return request('POST', null, { action: 'desmarcar_presente', senha: senha, celular: celular });
     },
+    adminStatus: function (senha, celular, status) {
+      return request('POST', null, { action: 'admin_status', senha: senha, celular: celular, status: status });
+    },
     excluir: function (senha, celular) {
       return request('POST', null, { action: 'excluir', senha: senha, celular: celular });
     }
