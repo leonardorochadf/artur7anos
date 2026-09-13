@@ -373,6 +373,11 @@ h1, h2 {
   max-width: min(72vw, 340px);
 }
 
+#hud-lives {
+  color: #8b1e1e;
+  background: #ffe8e8;
+}
+
 .hud-mute {
   pointer-events: auto;
   margin-left: auto;

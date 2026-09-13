@@ -15,14 +15,17 @@
   const ctx = canvas.getContext("2d");
   const menu = document.getElementById("screen-menu");
   const winScreen = document.getElementById("screen-win");
+  const overScreen = document.getElementById("screen-over");
   const hud = document.getElementById("hud");
   const touchUI = document.getElementById("touch");
   const hintEl = document.getElementById("hud-hint");
   const blocksEl = document.getElementById("hud-blocks");
+  const livesEl = document.getElementById("hud-lives");
   const muteBtn = document.getElementById("btn-mute");
   const actBtn = document.getElementById("btn-action");
   const btnPlay = document.getElementById("btn-play");
   const btnAgain = document.getElementById("btn-again");
+  const btnRetry = document.getElementById("btn-retry");
 
   const isTouch =
     "ontouchstart" in window ||
@@ -55,7 +58,10 @@
     buildPressed: false,
   };
 
+  const MAX_LIVES = 7;
+
   const state = {
+    lives: MAX_LIVES,
     collected: 0,
     inventory: 0,
     broken: [false, false, false],
@@ -86,6 +92,7 @@
     facing: 1,
     walkPhase: 0,
     swing: 0,
+    invuln: 0,
   };
 
   function tip(desktop, mobile) {
@@ -234,6 +241,7 @@
   }
 
   function resetGame() {
+    state.lives = MAX_LIVES;
     state.collected = 0;
     state.inventory = 0;
     state.broken = [false, false, false];
@@ -252,6 +260,7 @@
     player.facing = 1;
     player.swing = 0;
     player.onSlide = false;
+    player.invuln = 0;
     cameraX = 0;
     updateHUD();
     setHint(tip("← → andar · Espaço pular", "◀ ▶ andar · ⬆ pular"));
@@ -259,6 +268,7 @@
 
   function updateHUD() {
     blocksEl.textContent = `Blocos: ${state.collected}/3`;
+    livesEl.textContent = `Vidas: ${state.lives}`;
   }
 
   function setHint(text) {
@@ -366,7 +376,19 @@
       }
     }
 
-    if (player.y > H + 140) respawn();
+    if (player.y > H + 140) loseLife();
+  }
+
+  function loseLife() {
+    if (!running || player.invuln > 0) return;
+    state.lives -= 1;
+    updateHUD();
+    sfxHurt();
+    if (state.lives <= 0) {
+      finishGameOver();
+      return;
+    }
+    respawn();
   }
 
   function respawn() {
@@ -375,11 +397,11 @@
     player.vx = 0;
     player.vy = 0;
     player.onSlide = false;
-    sfxHurt();
+    player.invuln = 1.4;
   }
 
   function updateCheckpoint() {
-    if (!player.onGround || player.onSlide) return;
+    if (!player.onGround || player.onSlide || player.invuln > 0) return;
     if (player.x <= state.checkpoint.x + 40) return;
     const under = getSolidRects().some(
       (s) =>
@@ -402,6 +424,7 @@
     const now = performance.now() / 1000;
     for (const g of gators) {
       g.x = g.baseX + Math.sin(now * 1.6 + g.phase) * g.range;
+      if (player.invuln > 0) continue;
       const hit = {
         x: g.x,
         y: g.y,
@@ -409,7 +432,8 @@
         h: g.h,
       };
       if (rectsOverlap({ x: player.x, y: player.y, w: PLAYER_W, h: PLAYER_H }, hit)) {
-        respawn();
+        loseLife();
+        break;
       }
     }
   }
@@ -583,6 +607,7 @@
     }
 
     if (player.swing > 0) player.swing -= dt;
+    if (player.invuln > 0) player.invuln -= dt;
 
     moveAndCollide(dt);
     updateGators(dt);
@@ -883,6 +908,8 @@
   }
 
   function drawPlayer() {
+    if (player.invuln > 0 && Math.floor(player.invuln * 10) % 2 === 0) return;
+
     const x = player.x - cameraX;
     const y = player.y;
     const bob = player.onGround && !player.onSlide ? Math.sin(player.walkPhase) * 2 : 0;
@@ -988,6 +1015,16 @@
     touchUI.classList.add("hidden");
   }
 
+  function finishGameOver() {
+    running = false;
+    player.vx = 0;
+    player.vy = 0;
+    beep(80, 0.35, "sawtooth", 0.06);
+    setTimeout(() => beep(60, 0.4, "triangle", 0.05), 180);
+    overScreen.classList.remove("hidden");
+    touchUI.classList.add("hidden");
+  }
+
   function spawnConfetti() {
     const box = document.getElementById("confetti");
     if (!box) return;
@@ -1009,6 +1046,7 @@
     ensureAudio();
     menu.classList.add("hidden");
     winScreen.classList.add("hidden");
+    overScreen.classList.add("hidden");
     hud.classList.remove("hidden");
     if (isTouch) {
       touchUI.classList.remove("hidden");
@@ -1113,6 +1151,7 @@
 
   btnPlay.addEventListener("click", startGame);
   btnAgain.addEventListener("click", startGame);
+  btnRetry.addEventListener("click", startGame);
   muteBtn.addEventListener("click", () => {
     muted = !muted;
     muteBtn.textContent = muted ? "🔇" : "🔊";
