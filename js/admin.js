@@ -35,10 +35,13 @@
   var tabelaScrollSyncing = false;
   var buscaInput = document.getElementById('busca-lista');
   var buscaResultado = document.getElementById('busca-resultado');
+  var checkTodosExcluir = document.getElementById('check-todos-excluir');
+  var btnExcluirSelecionados = document.getElementById('btn-excluir-selecionados');
   var telaLogin = document.getElementById('tela-login');
   var telaApp = document.getElementById('tela-app');
   var logado = false;
   var salvando = false;
+  var excluindo = false;
   var buscaTimer = null;
   var maxFilhosTabela = 5;
   var editandoCelularKey = null;
@@ -1395,6 +1398,107 @@
     });
   }
 
+  function celularesSelecionadosExcluir() {
+    if (!listaEl) return [];
+    return Array.prototype.map.call(listaEl.querySelectorAll('.excluir-check:checked'), function (box) {
+      return box.getAttribute('data-cel');
+    }).filter(Boolean);
+  }
+
+  function atualizarBarraExcluir() {
+    var sels = celularesSelecionadosExcluir();
+    var total = listaEl ? listaEl.querySelectorAll('.excluir-check').length : 0;
+    if (btnExcluirSelecionados) {
+      btnExcluirSelecionados.disabled = !sels.length || excluindo;
+      btnExcluirSelecionados.textContent = sels.length
+        ? ('Excluir selecionados (' + sels.length + ')')
+        : 'Excluir selecionados';
+    }
+    if (checkTodosExcluir) {
+      checkTodosExcluir.checked = total > 0 && sels.length === total;
+      checkTodosExcluir.indeterminate = sels.length > 0 && sels.length < total;
+    }
+    if (listaEl) {
+      listaEl.querySelectorAll('.phone-card').forEach(function (card) {
+        var box = card.querySelector('.excluir-check');
+        if (box && box.checked) card.classList.add('selecionado-excluir');
+        else card.classList.remove('selecionado-excluir');
+      });
+    }
+  }
+
+  async function excluirFamiliasComProgresso(cels) {
+    var lista = (cels || []).filter(Boolean);
+    if (!lista.length || excluindo) return;
+
+    var nomes = lista.map(function (cel) {
+      var f = familiaPorCelular(cel);
+      return (f ? nomeFamilia(f) : '') || exibirCelular(cel);
+    });
+
+    var msg =
+      lista.length === 1
+        ? ('Deseja realmente EXCLUIR este cadastro?\n\n' + nomes[0] + '\n\nEsta ação não pode ser desfeita.')
+        : ('Deseja realmente EXCLUIR ' + lista.length + ' cadastros?\n\n' +
+          nomes.slice(0, 8).join('\n') +
+          (nomes.length > 8 ? '\n…' : '') +
+          '\n\nEsta ação não pode ser desfeita.');
+
+    var ok = await pedirConfirmacao(msg, {
+      titulo: lista.length === 1 ? 'Excluir cadastro' : 'Excluir selecionados',
+      textoSim: lista.length === 1 ? 'Sim, excluir' : 'Sim, excluir ' + lista.length,
+      textoNao: 'Não, manter',
+      classeSim: 'btn-danger'
+    });
+    if (!ok) {
+      setStatus('Exclusão cancelada.', 'warn');
+      return;
+    }
+
+    excluindo = true;
+    atualizarBarraExcluir();
+    abrirProgresso('Excluindo', lista.length === 1 ? 'Removendo o cadastro...' : 'Removendo 1 de ' + lista.length + '...');
+    setProgressoVisual(5);
+
+    var okCount = 0;
+    var erros = [];
+    try {
+      for (var i = 0; i < lista.length; i++) {
+        var cel = lista[i];
+        var pct = Math.round(((i) / lista.length) * 90) + 5;
+        setProgressoVisual(pct);
+        if (modalProgressoMsg) {
+          modalProgressoMsg.textContent =
+            'Excluindo ' + (i + 1) + ' de ' + lista.length + '...';
+        }
+        try {
+          await ArturApi.excluir(senha(), cel);
+          okCount += 1;
+        } catch (err) {
+          erros.push((exibirCelular(cel) || cel) + ': ' + (err.message || 'erro'));
+        }
+      }
+      setProgressoVisual(100);
+      await fecharProgresso();
+      await refresh(false);
+      if (erros.length) {
+        var texto =
+          okCount + ' excluído(s). ' + erros.length + ' falha(s):\n' + erros.slice(0, 5).join('\n');
+        setStatus(texto.replace(/\n/g, ' '), 'warn');
+        await mostrarAviso(texto, 'Exclusão parcial');
+      } else {
+        setStatus(okCount === 1 ? 'Cadastro excluído.' : (okCount + ' cadastros excluídos.'), 'ok');
+      }
+    } catch (err) {
+      await fecharProgresso();
+      setStatus(err.message || 'Erro ao excluir', 'err');
+      await mostrarAviso(err.message || 'Erro ao excluir', 'Erro');
+    } finally {
+      excluindo = false;
+      atualizarBarraExcluir();
+    }
+  }
+
   function renderLista(familias) {
     var ordenadas = ordenarPorTelefone(familias);
     atualizarDashboard(ordenadas);
@@ -1468,7 +1572,10 @@
       return (
         '<article class="phone-card" data-cel="' + esc(celKey) + '">' +
           '<div class="phone-card-top">' +
-            '<strong class="phone-number">' + esc(exibirCelulares(f)) + '</strong>' +
+            '<label class="phone-card-select">' +
+              '<input type="checkbox" class="excluir-check" data-cel="' + esc(celKey) + '" aria-label="Selecionar para excluir" />' +
+              '<strong class="phone-number">' + esc(exibirCelulares(f)) + '</strong>' +
+            '</label>' +
             '<span class="badge ' + esc(f.status) + '">' + esc(f.status) + '</span>' +
           '</div>' +
           pessoas +
@@ -1487,6 +1594,11 @@
         '</article>'
       );
     }).join('');
+
+    listaEl.querySelectorAll('.excluir-check').forEach(function (box) {
+      box.addEventListener('change', atualizarBarraExcluir);
+    });
+    atualizarBarraExcluir();
 
     listaEl.querySelectorAll('.lista-check').forEach(function (box) {
       box.addEventListener('change', async function () {
@@ -1533,26 +1645,7 @@
             return;
           }
           if (act === 'excluir') {
-            var nome = familia ? nomeFamilia(familia) : '';
-            var fone = familia ? exibirCelulares(familia) : exibirCelular(cel);
-            var msg =
-              'Deseja realmente EXCLUIR este cadastro?\n\n' +
-              'Telefone: ' + fone +
-              (nome ? '\nFamília: ' + nome : '') +
-              '\n\nEsta ação não pode ser desfeita.';
-            var ok = await pedirConfirmacao(msg, {
-              titulo: 'Excluir cadastro',
-              textoSim: 'Sim, excluir',
-              textoNao: 'Não, manter',
-              classeSim: 'btn-danger'
-            });
-            if (!ok) {
-              setStatus('Exclusão cancelada. Cadastro mantido.', 'warn');
-              return;
-            }
-            await ArturApi.excluir(senha(), cel);
-            setStatus('Cadastro excluído.', 'ok');
-            await refresh(false);
+            await excluirFamiliasComProgresso([cel]);
           }
         } catch (err) {
           alert(err.message || 'Erro');
@@ -1652,6 +1745,22 @@
   btnToggleTabela.addEventListener('click', toggleTabela);
   btnFecharTabela.addEventListener('click', fecharTabela);
   btnPdfTabela.addEventListener('click', gerarPdfTabela);
+
+  if (checkTodosExcluir) {
+    checkTodosExcluir.addEventListener('change', function () {
+      if (!listaEl) return;
+      var marcar = checkTodosExcluir.checked;
+      listaEl.querySelectorAll('.excluir-check').forEach(function (box) {
+        box.checked = marcar;
+      });
+      atualizarBarraExcluir();
+    });
+  }
+  if (btnExcluirSelecionados) {
+    btnExcluirSelecionados.addEventListener('click', function () {
+      excluirFamiliasComProgresso(celularesSelecionadosExcluir());
+    });
+  }
 
   var checkPaiEl = document.getElementById('check-pai');
   var checkMaeEl = document.getElementById('check-mae');

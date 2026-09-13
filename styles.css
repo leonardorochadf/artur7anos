@@ -716,10 +716,40 @@ body.modo-rsvp #painel-rsvp {
   gap: 10px;
 }
 
+.lista-excluir-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 3px solid #000;
+  background: #fff8e8;
+}
+
+.lista-excluir-todos {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.lista-excluir-todos input {
+  width: 18px;
+  height: 18px;
+}
+
 .phone-card {
   border: 3px solid #000;
   background: #fff;
   padding: 12px;
+}
+
+.phone-card.selecionado-excluir {
+  background: #ffe8e8;
+  border-color: #8b1e1e;
 }
 
 .phone-card-top {
@@ -728,6 +758,20 @@ body.modo-rsvp #painel-rsvp {
   align-items: center;
   gap: 8px;
   margin-bottom: 6px;
+}
+
+.phone-card-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.phone-card-select input.excluir-check {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .phone-number {
