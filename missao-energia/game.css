@@ -169,15 +169,7 @@ h1, h2 {
 }
 
 .win-panel::before {
-  content: "20%";
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  font-family: var(--font-pixel);
-  font-size: 0.7rem;
-  color: #c99700;
-  opacity: 0.35;
-  pointer-events: none;
+  display: none;
 }
 
 .confetti {
@@ -185,6 +177,7 @@ h1, h2 {
   position: absolute;
   inset: 0;
   overflow: hidden;
+  z-index: 2;
 }
 
 .confetti i {
@@ -203,6 +196,146 @@ h1, h2 {
   }
 }
 
+.prize-hero {
+  position: relative;
+  margin: 0 0 18px;
+  padding: 18px 10px 12px;
+  min-height: 168px;
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  background: radial-gradient(circle at 50% 40%, #fff7b0 0%, #ffe27a 35%, #7ec8ff 70%, #3d9be9 100%);
+  border: 4px solid var(--ink);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.35), 4px 4px 0 var(--ink);
+  overflow: hidden;
+}
+
+.prize-rays {
+  position: absolute;
+  inset: -40%;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 255, 255, 0.35) 0deg 12deg,
+    rgba(255, 210, 74, 0.08) 12deg 24deg
+  );
+  animation: rays-spin 10s linear infinite;
+  opacity: 0.85;
+}
+
+.prize-sun {
+  position: absolute;
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  background: radial-gradient(circle at 35% 30%, #fffce8, #ffd24a 48%, #f0a202 78%);
+  border: 4px solid var(--ink);
+  box-shadow:
+    0 0 0 8px rgba(255, 210, 74, 0.35),
+    0 0 28px 8px rgba(255, 230, 120, 0.75),
+    4px 4px 0 var(--ink);
+  animation: sun-pop 0.9s cubic-bezier(0.2, 1.4, 0.4, 1) both, sun-pulse 2.2s ease-in-out 0.9s infinite;
+  z-index: 1;
+  top: 18px;
+}
+
+.prize-sun-core {
+  position: absolute;
+  inset: 18px;
+  background: #fff7b0;
+  border: 2px solid rgba(26, 18, 8, 0.2);
+}
+
+.prize-percent {
+  position: relative;
+  z-index: 2;
+  margin-top: 78px;
+  text-align: center;
+  animation: prize-bounce 0.85s cubic-bezier(0.2, 1.5, 0.4, 1) 0.15s both;
+}
+
+.prize-number {
+  display: block;
+  font-family: var(--font-pixel);
+  font-size: clamp(2.4rem, 14vw, 3.4rem);
+  line-height: 1;
+  color: #fff8dc;
+  text-shadow:
+    4px 4px 0 #1a1208,
+    -2px 0 0 #1a1208,
+    2px 0 0 #1a1208,
+    0 0 18px rgba(255, 210, 74, 1);
+  animation: percent-shine 1.8s ease-in-out infinite;
+}
+
+.prize-label {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 6px 10px;
+  font-family: var(--font-pixel);
+  font-size: 0.55rem;
+  letter-spacing: 0.04em;
+  color: #1a1208;
+  background: #ffd24a;
+  border: 3px solid #1a1208;
+  box-shadow: 3px 3px 0 #1a1208;
+}
+
+.prize-won {
+  position: relative;
+  z-index: 2;
+  margin: 8px 0 0;
+  font-family: var(--font-pixel);
+  font-size: clamp(0.48rem, 2.8vw, 0.58rem);
+  line-height: 1.45;
+  color: #153d12;
+  background: rgba(244, 247, 239, 0.92);
+  border: 3px solid #1a1208;
+  padding: 8px 10px;
+  box-shadow: 3px 3px 0 #1a1208;
+}
+
+.win-panel h2 {
+  font-size: clamp(0.58rem, 2.9vw, 0.76rem);
+  line-height: 1.55;
+}
+
+@keyframes rays-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sun-pop {
+  from { transform: scale(0.2) translateY(30px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes sun-pulse {
+  0%, 100% {
+    filter: brightness(1);
+    box-shadow:
+      0 0 0 8px rgba(255, 210, 74, 0.35),
+      0 0 28px 8px rgba(255, 230, 120, 0.75),
+      4px 4px 0 var(--ink);
+  }
+  50% {
+    filter: brightness(1.15);
+    box-shadow:
+      0 0 0 14px rgba(255, 210, 74, 0.45),
+      0 0 42px 14px rgba(255, 230, 120, 0.9),
+      4px 4px 0 var(--ink);
+  }
+}
+
+@keyframes prize-bounce {
+  from { transform: scale(0.4) translateY(24px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes percent-shine {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.2); }
+}
+
+/* legado (mantido se usado em outro lugar) */
 .sun-wrap {
   height: 90px;
   margin-bottom: 8px;
@@ -218,18 +351,6 @@ h1, h2 {
   background: radial-gradient(circle at 35% 35%, #fff7b0, #ffd24a 45%, #f0a202 80%);
   border: 4px solid var(--ink);
   box-shadow: 0 0 0 6px rgba(255, 210, 74, 0.35), 4px 4px 0 var(--ink);
-  animation: sun-rise 1.2s ease-out both, sun-spin 8s linear infinite;
-}
-
-@keyframes sun-rise {
-  from { transform: translateY(40px) scale(0.4); opacity: 0; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
-}
-
-@keyframes sun-spin {
-  from { filter: brightness(1); }
-  50% { filter: brightness(1.12); }
-  to { filter: brightness(1); }
 }
 
 #hud {
