@@ -218,25 +218,15 @@
 
     var termoCfg = (window.ARTUR_CONFIG && window.ARTUR_CONFIG.termo) || {};
     var termoUrl = termoCfg.url || '';
-    var termoLink = document.getElementById('termo-link');
     var btnAbrirTermo = document.getElementById('btn-abrir-termo');
-    var btnCopyTermo = document.getElementById('btn-copy-termo');
     var btnRsvpTermo = document.getElementById('btn-rsvp-termo');
 
     if (termoUrl) {
-      if (termoLink) {
-        termoLink.href = termoUrl;
-        termoLink.textContent = termoUrl;
-      }
       if (btnAbrirTermo) btnAbrirTermo.href = termoUrl;
       if (btnRsvpTermo) btnRsvpTermo.href = termoUrl;
-      if (btnCopyTermo) {
-        btnCopyTermo.addEventListener('click', function () {
-          copiarTexto(termoUrl, btnCopyTermo, 'Link copiado!');
-        });
-      }
-    } else if (btnRsvpTermo) {
-      btnRsvpTermo.classList.add('hidden');
+    } else {
+      if (btnAbrirTermo) btnAbrirTermo.classList.add('hidden');
+      if (btnRsvpTermo) btnRsvpTermo.classList.add('hidden');
     }
   }
 
