@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=29" />
+  <link rel="stylesheet" href="styles.css?v=30" />
 </head>
 <body>
   <div class="app">
@@ -84,15 +84,14 @@
       </section>
 
       <section class="section">
-        <div class="section-head">
-          <h2>Buscar</h2>
-          <div class="section-head-actions">
-            <button type="button" class="btn btn-grass" id="btn-toggle-cadastro">Cadastrar</button>
-            <button type="button" class="btn btn-secondary" id="btn-toggle-presenca">Presença</button>
-            <button type="button" class="btn btn-wood" id="btn-toggle-tabela">Tabela</button>
-          </div>
-        </div>
+        <h2>Buscar</h2>
         <div class="panel">
+          <div class="admin-acoes-stack" id="admin-acoes-stack">
+            <button type="button" class="btn btn-grass btn-block" id="btn-toggle-cadastro">Cadastrar</button>
+            <button type="button" class="btn btn-secondary btn-block" id="btn-toggle-presenca">Presença</button>
+            <button type="button" class="btn btn-wood btn-block" id="btn-toggle-tabela">Tabela</button>
+          </div>
+
           <label for="busca-lista">Telefone / nome / filho</label>
           <input id="busca-lista" type="search" placeholder="Digite para filtrar automaticamente" autocomplete="off" />
           <p id="busca-resultado" class="busca-resultado">A lista filtra enquanto você digita.</p>
@@ -131,31 +130,27 @@
             <button type="button" class="btn btn-wood" id="add-adult" style="margin-top:10px">+ Adulto</button>
 
             <button type="submit" class="btn btn-grass btn-block" style="margin-top:14px">Salvar pré-cadastro</button>
-            <button type="button" class="btn btn-wood btn-block" id="btn-fechar-cadastro" style="margin-top:8px">Fechar cadastro</button>
+            <button type="button" class="btn btn-wood btn-block" id="btn-fechar-cadastro" style="margin-top:8px">Fechar</button>
           </form>
           <div id="form-status" class="status" role="status"></div>
         </div>
       </section>
 
       <section class="section hidden" id="secao-presenca">
-        <div class="section-head">
-          <h2>Lista de presença</h2>
-          <button type="button" class="btn btn-wood" id="btn-pdf-presenca">Download PDF</button>
-        </div>
+        <h2>Lista de presença</h2>
         <div class="panel">
-          <p>Marque ✓ em cada pessoa que vai / chegou. Isso confirma a família e marca presença. Use também os botões Confirmar / Não vai na lista por telefone.</p>
+          <button type="button" class="btn btn-wood btn-block" id="btn-pdf-presenca">Download PDF</button>
+          <p style="margin-top:12px">Marque ✓ em cada pessoa que vai / chegou. Isso confirma a família e marca presença. Use também os botões Confirmar / Não vai na lista por telefone.</p>
           <div id="lista-presenca" class="presenca-grupos"></div>
-          <button type="button" class="btn btn-wood btn-block" id="btn-fechar-presenca" style="margin-top:12px">Fechar lista</button>
+          <button type="button" class="btn btn-wood btn-block" id="btn-fechar-presenca" style="margin-top:12px">Fechar</button>
         </div>
       </section>
 
       <section class="section hidden" id="secao-tabela">
-        <div class="section-head">
-          <h2>Tabela de dados</h2>
-          <button type="button" class="btn btn-wood" id="btn-pdf-tabela">Download PDF</button>
-        </div>
+        <h2>Tabela de dados</h2>
         <div class="panel">
-          <p>Marque ✓ em cada pessoa. O check confirma que a pessoa vai e atualiza a família. Família só confirmada no convite <strong>não</strong> marca todo mundo automaticamente — você escolhe quem vai.</p>
+          <button type="button" class="btn btn-wood btn-block" id="btn-pdf-tabela">Download PDF</button>
+          <p style="margin-top:12px">Marque ✓ em cada pessoa. O check confirma que a pessoa vai e atualiza a família. Família só confirmada no convite <strong>não</strong> marca todo mundo automaticamente — você escolhe quem vai.</p>
           <div class="tabela-resumo" id="tabela-resumo"></div>
           <div class="tabela-scroll-top" id="tabela-scroll-top" aria-hidden="true">
             <div class="tabela-scroll-top-inner" id="tabela-scroll-top-inner"></div>
@@ -166,7 +161,7 @@
               <tbody id="tabela-dados-body"></tbody>
             </table>
           </div>
-          <button type="button" class="btn btn-wood btn-block" id="btn-fechar-tabela" style="margin-top:12px">Fechar tabela</button>
+          <button type="button" class="btn btn-wood btn-block" id="btn-fechar-tabela" style="margin-top:12px">Fechar</button>
         </div>
       </section>
 

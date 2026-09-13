@@ -799,6 +799,20 @@ body.modo-rsvp #painel-rsvp {
   text-decoration: none;
 }
 
+.admin-acoes-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.admin-acoes-stack .btn {
+  width: 100%;
+  text-align: center;
+  font-size: 0.55rem;
+  padding: 14px 12px;
+}
+
 .phone-empty {
   margin: 8px 0 0;
   opacity: 0.8;
@@ -831,6 +845,58 @@ body.modo-rsvp #painel-rsvp {
 .section-head-actions .btn {
   font-size: 0.45rem;
   padding: 10px 10px;
+}
+
+@media (max-width: 640px) {
+  .section-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .section-head .btn,
+  .section-head-actions {
+    width: 100%;
+  }
+
+  .section-head-actions {
+    flex-direction: column;
+  }
+
+  .section-head-actions .btn,
+  .section-head .btn {
+    width: 100%;
+    text-align: center;
+    font-size: 0.55rem;
+    padding: 14px 12px;
+  }
+
+  .phone-actions {
+    flex-direction: column;
+  }
+
+  .phone-actions .btn {
+    width: 100%;
+    text-align: center;
+    font-size: 0.52rem;
+    padding: 12px 10px;
+  }
+
+  .dash-lista-item {
+    flex-direction: column;
+  }
+
+  .dash-lista-item .btn-wa {
+    width: 100%;
+    text-align: center;
+  }
+
+  .modal-confirm-actions {
+    flex-direction: column;
+  }
+
+  .modal-confirm-actions .btn {
+    width: 100%;
+  }
 }
 
 .presenca-grupos {
