@@ -803,12 +803,12 @@
     }
     if (elConDet) {
       elConDet.textContent = confirmados
-        ? (confirmados + ' pessoas · Ad ' + confAdultos + ' · Cr ' + confCriancas)
+        ? (confirmados + ' pessoas\nAdultos ' + confAdultos + '\nCrianças ' + confCriancas)
         : '0 pessoas';
     }
     if (elNaoDet) {
       elNaoDet.textContent = naoConfirmados
-        ? (naoConfirmados + ' pessoas · Ad ' + naoAdultos + ' · Cr ' + naoCriancas)
+        ? (naoConfirmados + ' pessoas\nAdultos ' + naoAdultos + '\nCrianças ' + naoCriancas)
         : '0 pessoas';
     }
     if (elNaoVaoDet) {
