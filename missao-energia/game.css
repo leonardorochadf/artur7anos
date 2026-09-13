@@ -378,6 +378,43 @@ h1, h2 {
   background: #ffe8e8;
 }
 
+#hud-coins {
+  color: #7a5200;
+  background: #fff3c4;
+}
+
+.hud-progress {
+  display: grid;
+  gap: 6px;
+  min-width: 120px;
+}
+
+.hud-bar {
+  display: block;
+  height: 8px;
+  background: #d7d2c4;
+  border: 2px solid #1a1208;
+}
+
+.hud-bar i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #5aad32, #ffd24a);
+  transition: width 0.25s ease;
+}
+
+.win-stats {
+  margin: 0 0 12px;
+  font-family: var(--font-pixel);
+  font-size: 0.48rem;
+  line-height: 1.45;
+  color: #7a5200;
+  background: #fff3c4;
+  border: 3px solid #1a1208;
+  padding: 8px 10px;
+}
+
 .hud-mute {
   pointer-events: auto;
   margin-left: auto;

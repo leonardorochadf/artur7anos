@@ -21,6 +21,10 @@
   const hintEl = document.getElementById("hud-hint");
   const blocksEl = document.getElementById("hud-blocks");
   const livesEl = document.getElementById("hud-lives");
+  const coinsEl = document.getElementById("hud-coins");
+  const progressTextEl = document.getElementById("hud-progress-text");
+  const progressFillEl = document.getElementById("hud-bar-fill");
+  const winStatsEl = document.getElementById("win-stats");
   const muteBtn = document.getElementById("btn-mute");
   const actBtn = document.getElementById("btn-action");
   const btnPlay = document.getElementById("btn-play");
@@ -59,9 +63,27 @@
   };
 
   const MAX_LIVES = 7;
+  const TOTAL_CHALLENGES = 5;
+
+  const CHALLENGES = {
+    climb: { coins: 15, label: "Subiu a plataforma!" },
+    blocks: { coins: 30, label: "Quebrou os 3 blocos!" },
+    slide: { coins: 25, label: "Passou no tobogã!" },
+    river: { coins: 30, label: "Atravessou o rio!" },
+    stairs: { coins: 35, label: "Montou a escada!" },
+  };
 
   const state = {
     lives: MAX_LIVES,
+    coins: 0,
+    progress: 0,
+    done: {
+      climb: false,
+      blocks: false,
+      slide: false,
+      river: false,
+      stairs: false,
+    },
     collected: 0,
     inventory: 0,
     broken: [false, false, false],
@@ -241,6 +263,15 @@
 
   function resetGame() {
     state.lives = MAX_LIVES;
+    state.coins = 0;
+    state.progress = 0;
+    state.done = {
+      climb: false,
+      blocks: false,
+      slide: false,
+      river: false,
+      stairs: false,
+    };
     state.collected = 0;
     state.inventory = 0;
     state.broken = [false, false, false];
@@ -269,6 +300,49 @@
   function updateHUD() {
     blocksEl.textContent = `Blocos: ${state.collected}/3`;
     livesEl.textContent = `Vidas: ${state.lives}`;
+    coinsEl.textContent = `Moedas: ${state.coins}`;
+    progressTextEl.textContent = `Missão: ${state.progress}/${TOTAL_CHALLENGES}`;
+    progressFillEl.style.width = `${(state.progress / TOTAL_CHALLENGES) * 100}%`;
+  }
+
+  function sfxCoin() {
+    beep(660, 0.07, "square", 0.035);
+    setTimeout(() => beep(880, 0.09, "square", 0.03), 50);
+  }
+
+  function completeChallenge(id) {
+    if (state.done[id] || !CHALLENGES[id]) return;
+    state.done[id] = true;
+    state.progress = Math.min(TOTAL_CHALLENGES, state.progress + 1);
+    const reward = CHALLENGES[id].coins;
+    state.coins += reward;
+    updateHUD();
+    sfxCoin();
+    floatingTexts.push({
+      x: player.x - 10,
+      y: player.y - 10,
+      text: `+${reward}`,
+      life: 1.2,
+      color: "#ffd24a",
+    });
+    floatingTexts.push({
+      x: player.x - 40,
+      y: player.y - 28,
+      text: CHALLENGES[id].label,
+      life: 1.6,
+      color: "#fff8dc",
+    });
+    setHint(`${CHALLENGES[id].label} +${reward} moedas`);
+  }
+
+  function checkChallengeProgress() {
+    if (player.x >= 780 && player.y < HIGH + 20) completeChallenge("climb");
+    if (state.collected >= 3) completeChallenge("blocks");
+    if (player.x >= 1420 && player.onGround && !player.onSlide && player.slideDetach <= 0) {
+      completeChallenge("slide");
+    }
+    if (player.x >= 1900 && player.onGround) completeChallenge("river");
+    if (state.placed.every(Boolean)) completeChallenge("stairs");
   }
 
   function setHint(text) {
@@ -531,7 +605,8 @@
       spawnBurst(b.x + b.w / 2, b.y + b.h / 2, ["#8b5a2b", "#5aad32", "#c4894f"], 14);
       sfxBreak();
       updateHUD();
-      floatingTexts.push({ x: b.x + 6, y: b.y - 4, text: "+1", life: 0.8 });
+      floatingTexts.push({ x: b.x + 6, y: b.y - 4, text: "+1", life: 0.8, color: "#fff" });
+      if (state.collected >= 3) completeChallenge("blocks");
       return true;
     }
     return false;
@@ -548,6 +623,7 @@
       state.inventory -= 1;
       spawnBurst(s.x + s.w / 2, s.y + s.h / 2, ["#c4a574", "#a06a3a"], 10);
       sfxPlace();
+      if (state.placed.every(Boolean)) completeChallenge("stairs");
       return true;
     }
     return false;
@@ -560,6 +636,15 @@
     state.chestOpen = true;
     chestOpenAt = performance.now();
     sfxOpen();
+    state.coins += 50;
+    updateHUD();
+    floatingTexts.push({
+      x: chest.x - 20,
+      y: chest.y - 20,
+      text: "+50 bônus!",
+      life: 1.4,
+      color: "#ffd24a",
+    });
     spawnBurst(chest.x + chest.w / 2, chest.y, ["#ffd24a", "#fff7b0", "#ffe566"], 28);
     winScheduled = true;
     setTimeout(finishWin, 1000);
@@ -651,6 +736,7 @@
     updateCheckpoint();
     updateActionMode();
     updateHintsByProgress();
+    checkChallengeProgress();
 
     particles = particles.filter((p) => {
       p.life -= dt;
@@ -999,8 +1085,8 @@
     ctx.globalAlpha = 1;
     for (const t of floatingTexts) {
       ctx.globalAlpha = Math.max(0, t.life);
-      ctx.fillStyle = "#fff";
-      ctx.font = '12px "Press Start 2P", monospace';
+      ctx.fillStyle = t.color || "#fff";
+      ctx.font = '10px "Press Start 2P", monospace';
       ctx.fillText(t.text, t.x - cameraX, t.y);
     }
     ctx.globalAlpha = 1;
@@ -1057,6 +1143,9 @@
     running = false;
     sfxWin();
     spawnConfetti();
+    if (winStatsEl) {
+      winStatsEl.textContent = `Missão ${state.progress}/${TOTAL_CHALLENGES} · ${state.coins} moedas`;
+    }
     winScreen.classList.remove("hidden");
     touchUI.classList.add("hidden");
   }

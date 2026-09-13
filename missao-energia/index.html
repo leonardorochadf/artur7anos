@@ -17,6 +17,11 @@
 
     <div id="hud" class="hidden" aria-live="polite">
       <div class="hud-chip" id="hud-lives">Vidas: 7</div>
+      <div class="hud-chip" id="hud-coins">Moedas: 0</div>
+      <div class="hud-chip hud-progress" id="hud-progress">
+        <span id="hud-progress-text">Missão: 0/5</span>
+        <span class="hud-bar" aria-hidden="true"><i id="hud-bar-fill"></i></span>
+      </div>
       <div class="hud-chip" id="hud-blocks">Blocos: 0/3</div>
       <div class="hud-chip" id="hud-hint">Pule os obstáculos!</div>
       <button type="button" id="btn-mute" class="hud-mute" aria-pressed="false" title="Som">🔊</button>
@@ -70,6 +75,8 @@
           </div>
           <p class="prize-won">Você ganhou a promoção!</p>
         </div>
+
+        <p class="win-stats" id="win-stats">Missão 5/5 · 0 moedas</p>
 
         <h2>☀️ Sua conta da EDP mais barata todos os meses!</h2>
         <p class="lead">
