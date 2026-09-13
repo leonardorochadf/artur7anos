@@ -266,6 +266,7 @@
   var btnVoltarRsvp = document.getElementById('btn-voltar-rsvp');
   var secaoConfirmar = document.getElementById('confirmar');
   var painelRsvp = document.getElementById('painel-rsvp');
+  var rsvpTermo = document.getElementById('rsvp-termo');
 
   function entrarModoRsvp() {
     document.body.classList.add('modo-rsvp');
@@ -277,10 +278,12 @@
 
   function mostrarLookup() {
     if (painelRsvp) painelRsvp.classList.remove('rsvp-dados-abertos');
+    if (rsvpTermo) rsvpTermo.classList.add('hidden');
   }
 
   function ocultarLookup() {
     if (painelRsvp) painelRsvp.classList.add('rsvp-dados-abertos');
+    if (rsvpTermo) rsvpTermo.classList.remove('hidden');
   }
 
   function sairModoRsvp() {

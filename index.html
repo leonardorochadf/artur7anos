@@ -29,7 +29,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=17" />
+  <link rel="stylesheet" href="styles.css?v=18" />
 </head>
 <body>
   <div class="mc-fx" aria-hidden="true">
@@ -169,22 +169,6 @@
 
             <p style="margin-top:14px">Meias previstas: <strong id="meias-count">0</strong></p>
 
-            <div id="rsvp-termo" class="rsvp-termo-box">
-              <div class="rsvp-termo-fx" aria-hidden="true">
-                <span class="rsvp-termo-block b1"></span>
-                <span class="rsvp-termo-block b2"></span>
-                <span class="rsvp-termo-block b3"></span>
-              </div>
-              <p class="rsvp-termo-alerta">IMPORTANTE</p>
-              <p class="rsvp-termo-msg">
-                A criança <strong>só pode brincar</strong> se o termo estiver assinado.
-              </p>
-              <p class="rsvp-termo-msg">
-                Assine online agora. Se não assinar aqui, terá que assinar na hora no Jump.
-              </p>
-              <a class="btn btn-grass btn-block btn-pulse" id="btn-rsvp-termo" href="#" target="_blank" rel="noopener">Assinar termo online</a>
-            </div>
-
             <div class="rsvp-actions">
               <button type="submit" class="btn btn-grass btn-block" id="btn-confirmar">Confirmar presença</button>
               <button type="button" class="btn btn-danger btn-block" id="btn-nao-vai">Não vou poder ir</button>
@@ -193,6 +177,22 @@
         </div>
 
         <div id="status" class="status" role="status"></div>
+      </div>
+
+      <div id="rsvp-termo" class="rsvp-termo-box hidden">
+        <div class="rsvp-termo-fx" aria-hidden="true">
+          <span class="rsvp-termo-block b1"></span>
+          <span class="rsvp-termo-block b2"></span>
+          <span class="rsvp-termo-block b3"></span>
+        </div>
+        <p class="rsvp-termo-alerta">IMPORTANTE</p>
+        <p class="rsvp-termo-msg">
+          A criança <strong>só pode brincar</strong> se o termo estiver assinado.
+        </p>
+        <p class="rsvp-termo-msg">
+          Assine online agora. Se não assinar aqui, terá que assinar na hora no Jump.
+        </p>
+        <a class="btn btn-grass btn-block btn-pulse" id="btn-rsvp-termo" href="#" target="_blank" rel="noopener">Assinar termo online</a>
       </div>
     </section>
 
@@ -227,6 +227,6 @@
 
   <script src="config.js?v=4"></script>
   <script src="js/api.js?v=4"></script>
-  <script src="js/app.js?v=10"></script>
+  <script src="js/app.js?v=11"></script>
 </body>
 </html>
