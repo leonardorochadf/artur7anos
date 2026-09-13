@@ -81,7 +81,7 @@ Arquivos necessários no ar:
 - `admin.html`
 - `config.js`
 - `styles.css`
-- `JUMP.jpeg`
+- `convite_new.png`
 - `js/api.js`
 - `js/app.js`
 - `js/admin.js`
@@ -116,7 +116,7 @@ Se mudar a implantação, use a URL **nova** da versão ativa.
 
 - Textos/data/local: `config.js`
 - Visual: `styles.css`
-- Arte do convite: `JUMP.jpeg`
+- Arte do convite: `convite_new.png`
 
 ## Estrutura
 
@@ -126,7 +126,7 @@ aniversarioArtur7Anos/
   admin.html          ← pré-cadastro e presença
   config.js
   styles.css
-  JUMP.jpeg
+  convite_new.png
   js/
     api.js
     app.js

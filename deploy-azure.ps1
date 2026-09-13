@@ -14,7 +14,7 @@ Copy-Item (Join-Path $root 'index.html') $deploy
 Copy-Item (Join-Path $root 'admin.html') $deploy
 Copy-Item (Join-Path $root 'config.js') $deploy
 Copy-Item (Join-Path $root 'styles.css') $deploy
-Copy-Item (Join-Path $root 'JUMP.jpeg') $deploy
+Copy-Item (Join-Path $root 'convite_new.png') $deploy
 Copy-Item (Join-Path $root 'js') (Join-Path $deploy 'js') -Recurse
 
 $key = az storage account keys list --account-name $sa --resource-group $rg --query "[0].value" -o tsv
