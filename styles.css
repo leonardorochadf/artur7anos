@@ -1119,40 +1119,63 @@ button.dash-click:active {
 .dash-lista-item {
   display: flex;
   gap: 10px;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   border: 2px solid #000;
   background: #fff;
-  padding: 10px;
+  padding: 12px 10px;
 }
 
 .dash-lista-info {
   min-width: 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .dash-lista-info strong {
-  font-size: 1.05rem;
+  font-size: 1.1rem;
+  line-height: 1.25;
 }
 
-.dash-lista-fone,
-.dash-lista-pessoas {
+.dash-lista-fone {
   font-family: var(--font-body);
   font-size: 0.95rem;
   color: #333;
   word-break: break-word;
 }
 
+.dash-lista-nomes {
+  list-style: none;
+  margin: 6px 0 2px;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.4;
+  color: #111;
+}
+
+.dash-lista-nomes li {
+  padding: 1px 0;
+  word-break: break-word;
+}
+
+.dash-lista-nomes li.dash-lista-sep {
+  opacity: 0.55;
+  padding: 4px 0;
+  letter-spacing: 0.08em;
+}
+
 .dash-lista-item .badge {
   align-self: flex-start;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .dash-lista-item .btn-wa {
   flex-shrink: 0;
   white-space: nowrap;
+  margin-top: 2px;
 }
 
 .dash-lista-sem-fone {

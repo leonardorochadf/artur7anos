@@ -868,20 +868,12 @@
       bodyEl.innerHTML = familias.map(function (f) {
         var msg = mensagemWhatsappConfirmacao(f, filtro);
         var wa = whatsappUrlLista(f, msg);
-        var pessoas = [];
-        if (f.nome_pai) pessoas.push(f.nome_pai);
-        if (f.nome_mae) pessoas.push(f.nome_mae);
-        (f.adultos || []).forEach(function (n) { pessoas.push(n); });
-        (f.filhos || []).forEach(function (n) { pessoas.push(n); });
-
         return (
           '<article class="dash-lista-item">' +
             '<div class="dash-lista-info">' +
               '<strong>' + esc(nomeFamilia(f) || 'Sem nome') + '</strong>' +
               '<span class="dash-lista-fone">' + esc(exibirCelulares(f)) + '</span>' +
-              (pessoas.length
-                ? '<span class="dash-lista-pessoas">' + esc(pessoas.join(' · ')) + '</span>'
-                : '') +
+              htmlPessoasDashLista(f) +
               '<span class="badge ' + esc(f.status) + '">' + esc(statusLabel(f.status)) + '</span>' +
             '</div>' +
             (wa
@@ -893,6 +885,35 @@
     }
 
     modal.classList.remove('hidden');
+  }
+
+  function htmlPessoasDashLista(f) {
+    var pais = [];
+    if (f.nome_pai) pais.push(f.nome_pai);
+    if (f.nome_mae) pais.push(f.nome_mae);
+
+    var demais = [];
+    (f.adultos || []).forEach(function (n) {
+      if (n) demais.push(n);
+    });
+    (f.filhos || []).forEach(function (n) {
+      if (n) demais.push(n);
+    });
+
+    if (!pais.length && !demais.length) return '';
+
+    var html = '<ul class="dash-lista-nomes">';
+    pais.forEach(function (n) {
+      html += '<li>- ' + esc(n) + '</li>';
+    });
+    if (pais.length && demais.length) {
+      html += '<li class="dash-lista-sep">—</li>';
+    }
+    demais.forEach(function (n) {
+      html += '<li>- ' + esc(n) + '</li>';
+    });
+    html += '</ul>';
+    return html;
   }
 
   function montarAcessosFallback(familias) {
