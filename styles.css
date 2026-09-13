@@ -635,6 +635,38 @@ body.modo-rsvp #painel-rsvp {
   margin-top: 14px;
 }
 
+.rsvp-actions .btn-pressed {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+  outline: 3px solid #000;
+  outline-offset: 2px;
+  font-weight: 700;
+}
+
+.rsvp-actions .btn-pressed-ok {
+  background: #1f7a32;
+  color: #fff;
+  filter: brightness(1.05);
+}
+
+.rsvp-actions .btn-pressed-ok::after {
+  content: " ✓";
+}
+
+.rsvp-actions .btn-pressed-no {
+  background: #a11f2a;
+  color: #fff;
+  filter: brightness(1.05);
+}
+
+.rsvp-actions .btn-pressed-no::after {
+  content: " ✓";
+}
+
+.rsvp-actions .btn-pulse {
+  animation: mc-cta-party 1.35s ease-in-out infinite;
+}
+
 .phone-list {
   display: grid;
   gap: 10px;

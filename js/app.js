@@ -10,6 +10,7 @@
   var kidsBox = document.getElementById('kids');
   var addKidBtn = document.getElementById('add-kid');
   var btnBuscar = document.getElementById('btn-buscar');
+  var btnConfirmar = document.getElementById('btn-confirmar');
   var btnNaoVai = document.getElementById('btn-nao-vai');
   var blocoFamilia = document.getElementById('bloco-familia');
   var badgeCadastro = document.getElementById('badge-cadastro');
@@ -278,12 +279,43 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  function atualizarBotoesRsvp(f, encontrado) {
+    if (!btnConfirmar || !btnNaoVai) return;
+
+    btnConfirmar.classList.remove('btn-pulse', 'btn-pressed', 'btn-pressed-ok', 'btn-pressed-no');
+    btnNaoVai.classList.remove('btn-pulse', 'btn-pressed', 'btn-pressed-ok', 'btn-pressed-no');
+    btnConfirmar.removeAttribute('aria-pressed');
+    btnNaoVai.removeAttribute('aria-pressed');
+
+    var st = encontrado && f ? (f.status || 'pre_cadastro') : '';
+
+    if (st === 'confirmado' || st === 'presente') {
+      btnConfirmar.classList.add('btn-pressed', 'btn-pressed-ok');
+      btnConfirmar.setAttribute('aria-pressed', 'true');
+      btnNaoVai.setAttribute('aria-pressed', 'false');
+      return;
+    }
+
+    if (st === 'nao_vai') {
+      btnNaoVai.classList.add('btn-pressed', 'btn-pressed-no');
+      btnNaoVai.setAttribute('aria-pressed', 'true');
+      btnConfirmar.setAttribute('aria-pressed', 'false');
+      return;
+    }
+
+    // Novo cadastro ou ainda não confirmado: pisca o Confirmar presença
+    btnConfirmar.classList.add('btn-pulse');
+    btnConfirmar.setAttribute('aria-pressed', 'false');
+    btnNaoVai.setAttribute('aria-pressed', 'false');
+  }
+
   function montarBadgeStatus(f, encontrado) {
     if (!encontrado || !f) {
       badgeCadastro.innerHTML =
         '<span class="badge-titulo">NOVO CADASTRO</span>' +
         '<span class="badge-texto">Informe 1 responsável e adicione as crianças que vão brincar. Depois confirme a presença.</span>';
       badgeCadastro.className = 'found-badge pendente';
+      atualizarBotoesRsvp(null, false);
       return;
     }
 
@@ -304,6 +336,7 @@
         '<span class="badge-texto">Cadastro encontrado. Confira os dados (pai/mãe e filhos) e confirme a presença.</span>';
       badgeCadastro.className = 'found-badge pendente';
     }
+    atualizarBotoesRsvp(f, true);
   }
 
   function modoFormulario(encontrado) {
