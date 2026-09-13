@@ -176,6 +176,16 @@ html, body {
 .win-panel .lead {
   font-size: clamp(1.05rem, 4.2vw, 1.2rem);
   margin-bottom: 12px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.win-panel .brand-break {
+  display: block;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  color: #1a5c12;
+  font-weight: 700;
 }
 
 .win-panel .btn-cta {
