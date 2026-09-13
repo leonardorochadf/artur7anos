@@ -32,8 +32,6 @@
   var buscando = false;
   var salvandoRsvp = false;
   var ignorarAutoSave = false;
-  var celularAtivoTxt = document.getElementById('celular-ativo-txt');
-  var rsvpCelularHint = document.getElementById('rsvp-celular-hint');
   var modalProgresso = document.getElementById('modal-progresso');
   var modalProgressoMsg = document.getElementById('modal-progresso-msg');
   var modalProgressoTitulo = document.getElementById('modal-progresso-titulo');
@@ -400,24 +398,12 @@
   function mostrarLookup() {
     if (painelRsvp) painelRsvp.classList.remove('rsvp-dados-abertos');
     if (rsvpTermo) rsvpTermo.classList.add('hidden');
-    if (rsvpCelularHint) rsvpCelularHint.classList.add('hidden');
   }
 
   function ocultarLookup() {
     // Mantém o celular visível/editável; só esconde o texto introdutório via CSS
     if (painelRsvp) painelRsvp.classList.add('rsvp-dados-abertos');
     if (rsvpTermo) rsvpTermo.classList.remove('hidden');
-    if (rsvpCelularHint) rsvpCelularHint.classList.remove('hidden');
-    atualizarDicaCelular();
-  }
-
-  function atualizarDicaCelular() {
-    var cel = ArturApi.normalizarCelular(celularInput.value);
-    if (celularAtivoTxt) {
-      celularAtivoTxt.textContent = cel.length >= 10
-        ? ArturApi.formatPhone(cel)
-        : (celularInput.value || '—');
-    }
   }
 
   function sairModoRsvp() {
@@ -617,7 +603,6 @@
       setFilhos([]);
       setAdultos([]);
     }
-    atualizarDicaCelular();
     montarBadgeStatus(f, encontrado);
     formularioSujo = false;
     setTimeout(function () { ignorarAutoSave = false; }, 200);
@@ -759,7 +744,6 @@
       var data = await ArturApi.salvar(payload);
       familiaAtual = data.familia || familiaAtual;
       celularChave = ArturApi.normalizarCelular(celularInput.value) || celularChave;
-      atualizarDicaCelular();
       if (data.familia) {
         var eraNovo = wrapUnico && !wrapUnico.classList.contains('hidden');
         if (eraNovo) {
@@ -811,7 +795,6 @@
 
   celularInput.addEventListener('input', function () {
     aplicarCelularDigitado(celularInput.value);
-    atualizarDicaCelular();
     if (formularioAberto() && familiaAtual) {
       marcarFormularioSujo();
       return;
@@ -821,7 +804,6 @@
 
   celularInput.addEventListener('change', function () {
     aplicarCelularDigitado(celularInput.value);
-    atualizarDicaCelular();
     if (formularioAberto() && familiaAtual) {
       marcarFormularioSujo();
       return;
@@ -838,7 +820,6 @@
       texto = '';
     }
     aplicarCelularDigitado(texto || celularInput.value);
-    atualizarDicaCelular();
     if (formularioAberto() && familiaAtual) {
       marcarFormularioSujo();
       return;
@@ -848,7 +829,6 @@
 
   celularInput.addEventListener('blur', function () {
     aplicarCelularDigitado(celularInput.value);
-    atualizarDicaCelular();
     var digitos = ArturApi.normalizarCelular(celularInput.value);
     if (formularioAberto() && familiaAtual && formularioSujo) {
       salvarAoSairDoCampo();
