@@ -667,40 +667,44 @@
   }
 
   function mensagemWhatsappConfirmacao(f, filtro) {
-    var nome = nomeFamilia(f) || 'família';
+    var nome = nomeFamilia(f) || 'familia';
     var link = linkConvite();
-    // Emojis via escape Unicode (não quebram no WhatsApp)
-    var festa = '\uD83C\uDF89';
-    var data = '\uD83D\uDCC5';
-    var hora = '\uD83D\uDD54';
-    var local = '\uD83D\uDCCD';
 
     if (filtro === 'pendentes') {
       return (
-        'Oi, ' + nome + '! Tudo bem?\n\n' +
-        'Passando para confirmar se vocês vão ao aniversário de 7 anos do Artur!\n\n' +
-        data + ' 25/11 (quarta-feira)\n' +
-        hora + ' Das 17h45 às 21h30\n' +
-        local + ' Jump Trampolim Park\n\n' +
-        'Por favor, confirme pelo link se vão ou não:\n' +
+        'Oi, *' + nome + '*! Tudo bem?\n\n' +
+        'Passando para confirmar se voc\u00EAs v\u00E3o ao *anivers\u00E1rio de 7 anos do Artur*!\n\n' +
+        '- *Data:* 25/11 (quarta-feira)\n' +
+        '- *Hor\u00E1rio:* das 17h45 \u00E0s 21h30\n' +
+        '- *Local:* Jump Trampolim Park\n\n' +
+        'Por favor, confirme pelo link se *v\u00E3o* ou *n\u00E3o*:\n' +
         link
       );
     }
     if (filtro === 'nao_vao') {
       return (
-        'Oi, ' + nome + '! Tudo bem?\n\n' +
-        'Vi o registro de que não poderão ir ao aniversário do Artur. Se mudarem de ideia, é só confirmar pelo link:\n' +
+        'Oi, *' + nome + '*! Tudo bem?\n\n' +
+        'Vi o registro de que *n\u00E3o poder\u00E3o ir* ao anivers\u00E1rio do Artur.\n' +
+        'Se mudarem de ideia, \u00E9 s\u00F3 confirmar pelo link:\n' +
         link
       );
     }
     return (
-      'Oi, ' + nome + '! Tudo bem?\n\n' +
-      'Obrigado pela confirmação no aniversário do Artur! ' + festa + '\n\n' +
-      data + ' 25/11 | 17h45-21h30\n' +
-      local + ' Jump Trampolim Park\n\n' +
+      'Oi, *' + nome + '*! Tudo bem?\n\n' +
+      'Obrigado pela *confirma\u00E7\u00E3o* no anivers\u00E1rio do Artur!\n\n' +
+      '- *Data:* 25/11\n' +
+      '- *Hor\u00E1rio:* 17h45-21h30\n' +
+      '- *Local:* Jump Trampolim Park\n\n' +
       'Qualquer ajuste, use o link:\n' +
       link
     );
+  }
+
+  function filtroWhatsappPorStatus(f) {
+    if (!f) return 'pendentes';
+    if (f.status === 'nao_vai') return 'nao_vao';
+    if (f.status === 'confirmado' || f.status === 'presente') return 'confirmados';
+    return 'pendentes';
   }
 
   function whatsappUrlLista(f, texto) {
@@ -2053,9 +2057,13 @@
             '<span>Último acesso: <strong>' + esc(formatarDataHora(f.ultimo_acesso_em)) + '</strong></span>' +
           '</div>' +
           '<div class="phone-actions">' +
-            (whatsappUrlLista(f)
-              ? '<a class="btn btn-grass" href="' + esc(whatsappUrlLista(f)) + '" target="_blank" rel="noopener">WhatsApp</a>'
-              : '') +
+            (function () {
+              var waMsg = mensagemWhatsappConfirmacao(f, filtroWhatsappPorStatus(f));
+              var wa = whatsappUrlLista(f, waMsg);
+              return wa
+                ? '<a class="btn btn-grass" href="' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a>'
+                : '';
+            })() +
             (f.status !== 'confirmado' && f.status !== 'presente'
               ? '<button type="button" class="btn btn-grass" data-act="confirmar" data-cel="' + esc(celKey) + '">Confirmar</button>'
               : '') +
