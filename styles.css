@@ -608,6 +608,12 @@ body.modo-rsvp #confirmar {
   animation: rise 0.35s ease-out both;
 }
 
+body.modo-rsvp #confirmar > .section-head,
+body.modo-rsvp #painel-rsvp,
+body.modo-rsvp #rsvp-termo:not(.hidden) {
+  display: block;
+}
+
 body.modo-rsvp #painel-rsvp {
   border: 4px solid #000;
   box-shadow: 6px 6px 0 rgba(0,0,0,.28);

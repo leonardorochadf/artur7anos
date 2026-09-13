@@ -494,6 +494,17 @@
     btnVoltarRsvp.addEventListener('click', sairModoRsvp);
   }
 
+  var btnIrConfirmar = document.getElementById('btn-ir-confirmar');
+  if (btnIrConfirmar) {
+    btnIrConfirmar.addEventListener('click', function (e) {
+      e.preventDefault();
+      entrarModoRsvp();
+      if (celularInput) {
+        setTimeout(function () { celularInput.focus(); }, 50);
+      }
+    });
+  }
+
   addKidBtn.addEventListener('click', function () {
     kidsBox.appendChild(kidInput(''));
     updateMeias();
