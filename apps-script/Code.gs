@@ -12,7 +12,7 @@ var ABA = 'Familias';
 var ABA_ACESSOS = 'Acessos';
 var ADMIN_SENHA_FIXA = '19122019@';
 var SHEET_ID_FIXO = '1ZFZ_UjSaF4BXecf0TizKXLt8EeCpErpPwmqWQJBGyok';
-var VERSAO = 'v8.6-check-confirma';
+var VERSAO = 'v8.7-celular-55';
 
 var CABECALHO = [
   'celular',
@@ -767,7 +767,25 @@ function formatarDataCampo(v) {
 }
 
 function normalizarCelular(v) {
-  return String(v || '').replace(/\D/g, '');
+  var d = String(v || '').replace(/\D/g, '');
+  if (!d) return '';
+  if (ehIdSemCelular(d)) return d;
+
+  // +55 / 55 (ex.: 5511953822691 → 11953822691)
+  if ((d.length === 12 || d.length === 13) && d.indexOf('55') === 0) {
+    d = d.substring(2);
+  } else if (d.length > 11 && d.indexOf('55') === 0) {
+    d = d.substring(2);
+  }
+
+  if (d.length >= 11 && d.charAt(0) === '0') {
+    d = d.substring(1);
+  }
+
+  if (d.length > 11 && !ehIdSemCelular(d)) {
+    d = d.substring(d.length - 11);
+  }
+  return d;
 }
 
 function listaCelulares(v) {

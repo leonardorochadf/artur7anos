@@ -37,8 +37,35 @@
     return String(v || '').replace(/\D/g, '');
   }
 
+  /**
+   * Aceita colagem/autocomplete tipo "+55 11 95382-2691"
+   * e devolve DDD+número BR (ex.: 11953822691).
+   */
+  function normalizarCelular(v) {
+    var d = onlyDigits(v);
+    if (!d) return '';
+
+    // IDs internos do admin (sem telefone real)
+    if (/^990\d{8}$/.test(d) || /^000\d{8}$/.test(d)) return d;
+
+    // Código do país Brasil: +55 / 55
+    if ((d.length === 12 || d.length === 13) && d.indexOf('55') === 0) {
+      d = d.slice(2);
+    } else if (d.length > 11 && d.indexOf('55') === 0) {
+      d = d.slice(2);
+    }
+
+    // 0 + DDD (ex.: 011953822691)
+    if (d.length >= 11 && d.charAt(0) === '0') {
+      d = d.slice(1);
+    }
+
+    if (d.length > 11) d = d.slice(-11);
+    return d.slice(0, 11);
+  }
+
   function formatPhone(v) {
-    var d = onlyDigits(v).slice(0, 11);
+    var d = normalizarCelular(v);
     if (d.length <= 2) return d;
     if (d.length <= 6) return '(' + d.slice(0, 2) + ') ' + d.slice(2);
     if (d.length <= 10) {
@@ -50,6 +77,7 @@
   global.ArturApi = {
     ready: ready,
     onlyDigits: onlyDigits,
+    normalizarCelular: normalizarCelular,
     formatPhone: formatPhone,
     buscar: function (q, celular) {
       return request('GET', { action: 'buscar', q: q || '', celular: celular || '' });

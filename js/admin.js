@@ -508,8 +508,8 @@
   async function salvarCadastro() {
     if (!logado || salvando) return;
 
-    var celular = ArturApi.onlyDigits(celularInput.value);
-    var celular2 = celular2Input ? ArturApi.onlyDigits(celular2Input.value) : '';
+    var celular = ArturApi.normalizarCelular(celularInput.value);
+    var celular2 = celular2Input ? ArturApi.normalizarCelular(celular2Input.value) : '';
     var pai = paiInput.value.trim();
     var mae = maeInput.value.trim();
     var filhos = getFilhos();

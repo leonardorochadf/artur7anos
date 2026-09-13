@@ -409,17 +409,21 @@
     montarBadgeStatus(f, encontrado);
   }
 
-  async function buscarPorTelefone() {
+  async function buscarPorTelefone(opts) {
+    opts = opts || {};
     if (buscando) return;
     if (!ArturApi.ready()) {
       setStatus('API ainda não configurada.', 'warn');
       return;
     }
 
-    var celular = ArturApi.onlyDigits(celularInput.value);
+    aplicarCelularDigitado(celularInput.value);
+    var celular = ArturApi.normalizarCelular(celularInput.value);
     if (celular.length < 10) {
-      await mostrarAviso('Digite o celular completo com DDD.', 'Atenção');
-      setStatus('Digite o celular completo com DDD.', 'warn');
+      if (!opts.silencioso) {
+        await mostrarAviso('Digite o celular completo com DDD.', 'Atenção');
+        setStatus('Digite o celular completo com DDD.', 'warn');
+      }
       blocoFamilia.classList.add('hidden');
       return;
     }
@@ -429,8 +433,8 @@
       btnBuscar.disabled = true;
       btnBuscar.textContent = 'Buscando...';
     }
-    setStatus('Buscando cadastro...', '');
-    abrirProgresso('Buscando', 'Procurando o cadastro deste celular...');
+    setStatus('Buscando cadastro de ' + ArturApi.formatPhone(celular) + '...', '');
+    abrirProgresso('Buscando', 'Procurando o cadastro de ' + ArturApi.formatPhone(celular) + '...');
     try {
       var data = await ArturApi.buscar('', celular);
       var results = data.resultados || [];
@@ -457,10 +461,31 @@
     }
   }
 
+  function aplicarCelularDigitado(raw) {
+    var normalizado = ArturApi.normalizarCelular(raw);
+    celularInput.value = ArturApi.formatPhone(normalizado);
+    return normalizado;
+  }
+
+  function agendarBuscaPorCelular(delayMs) {
+    clearTimeout(debounceTimer);
+    var digitos = ArturApi.normalizarCelular(celularInput.value);
+    if (digitos.length > 0) entrarModoRsvp();
+    if (digitos.length >= 10) {
+      debounceTimer = setTimeout(function () {
+        buscarPorTelefone({ silencioso: true });
+      }, typeof delayMs === 'number' ? delayMs : 350);
+    } else {
+      blocoFamilia.classList.add('hidden');
+      mostrarLookup();
+    }
+  }
+
   function payloadBase() {
-    var encontrado = !!(familiaAtual && familiaTemCelular(familiaAtual, ArturApi.onlyDigits(celularInput.value)));
+    var cel = ArturApi.normalizarCelular(celularInput.value);
+    var encontrado = !!(familiaAtual && familiaTemCelular(familiaAtual, cel));
     var payload = {
-      celular: ArturApi.onlyDigits(celularInput.value),
+      celular: cel,
       filhos: getFilhos(),
       adultos: getAdultos(),
       origem: 'convidado'
@@ -498,21 +523,40 @@
   });
 
   celularInput.addEventListener('input', function () {
-    celularInput.value = ArturApi.formatPhone(celularInput.value);
-    clearTimeout(debounceTimer);
-    var digitos = ArturApi.onlyDigits(celularInput.value);
-    if (digitos.length > 0) entrarModoRsvp();
-    if (digitos.length >= 10) {
-      debounceTimer = setTimeout(buscarPorTelefone, 400);
-    } else {
-      blocoFamilia.classList.add('hidden');
-      mostrarLookup();
+    aplicarCelularDigitado(celularInput.value);
+    agendarBuscaPorCelular(350);
+  });
+
+  // Autocomplete / sugestão do teclado (ex.: +55 11 95382-2691)
+  celularInput.addEventListener('change', function () {
+    aplicarCelularDigitado(celularInput.value);
+    agendarBuscaPorCelular(120);
+  });
+
+  celularInput.addEventListener('paste', function (e) {
+    e.preventDefault();
+    var texto = '';
+    try {
+      texto = (e.clipboardData || window.clipboardData).getData('text') || '';
+    } catch (err) {
+      texto = '';
+    }
+    aplicarCelularDigitado(texto || celularInput.value);
+    agendarBuscaPorCelular(80);
+  });
+
+  celularInput.addEventListener('blur', function () {
+    aplicarCelularDigitado(celularInput.value);
+    var digitos = ArturApi.normalizarCelular(celularInput.value);
+    if (digitos.length >= 10 && !familiaAtual) {
+      agendarBuscaPorCelular(50);
     }
   });
 
   celularInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
       e.preventDefault();
+      clearTimeout(debounceTimer);
       buscarPorTelefone();
     }
   });
