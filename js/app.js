@@ -25,6 +25,9 @@
   var blocoFamilia = document.getElementById('bloco-familia');
   var badgeCadastro = document.getElementById('badge-cadastro');
   var statusEl = document.getElementById('status');
+  var rsvpLookupAtivo = document.getElementById('rsvp-lookup-ativo');
+  var rsvpCelularFixo = document.getElementById('rsvp-celular-fix');
+  var celularChaveTxt = document.getElementById('celular-chave-txt');
   var familiaAtual = null;
   var celularChave = '';
   var debounceTimer = null;
@@ -398,20 +401,36 @@
   function mostrarLookup() {
     if (painelRsvp) painelRsvp.classList.remove('rsvp-dados-abertos');
     if (rsvpTermo) rsvpTermo.classList.add('hidden');
+    if (rsvpLookupAtivo) rsvpLookupAtivo.classList.remove('hidden');
+    if (rsvpCelularFixo) rsvpCelularFixo.classList.add('hidden');
+    if (btnBuscar) {
+      btnBuscar.classList.remove('hidden');
+      btnBuscar.disabled = false;
+      btnBuscar.textContent = 'Buscar';
+    }
     if (celularInput) {
       celularInput.readOnly = false;
-      celularInput.removeAttribute('aria-readonly');
+      celularInput.disabled = false;
     }
   }
 
   function ocultarLookup() {
-    // Mantém o celular visível só como informação (sem Buscar)
+    // Número vira só informação (chave). Sem editar e sem Buscar.
     if (painelRsvp) painelRsvp.classList.add('rsvp-dados-abertos');
     if (rsvpTermo) rsvpTermo.classList.remove('hidden');
+    if (rsvpLookupAtivo) rsvpLookupAtivo.classList.add('hidden');
+    if (rsvpCelularFixo) rsvpCelularFixo.classList.remove('hidden');
+    var cel = ArturApi.normalizarCelular(celularInput ? celularInput.value : '');
+    if (celularChaveTxt) {
+      celularChaveTxt.textContent = cel.length >= 10
+        ? ArturApi.formatPhone(cel)
+        : (celularInput && celularInput.value) || '—';
+    }
     if (celularInput) {
       celularInput.readOnly = true;
-      celularInput.setAttribute('aria-readonly', 'true');
+      celularInput.disabled = true;
     }
+    if (btnBuscar) btnBuscar.classList.add('hidden');
   }
 
   function sairModoRsvp() {
@@ -797,29 +816,32 @@
     return !!(blocoFamilia && !blocoFamilia.classList.contains('hidden'));
   }
 
+  // Com cadastro aberto o celular é chave: não edita e não dispara busca
   celularInput.addEventListener('focus', function () {
+    if (painelRsvp && painelRsvp.classList.contains('rsvp-dados-abertos')) {
+      celularInput.blur();
+      return;
+    }
     entrarModoRsvp();
   });
 
   celularInput.addEventListener('input', function () {
+    if (painelRsvp && painelRsvp.classList.contains('rsvp-dados-abertos')) return;
     aplicarCelularDigitado(celularInput.value);
-    if (formularioAberto() && familiaAtual) {
-      marcarFormularioSujo();
-      return;
-    }
     agendarBuscaPorCelular(350);
   });
 
   celularInput.addEventListener('change', function () {
+    if (painelRsvp && painelRsvp.classList.contains('rsvp-dados-abertos')) return;
     aplicarCelularDigitado(celularInput.value);
-    if (formularioAberto() && familiaAtual) {
-      marcarFormularioSujo();
-      return;
-    }
     agendarBuscaPorCelular(120);
   });
 
   celularInput.addEventListener('paste', function (e) {
+    if (painelRsvp && painelRsvp.classList.contains('rsvp-dados-abertos')) {
+      e.preventDefault();
+      return;
+    }
     e.preventDefault();
     var texto = '';
     try {
@@ -828,34 +850,26 @@
       texto = '';
     }
     aplicarCelularDigitado(texto || celularInput.value);
-    if (formularioAberto() && familiaAtual) {
-      marcarFormularioSujo();
-      return;
-    }
     agendarBuscaPorCelular(80);
   });
 
   celularInput.addEventListener('blur', function () {
+    if (painelRsvp && painelRsvp.classList.contains('rsvp-dados-abertos')) return;
     aplicarCelularDigitado(celularInput.value);
     var digitos = ArturApi.normalizarCelular(celularInput.value);
-    if (formularioAberto() && familiaAtual && formularioSujo) {
-      salvarAoSairDoCampo();
-      return;
-    }
     if (digitos.length >= 10 && !familiaAtual) {
       agendarBuscaPorCelular(50);
     }
   });
 
   celularInput.addEventListener('keydown', function (e) {
+    if (painelRsvp && painelRsvp.classList.contains('rsvp-dados-abertos')) {
+      e.preventDefault();
+      return;
+    }
     if (e.key === 'Enter') {
       e.preventDefault();
       clearTimeout(debounceTimer);
-      if (formularioAberto() && familiaAtual) {
-        marcarFormularioSujo();
-        salvarAoSairDoCampo();
-        return;
-      }
       buscarPorTelefone();
     }
   });

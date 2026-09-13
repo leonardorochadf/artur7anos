@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=35" />
+  <link rel="stylesheet" href="styles.css?v=36" />
 </head>
 <body>
   <div class="mc-fx" aria-hidden="true">
@@ -129,10 +129,18 @@
       <div class="panel panel-mc" id="painel-rsvp">
         <div id="rsvp-lookup-wrap" class="rsvp-lookup-mc">
           <div class="mc-sign-title" aria-hidden="true">⚔ LEVEL UP</div>
-          <label for="celular">Celular do responsável</label>
-          <div class="phone-lookup">
-            <input id="celular" name="celular" inputmode="tel" autocomplete="tel" placeholder="(27) 99999-9999" required />
-            <button type="button" class="btn btn-grass" id="btn-buscar">Buscar</button>
+
+          <div id="rsvp-lookup-ativo">
+            <label for="celular">Celular do responsável</label>
+            <div class="phone-lookup">
+              <input id="celular" name="celular" inputmode="tel" autocomplete="tel" placeholder="(27) 99999-9999" required />
+              <button type="button" class="btn btn-grass" id="btn-buscar">Buscar</button>
+            </div>
+          </div>
+
+          <div id="rsvp-celular-fix" class="hidden">
+            <label>Celular do responsável</label>
+            <p id="celular-chave-txt" class="celular-chave-box" aria-live="polite"></p>
           </div>
         </div>
 
@@ -259,6 +267,6 @@
 
   <script src="config.js?v=8"></script>
   <script src="js/api.js?v=6"></script>
-  <script src="js/app.js?v=29"></script>
+  <script src="js/app.js?v=30"></script>
 </body>
 </html>
