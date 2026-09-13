@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=30" />
+  <link rel="stylesheet" href="styles.css?v=31" />
 </head>
 <body>
   <div class="mc-fx" aria-hidden="true">
@@ -126,16 +126,14 @@
         <h2>Confirme sua presença</h2>
         <button type="button" class="btn btn-wood hidden" id="btn-voltar-rsvp">Fechar e voltar</button>
       </div>
-      <div class="panel" id="painel-rsvp">
-        <div id="rsvp-lookup-wrap">
-          <p id="rsvp-intro">Digite o celular.<br />Depois: <strong>1 responsável</strong> e o(s) filho(s) que vão brincar.</p>
-
+      <div class="panel panel-mc" id="painel-rsvp">
+        <div id="rsvp-lookup-wrap" class="rsvp-lookup-mc">
+          <div class="mc-sign-title" aria-hidden="true">⚔ LEVEL UP</div>
           <label for="celular">Celular do responsável</label>
           <div class="phone-lookup">
             <input id="celular" name="celular" inputmode="tel" autocomplete="tel" placeholder="(27) 99999-9999" required />
-            <button type="button" class="btn btn-secondary" id="btn-buscar">Buscar</button>
+            <button type="button" class="btn btn-grass" id="btn-buscar">Buscar</button>
           </div>
-          <p id="rsvp-hint-busca" class="rsvp-hint" style="margin-top:6px">Pode colar ou escolher do teclado, até com +55 — formatamos e buscamos automaticamente.</p>
           <p id="rsvp-celular-hint" class="hidden" role="status">
             Cadastro deste número: <strong id="celular-ativo-txt"></strong>
             <span style="display:block;margin-top:4px;font-size:0.95rem;opacity:.85">Pode editar o celular ou qualquer dado — salvamos automaticamente.</span>

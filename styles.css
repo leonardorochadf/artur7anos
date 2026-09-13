@@ -720,6 +720,76 @@ th {
   white-space: nowrap;
 }
 
+.panel-mc {
+  background:
+    linear-gradient(180deg, rgba(110, 196, 255, 0.35) 0%, rgba(184, 232, 255, 0.2) 28%, rgba(90, 156, 58, 0.22) 28%, rgba(139, 90, 43, 0.18) 100%),
+    #f4f7ef;
+  border-width: 5px;
+  border-color: #3a2a1a;
+  box-shadow:
+    inset 0 0 0 3px #c4a574,
+    8px 8px 0 #1a1208;
+}
+
+.rsvp-lookup-mc {
+  position: relative;
+  padding: 14px 12px 12px;
+  border: 4px solid #1a1208;
+  background:
+    linear-gradient(180deg, #8b5a2b 0 10px, #c4a574 10px 14px, #efe2c4 14px);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+  animation: mc-lookup-in 0.45s ease-out both;
+}
+
+.rsvp-lookup-mc .mc-sign-title {
+  font-family: var(--font-display);
+  font-size: 0.48rem;
+  letter-spacing: 0.04em;
+  color: #f4e4b8;
+  text-align: center;
+  margin: 0 0 12px;
+  text-shadow:
+    2px 0 0 #1a1208,
+    -2px 0 0 #1a1208,
+    0 2px 0 #1a1208,
+    0 -2px 0 #1a1208,
+    3px 3px 0 #000;
+}
+
+.rsvp-lookup-mc > label {
+  margin-top: 0;
+  color: #1a1208;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.rsvp-lookup-mc .phone-lookup input {
+  border-color: #1a1208;
+  background: #fffdf5;
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.12);
+}
+
+.rsvp-lookup-mc .phone-lookup .btn {
+  min-height: 100%;
+  box-shadow: 3px 3px 0 #1a1208;
+}
+
+@keyframes mc-lookup-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsvp-lookup-mc {
+    animation: none;
+  }
+}
+
 .found-badge {
   margin: 14px 0 4px;
   padding: 12px;
@@ -789,8 +859,7 @@ body.modo-rsvp #painel-rsvp {
   box-shadow: 6px 6px 0 rgba(0,0,0,.28);
 }
 
-#painel-rsvp.rsvp-dados-abertos #rsvp-intro,
-#painel-rsvp.rsvp-dados-abertos #rsvp-hint-busca {
+#painel-rsvp.rsvp-dados-abertos .mc-sign-title {
   display: none;
 }
 
