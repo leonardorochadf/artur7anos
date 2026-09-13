@@ -487,7 +487,8 @@
     var payload = {
       celular: cel,
       filhos: getFilhos(),
-      adultos: getAdultos(),
+      // Outros adultos so no admin; no convite preserva o que ja existir
+      adultos: (familiaAtual && familiaAtual.adultos) ? familiaAtual.adultos.slice() : [],
       origem: 'convidado'
     };
 
@@ -509,10 +510,10 @@
       setStatus('Celular incompleto.', 'err');
       return false;
     }
-    var temNome = !!(payload.nome_pai || payload.nome_mae || payload.nome_responsavel || (payload.adultos && payload.adultos.length));
+    var temNome = !!(payload.nome_pai || payload.nome_mae || payload.nome_responsavel);
     if (!temNome) {
-      await mostrarAviso('Informe o nome do responsável ou de outro adulto.', 'Atenção');
-      setStatus('Informe o responsável ou outro adulto.', 'err');
+      await mostrarAviso('Informe o nome do responsável.', 'Atenção');
+      setStatus('Informe o nome do responsável.', 'err');
       return false;
     }
     return true;
