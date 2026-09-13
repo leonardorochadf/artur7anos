@@ -24,6 +24,8 @@ html, body {
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
+  overscroll-behavior: none;
+  -webkit-touch-callout: none;
 }
 
 #app {
@@ -461,19 +463,23 @@ h1, h2 {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: max(8px, env(safe-area-inset-bottom));
+  bottom: max(10px, env(safe-area-inset-bottom));
   z-index: 15;
-  display: flex;
+  display: none;
   justify-content: space-between;
   padding: 0 12px;
   gap: 12px;
   pointer-events: none;
 }
 
+body.is-mobile .touch:not(.hidden) {
+  display: flex !important;
+}
+
 .touch-left,
 .touch-right {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   pointer-events: auto;
 }
 
@@ -483,35 +489,85 @@ h1, h2 {
 }
 
 .touch-btn {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   border: 4px solid var(--ink);
-  background: rgba(244, 247, 239, 0.92);
+  background: rgba(244, 247, 239, 0.94);
   box-shadow: 4px 4px 0 var(--ink);
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-family: var(--font-pixel);
   color: var(--ink);
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0;
 }
 
-.touch-jump { background: #9be37a; }
+.touch-ico {
+  line-height: 1;
+  font-size: 1.35rem;
+}
+
+.touch-cap {
+  font-size: 0.38rem;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+
+.touch-jump {
+  background: #9be37a;
+  width: 78px;
+  height: 78px;
+}
+
 .touch-act {
   width: auto;
-  min-width: 110px;
+  min-width: 118px;
+  height: 56px;
   padding: 0 12px;
   font-size: 0.45rem;
   background: var(--gold);
 }
 
-.touch-btn:active {
+.touch-btn:active,
+.touch-btn.is-held {
   transform: translate(2px, 2px);
   box-shadow: 2px 2px 0 var(--ink);
 }
 
+.touch-btn.is-flash {
+  animation: touch-flash 0.7s ease-in-out infinite;
+}
+
+@keyframes touch-flash {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.25); box-shadow: 0 0 0 3px #ffd24a, 4px 4px 0 var(--ink); }
+}
+
 @media (min-width: 900px) {
-  .touch { display: none !important; }
+  body:not(.is-mobile) .touch {
+    display: none !important;
+  }
 }
 
 body.is-mobile #help-desktop { display: none; }
 body:not(.is-mobile) #help-mobile { display: none; }
+
+body.is-mobile #hud {
+  top: max(34px, calc(env(safe-area-inset-top) + 26px));
+  gap: 6px;
+}
+
+body.is-mobile .hud-chip {
+  min-height: 36px;
+  font-size: 0.36rem;
+  padding: 0 8px;
+}
+
+body.is-mobile .game-top-title {
+  font-size: 0.5rem;
+}

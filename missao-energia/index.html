@@ -34,11 +34,20 @@
 
     <div id="touch" class="touch hidden" aria-hidden="true">
       <div class="touch-left">
-        <button type="button" class="touch-btn" data-dir="left" aria-label="Esquerda">◀</button>
-        <button type="button" class="touch-btn" data-dir="right" aria-label="Direita">▶</button>
+        <button type="button" class="touch-btn" id="btn-left" data-dir="left" aria-label="Esquerda">
+          <span class="touch-ico">◀</span>
+          <span class="touch-cap">Parar</span>
+        </button>
+        <button type="button" class="touch-btn" id="btn-right" data-dir="right" aria-label="Direita">
+          <span class="touch-ico">▶</span>
+          <span class="touch-cap">Andar</span>
+        </button>
       </div>
       <div class="touch-right">
-        <button type="button" class="touch-btn touch-jump" data-action="jump" aria-label="Pular">⬆</button>
+        <button type="button" class="touch-btn touch-jump" id="btn-jump" data-action="jump" aria-label="Pular">
+          <span class="touch-ico">⬆</span>
+          <span class="touch-cap">Pular</span>
+        </button>
         <button type="button" class="touch-btn touch-act" id="btn-action" data-action="act" aria-label="Ação">Quebrar</button>
       </div>
     </div>
@@ -50,10 +59,12 @@
         <p class="lead">Passe pelos 7 levels: obstáculos, blocos, tobogã, jacarés e escada. No Level 7 te espera uma recompensa eletrizante!</p>
         <button type="button" class="btn btn-primary" id="btn-play">JOGAR</button>
         <div class="help" id="help-desktop">
-          <p><strong>PC:</strong> ← → andar · Espaço pular · clique 2× ou E para quebrar/abrir · B construir · 7 vidas</p>
+          <p><strong>PC:</strong> ← → andar · Espaço pular · clique 2× ou E para quebrar/abrir · B construir</p>
+          <p>No tobogã: escorrega sozinho · ← para parar na grama · Espaço para pular o rio</p>
         </div>
         <div class="help" id="help-mobile">
-          <p><strong>Celular:</strong> ◀ ▶ andar · ⬆ pular · toque 2× ou QUEBRAR / CONSTRUIR / ABRIR · 7 vidas</p>
+          <p><strong>Celular:</strong> ◀ ▶ andar · ⬆ pular · botão de ação (Quebrar / Construir / Abrir)</p>
+          <p>No tobogã: escorrega sozinho · segure ◀ para parar · ⬆ para pular o rio</p>
         </div>
       </div>
     </section>

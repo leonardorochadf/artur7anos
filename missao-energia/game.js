@@ -760,6 +760,7 @@
     updateActionMode();
     updateHintsByProgress();
     checkChallengeProgress();
+    updateTouchHints();
 
     particles = particles.filter((p) => {
       p.life -= dt;
@@ -1121,7 +1122,7 @@
     const tw = ctx.measureText(worldTip).width;
     const bw = Math.min(W - 24, tw + 24);
     const x = (W - bw) / 2;
-    const y = H - (isTouch ? 150 : 28);
+    const y = H - (isTouch ? 168 : 28);
     ctx.fillStyle = "rgba(26,18,8,0.72)";
     ctx.fillRect(x, y - 18, bw, 26);
     ctx.strokeStyle = "#ffd24a";
@@ -1257,23 +1258,30 @@
   });
 
   function bindHold(el, on, off) {
+    if (!el) return;
     const start = (ev) => {
       ev.preventDefault();
+      ev.stopPropagation();
+      try {
+        el.setPointerCapture(ev.pointerId);
+      } catch (_) {}
+      el.classList.add("is-held");
       on();
     };
     const end = (ev) => {
       ev.preventDefault();
+      el.classList.remove("is-held");
       off();
     };
     el.addEventListener("pointerdown", start);
     el.addEventListener("pointerup", end);
     el.addEventListener("pointercancel", end);
-    el.addEventListener("pointerleave", end);
+    el.addEventListener("lostpointercapture", end);
   }
 
-  const btnLeft = touchUI.querySelector('[data-dir="left"]');
-  const btnRight = touchUI.querySelector('[data-dir="right"]');
-  const btnJump = touchUI.querySelector('[data-action="jump"]');
+  const btnLeft = document.getElementById("btn-left") || touchUI.querySelector('[data-dir="left"]');
+  const btnRight = document.getElementById("btn-right") || touchUI.querySelector('[data-dir="right"]');
+  const btnJump = document.getElementById("btn-jump") || touchUI.querySelector('[data-action="jump"]');
 
   bindHold(btnLeft, () => (keys.left = true), () => (keys.left = false));
   bindHold(btnRight, () => (keys.right = true), () => (keys.right = false));
@@ -1285,6 +1293,19 @@
     },
     () => (keys.jump = false)
   );
+
+  function updateTouchHints() {
+    if (!isTouch || !running) {
+      btnLeft && btnLeft.classList.remove("is-flash");
+      btnJump && btnJump.classList.remove("is-flash");
+      return;
+    }
+    const onGrass = player.x >= 1320 && player.x < 1520 && !player.onSlide;
+    const needStop = player.slideCoast > 0 || onGrass;
+    const needJump = onGrass && player.onGround && player.slideCoast <= 0;
+    btnLeft && btnLeft.classList.toggle("is-flash", needStop && !keys.left);
+    btnJump && btnJump.classList.toggle("is-flash", needJump);
+  }
 
   actBtn.addEventListener("pointerdown", (e) => {
     e.preventDefault();
