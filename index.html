@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=25" />
+  <link rel="stylesheet" href="styles.css?v=27" />
 </head>
 <body>
   <div class="mc-fx" aria-hidden="true">
@@ -169,11 +169,18 @@
               <input id="nome-mae" name="nome_mae" placeholder="Nome da mãe" maxlength="80" />
             </div>
 
-            <label>Filhos que vão brincar <span style="opacity:.7;font-weight:400">(opcional)</span></label>
-            <div id="kids" class="kids"></div>
-            <button type="button" class="btn btn-wood" id="add-kid" style="margin-top:10px">+ Incluir filho(a)</button>
+            <div id="wrap-filhos" class="hidden" style="margin-top:14px">
+              <label>Filhos que vão brincar</label>
+              <div id="kids" class="kids"></div>
+            </div>
+            <button type="button" class="btn btn-wood btn-block" id="add-kid" style="margin-top:10px">+ Incluir filho(a)</button>
 
-            <p style="margin-top:14px">Meias previstas: <strong id="meias-count">0</strong></p>
+            <div id="wrap-adultos" class="hidden" style="margin-top:14px">
+              <label>Outros adultos</label>
+              <div id="adults" class="kids"></div>
+            </div>
+
+            <p id="wrap-meias" class="hidden" style="margin-top:14px">Meias previstas: <strong id="meias-count">0</strong></p>
 
             <div class="rsvp-actions">
               <button type="submit" class="btn btn-grass btn-block" id="btn-confirmar">Confirmar presença</button>
@@ -226,8 +233,10 @@
     </div>
   </div>
 
+  <div id="toast-temporario" class="toast-temporario hidden" role="status" aria-live="polite" aria-hidden="true"></div>
+
   <script src="config.js?v=7"></script>
   <script src="js/api.js?v=6"></script>
-  <script src="js/app.js?v=17"></script>
+  <script src="js/app.js?v=21"></script>
 </body>
 </html>

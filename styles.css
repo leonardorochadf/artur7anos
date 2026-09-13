@@ -180,6 +180,39 @@ body::before {
   display: none;
 }
 
+.toast-temporario {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 100001;
+  transform: translateX(-50%) translateY(12px);
+  max-width: min(92vw, 340px);
+  padding: 14px 18px;
+  background: #1f5c2e;
+  color: #f4f7ef;
+  border: 3px solid #3a2a1a;
+  box-shadow: 4px 4px 0 #1a1208;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.35;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.toast-temporario.toast-in {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.toast-temporario.toast-out {
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px);
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
 .modal-confirm-backdrop {
   position: absolute;
   inset: 0;
@@ -429,9 +462,15 @@ input:focus, textarea:focus {
 
 .kid-row {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   gap: 8px;
   align-items: center;
+}
+
+.kid-row .kid-name,
+.kid-row .adult-name {
+  min-width: 0;
+  width: 100%;
 }
 
 .suggestions {

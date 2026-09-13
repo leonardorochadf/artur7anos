@@ -7,6 +7,9 @@
   var responsavelInput = document.getElementById('nome-responsavel');
   var wrapUnico = document.getElementById('wrap-responsavel-unico');
   var wrapPais = document.getElementById('wrap-pais');
+  var wrapFilhos = document.getElementById('wrap-filhos');
+  var wrapAdultos = document.getElementById('wrap-adultos');
+  var wrapMeias = document.getElementById('wrap-meias');
   var kidsBox = document.getElementById('kids');
   var addKidBtn = document.getElementById('add-kid');
   var adultsBox = document.getElementById('adults');
@@ -81,6 +84,26 @@
       alerta: true,
       classeSim: 'btn-grass'
     });
+  }
+
+  var toastTimer = null;
+  function mostrarToastTemporario(mensagem, duracaoMs) {
+    var toast = document.getElementById('toast-temporario');
+    if (!toast) return;
+    clearTimeout(toastTimer);
+    toast.textContent = mensagem || '';
+    toast.classList.remove('hidden', 'toast-out');
+    toast.classList.add('toast-in');
+    toast.setAttribute('aria-hidden', 'false');
+    toastTimer = setTimeout(function () {
+      toast.classList.remove('toast-in');
+      toast.classList.add('toast-out');
+      toastTimer = setTimeout(function () {
+        toast.classList.add('hidden');
+        toast.classList.remove('toast-out');
+        toast.setAttribute('aria-hidden', 'true');
+      }, 280);
+    }, typeof duracaoMs === 'number' ? duracaoMs : 2800);
   }
 
   function setProgressoVisual(pct) {
@@ -218,10 +241,8 @@
     input.value = value || '';
     row.querySelector('.remove-kid').addEventListener('click', function () {
       row.remove();
-      if (!kidsBox.querySelector('.kid-row')) {
-        kidsBox.appendChild(kidInput(''));
-      }
       updateMeias();
+      atualizarVisibilidadeListas();
     });
     input.addEventListener('input', updateMeias);
     input.addEventListener('keydown', async function (e) {
@@ -257,9 +278,7 @@
     input.value = value || '';
     row.querySelector('.remove-adult').addEventListener('click', function () {
       row.remove();
-      if (adultsBox && !adultsBox.querySelector('.kid-row')) {
-        adultsBox.appendChild(adultInput(''));
-      }
+      atualizarVisibilidadeListas();
     });
     return row;
   }
@@ -271,30 +290,68 @@
     }).filter(Boolean);
   }
 
+  function normalizarListaNomes(lista) {
+    if (!lista) return [];
+    if (typeof lista === 'string') {
+      return lista.split('|').map(function (s) { return s.trim(); }).filter(Boolean);
+    }
+    if (!Array.isArray(lista)) return [];
+    var out = [];
+    lista.forEach(function (item) {
+      String(item || '').split('|').forEach(function (s) {
+        s = s.trim();
+        if (s) out.push(s);
+      });
+    });
+    return out;
+  }
+
+  function atualizarVisibilidadeListas() {
+    var linhasFilhos = kidsBox ? kidsBox.querySelectorAll('.kid-row').length : 0;
+    var linhasAdultos = adultsBox ? adultsBox.querySelectorAll('.kid-row').length : 0;
+    var qtdFilhos = getFilhos().length;
+    var temFilhos = linhasFilhos > 0;
+    var temAdultos = linhasAdultos > 0;
+
+    if (wrapFilhos) wrapFilhos.classList.toggle('hidden', !temFilhos);
+    if (wrapAdultos) wrapAdultos.classList.toggle('hidden', !temAdultos);
+    if (wrapMeias) wrapMeias.classList.toggle('hidden', qtdFilhos === 0);
+
+    // Sempre pode incluir filho (novo cadastro ou família sem filhos ainda)
+    if (addKidBtn) addKidBtn.classList.remove('hidden');
+  }
+
   function setAdultos(list) {
     if (!adultsBox) return;
     adultsBox.innerHTML = '';
-    (list && list.length ? list : ['']).forEach(function (nome) {
+    var nomes = normalizarListaNomes(list);
+    nomes.forEach(function (nome) {
       adultsBox.appendChild(adultInput(nome));
     });
+    atualizarVisibilidadeListas();
   }
 
   function getFilhos() {
+    if (!kidsBox) return [];
     return Array.prototype.map.call(kidsBox.querySelectorAll('.kid-name'), function (el) {
       return el.value.trim();
     }).filter(Boolean);
   }
 
   function setFilhos(list) {
+    if (!kidsBox) return;
     kidsBox.innerHTML = '';
-    (list && list.length ? list : ['']).forEach(function (nome) {
+    var nomes = normalizarListaNomes(list);
+    nomes.forEach(function (nome) {
       kidsBox.appendChild(kidInput(nome));
     });
     updateMeias();
+    atualizarVisibilidadeListas();
   }
 
   function updateMeias() {
-    meiasEl.textContent = String(getFilhos().length);
+    if (meiasEl) meiasEl.textContent = String(getFilhos().length);
+    if (wrapMeias) wrapMeias.classList.toggle('hidden', getFilhos().length === 0);
   }
 
   var btnVoltarRsvp = document.getElementById('btn-voltar-rsvp');
@@ -338,7 +395,16 @@
     btnConfirmar.removeAttribute('aria-pressed');
     btnNaoVai.removeAttribute('aria-pressed');
 
-    var st = encontrado && f ? (f.status || 'pre_cadastro') : '';
+    // Primeiro cadastro: só "Confirmar presença" (sem "Não vou poder ir")
+    if (!encontrado) {
+      btnNaoVai.classList.add('hidden');
+      btnConfirmar.classList.add('btn-pulse');
+      btnConfirmar.setAttribute('aria-pressed', 'false');
+      return;
+    }
+
+    btnNaoVai.classList.remove('hidden');
+    var st = f ? (f.status || 'pre_cadastro') : '';
 
     if (st === 'confirmado' || st === 'presente') {
       btnConfirmar.classList.add('btn-pressed', 'btn-pressed-ok');
@@ -354,7 +420,7 @@
       return;
     }
 
-    // Novo cadastro ou ainda não confirmado: pisca o Confirmar presença
+    // Já cadastrado, ainda não confirmado: pisca o Confirmar presença
     btnConfirmar.classList.add('btn-pulse');
     btnConfirmar.setAttribute('aria-pressed', 'false');
     btnNaoVai.setAttribute('aria-pressed', 'false');
@@ -399,12 +465,17 @@
       if (responsavelInput) responsavelInput.value = '';
       setFilhos(f.filhos || []);
       setAdultos(f.adultos || []);
+      if (blocoFamilia && blocoFamilia.scrollIntoView) {
+        setTimeout(function () {
+          blocoFamilia.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+      }
     } else {
       if (paiInput) paiInput.value = '';
       if (maeInput) maeInput.value = '';
       if (responsavelInput) responsavelInput.value = '';
-      setFilhos(['']);
-      setAdultos(['']);
+      setFilhos([]);
+      setAdultos([]);
     }
     montarBadgeStatus(f, encontrado);
   }
@@ -439,15 +510,26 @@
       var data = await ArturApi.buscar('', celular);
       var results = data.resultados || [];
       var exact = results.find(function (r) { return familiaTemCelular(r, celular); });
+      // Busca por celular: se a API trouxe resultado, usa o primeiro
+      if (!exact && celular && results.length === 1) exact = results[0];
 
       await fecharProgresso();
 
       if (exact) {
         abrirFormulario(exact, true);
-        setStatus('Família carregada. Confirme, ajuste ou informe que não vai.', 'ok');
+        var nomes = [];
+        if (exact.nome_pai) nomes.push(exact.nome_pai);
+        if (exact.nome_mae) nomes.push(exact.nome_mae);
+        var filhos = normalizarListaNomes(exact.filhos);
+        var adultos = normalizarListaNomes(exact.adultos);
+        var resumo = (nomes.length ? nomes.join(' / ') : 'Família') +
+          (filhos.length ? ' · Filhos: ' + filhos.join(', ') : '') +
+          (adultos.length ? ' · Adultos: ' + adultos.join(', ') : '');
+        setStatus('Cadastro encontrado: ' + resumo, 'ok');
       } else {
         abrirFormulario(null, false);
-        setStatus('Novo telefone: cadastre 1 responsável e os filhos, depois confirme.', 'warn');
+        setStatus('Novo telefone: preencha o cadastro e confirme a presença.', 'warn');
+        mostrarToastTemporario('Número novo! Faça o seu cadastro.', 3000);
       }
     } catch (err) {
       await fecharProgresso();
@@ -487,8 +569,7 @@
     var payload = {
       celular: cel,
       filhos: getFilhos(),
-      // Outros adultos so no admin; no convite preserva o que ja existir
-      adultos: (familiaAtual && familiaAtual.adultos) ? familiaAtual.adultos.slice() : [],
+      adultos: encontrado ? getAdultos() : [],
       origem: 'convidado'
     };
 
@@ -583,17 +664,11 @@
   }
 
   addKidBtn.addEventListener('click', function () {
+    if (!kidsBox) return;
     kidsBox.appendChild(kidInput(''));
     updateMeias();
+    atualizarVisibilidadeListas();
   });
-
-  if (addAdultBtn && adultsBox) {
-    addAdultBtn.addEventListener('click', function () {
-      adultsBox.appendChild(adultInput(''));
-    });
-  }
-
-  setAdultos(['']);
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
