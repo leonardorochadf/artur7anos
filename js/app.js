@@ -621,18 +621,10 @@
 
       if (exact) {
         abrirFormulario(exact, true);
-        var nomes = [];
-        if (exact.nome_pai) nomes.push(exact.nome_pai);
-        if (exact.nome_mae) nomes.push(exact.nome_mae);
-        var filhos = normalizarListaNomes(exact.filhos);
-        var adultos = normalizarListaNomes(exact.adultos);
-        var resumo = (nomes.length ? nomes.join(' / ') : 'Família') +
-          (filhos.length ? ' · Filhos: ' + filhos.join(', ') : '') +
-          (adultos.length ? ' · Adultos: ' + adultos.join(', ') : '');
-        setStatus('Cadastro encontrado: ' + resumo, 'ok');
+        setStatus('', '');
       } else {
         abrirFormulario(null, false);
-        setStatus('Novo telefone: preencha o cadastro e confirme a presença.', 'warn');
+        setStatus('', '');
         mostrarToastTemporario('Número novo! Faça o seu cadastro.', 3000);
       }
     } catch (err) {
