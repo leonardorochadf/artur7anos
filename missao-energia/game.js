@@ -339,8 +339,10 @@
   function moveAndCollide(dt) {
     player.vy += GRAVITY * dt;
     if (player.onSlide) {
-      player.vx = Math.max(player.vx, 320);
-      player.vy = Math.min(player.vy, 380);
+      // tobogã: desce rápido e não dá para se segurar
+      player.vx = 460;
+      player.vy = Math.max(player.vy, 420);
+      player.facing = 1;
     }
     player.x += player.vx * dt;
 
@@ -349,9 +351,11 @@
 
     for (const s of solidsNow) {
       if (rectsOverlap(p, s)) {
+        // no tobogã ignora paredes laterais dos degraus
+        if (player.onSlide && s.type === "slide") continue;
         if (player.vx > 0) player.x = s.x - PLAYER_W;
         else if (player.vx < 0) player.x = s.x + s.w;
-        player.vx = 0;
+        if (!(player.onSlide && s.type === "slide")) player.vx = player.onSlide ? 460 : 0;
         p.x = player.x;
       }
     }
@@ -581,18 +585,22 @@
     let move = 0;
     if (keys.left) move -= 1;
     if (keys.right) move += 1;
-    if (!player.onSlide) player.vx = move * MOVE_SPEED;
-    else if (move < 0) player.vx = Math.max(180, player.vx + move * 40);
 
-    if (move) {
-      player.facing = move > 0 ? 1 : -1;
-      player.walkPhase += dt * 10;
+    if (player.onSlide) {
+      // no tobogã o controle some: vai embora pra frente
+      player.vx = 460;
+      player.facing = 1;
+    } else {
+      player.vx = move * MOVE_SPEED;
+      if (move) {
+        player.facing = move > 0 ? 1 : -1;
+        player.walkPhase += dt * 10;
+      }
     }
 
-    if (keys.jumpPressed && player.onGround) {
+    if (keys.jumpPressed && player.onGround && !player.onSlide) {
       player.vy = JUMP_VEL;
       player.onGround = false;
-      player.onSlide = false;
       sfxJump();
     }
     keys.jumpPressed = false;
@@ -682,16 +690,25 @@
 
   function drawSign(d) {
     const x = d.x - cameraX;
+    const label = d.text || "TOBOGÃ";
+    ctx.font = '9px "Press Start 2P", monospace';
+    const tw = ctx.measureText(label).width;
+    const boxW = Math.max(96, Math.ceil(tw + 20));
+    const boxH = 32;
+    const boxX = x - (boxW - 42) / 2;
+    const boxY = d.y - 82;
+
     ctx.fillStyle = "#6b4226";
     ctx.fillRect(x + 18, d.y - 50, 6, 50);
     ctx.fillStyle = "#f0d9a0";
-    ctx.fillRect(x, d.y - 78, 42, 28);
+    ctx.fillRect(boxX, boxY, boxW, boxH);
     ctx.strokeStyle = "#1a1208";
     ctx.lineWidth = 2;
-    ctx.strokeRect(x, d.y - 78, 42, 28);
+    ctx.strokeRect(boxX, boxY, boxW, boxH);
     ctx.fillStyle = "#1a1208";
-    ctx.font = '8px "Press Start 2P", monospace';
-    ctx.fillText(d.text, x + 4, d.y - 58);
+    ctx.textAlign = "center";
+    ctx.fillText(label, boxX + boxW / 2, boxY + 21);
+    ctx.textAlign = "left";
   }
 
   function drawGroundTile(s) {
