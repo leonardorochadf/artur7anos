@@ -1137,7 +1137,6 @@ th {
 body.modo-rsvp .mc-fx,
 body.modo-rsvp .hero,
 body.modo-rsvp .hero-actions,
-body.modo-rsvp #missao-energia,
 body.modo-rsvp #detalhes,
 body.modo-rsvp #termo,
 body.modo-rsvp .footer {
@@ -2030,6 +2029,28 @@ button.dash-click:active {
   color: inherit;
 }
 
+.gift-box {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto 16px;
+  padding: 16px 14px;
+  text-decoration: none;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: clamp(0.52rem, 2.8vw, 0.62rem);
+  line-height: 1.45;
+  color: #1a1208;
+  background: #f1c232;
+  border: 4px solid #000;
+  box-shadow: 4px 4px 0 #000;
+}
+
+.gift-box:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 #000;
+}
+
 @keyframes rise {
   from {
     opacity: 0;
@@ -2352,23 +2373,6 @@ button.dash-click:active {
     transform: translateY(-5px) scale(1.03);
     box-shadow: 6px 8px 0 #000;
   }
-}
-
-.missao-call {
-  padding-top: 4px;
-  padding-bottom: 8px;
-}
-
-.missao-cta-row {
-  justify-content: stretch;
-}
-
-.missao-cta-row .btn {
-  flex: 1;
-}
-
-.btn-gold {
-  background: #f1c232;
 }
 
 @media (prefers-reduced-motion: reduce) {
