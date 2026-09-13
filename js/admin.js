@@ -7,6 +7,8 @@
   var maeInput = document.getElementById('nome-mae');
   var kidsBox = document.getElementById('kids');
   var addKidBtn = document.getElementById('add-kid');
+  var adultsBox = document.getElementById('adults');
+  var addAdultBtn = document.getElementById('add-adult');
   var statusEl = document.getElementById('status');
   var formStatusEl = document.getElementById('form-status');
   var loginStatusEl = document.getElementById('login-status');
@@ -340,6 +342,49 @@
     return f.nome_pai || f.nome_mae || f.nome_responsavel || '';
   }
 
+  function adultInput(value, checked) {
+    var row = document.createElement('div');
+    row.className = 'kid-row';
+    row.innerHTML =
+      '<input type="checkbox" class="presenca-check adult-check" />' +
+      '<input type="text" class="adult-name" placeholder="Nome do adulto" maxlength="60" />' +
+      '<button type="button" class="btn btn-danger remove-adult">X</button>';
+    var input = row.querySelector('.adult-name');
+    var check = row.querySelector('.adult-check');
+    input.value = value || '';
+    check.checked = !!checked;
+    row.querySelector('.remove-adult').addEventListener('click', function () {
+      if (adultsBox.querySelectorAll('.kid-row').length === 1) {
+        input.value = '';
+        check.checked = false;
+        return;
+      }
+      row.remove();
+    });
+    check.addEventListener('change', function () {
+      onCheckPessoaFormulario(check);
+    });
+    return row;
+  }
+
+  function getAdultos() {
+    if (!adultsBox) return [];
+    return Array.prototype.map.call(adultsBox.querySelectorAll('.adult-name'), function (el) {
+      return el.value.trim();
+    }).filter(Boolean);
+  }
+
+  function setAdultos(list, checksMap, celular) {
+    if (!adultsBox) return;
+    var map = checksMap || getChecksLocais();
+    var cel = celular || ArturApi.onlyDigits(celularInput.value);
+    adultsBox.innerHTML = '';
+    (list && list.length ? list : ['']).forEach(function (n) {
+      var key = cel + '|adulto|' + n;
+      adultsBox.appendChild(adultInput(n, !!map[key]));
+    });
+  }
+
   function kidInput(value, checked) {
     var row = document.createElement('div');
     row.className = 'kid-row';
@@ -423,13 +468,14 @@
       key = cel + '|mae|' + mae;
     } else {
       var row = box.closest('.kid-row');
-      var nome = row ? row.querySelector('.kid-name').value.trim() : '';
+      var nomeKid = row ? (row.querySelector('.kid-name') || row.querySelector('.adult-name')) : null;
+      var nome = nomeKid ? nomeKid.value.trim() : '';
       if (!nome) {
         box.checked = false;
-        alert('Digite o nome da criança.');
+        alert(box.classList.contains('adult-check') ? 'Digite o nome do adulto.' : 'Digite o nome da criança.');
         return;
       }
-      key = cel + '|crianca|' + nome;
+      key = cel + (box.classList.contains('adult-check') ? '|adulto|' : '|crianca|') + nome;
     }
 
     setCheckLocal(key, box.checked);
@@ -440,6 +486,11 @@
     kidsBox.querySelectorAll('.kid-check').forEach(function (b) {
       if (b.checked) aindaTem = true;
     });
+    if (adultsBox) {
+      adultsBox.querySelectorAll('.adult-check').forEach(function (b) {
+        if (b.checked) aindaTem = true;
+      });
+    }
 
     try {
       if (aindaTem) await ArturApi.marcarPresente(senha(), cel);
@@ -474,6 +525,7 @@
     var pai = paiInput.value.trim();
     var mae = maeInput.value.trim();
     var filhos = getFilhos();
+    var adultos = getAdultos();
     var faltando = [];
 
     if (celular && (celular.length < 10 || celular.length > 11)) {
@@ -533,7 +585,8 @@
         celular_chave: editandoCelularKey || '',
         nome_pai: pai,
         nome_mae: mae,
-        filhos: filhos
+        filhos: filhos,
+        adultos: adultos
       });
       await fecharProgresso();
       var msg = (data && data.msg) || (editando ? 'Cadastro atualizado.' : 'Pré-cadastro criado.');
@@ -549,6 +602,7 @@
       if (checkPai) checkPai.checked = false;
       if (checkMae) checkMae.checked = false;
       setFilhos(['']);
+      setAdultos(['']);
       fecharCadastro();
       await refresh(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -617,6 +671,7 @@
       var nAdultos = 0;
       if (f.nome_pai) nAdultos += 1;
       if (f.nome_mae) nAdultos += 1;
+      nAdultos += (f.adultos && f.adultos.length) ? f.adultos.length : 0;
       var nCriancas = (f.filhos && f.filhos.length) ? f.filhos.length : 0;
       var totalPessoas = nAdultos + nCriancas;
 
@@ -750,7 +805,7 @@
               '<td>' + esc(formatarDataHora(f.criado_em)) + '</td>' +
               '<td>' + esc(exibirCelulares(f)) + '</td>' +
               '<td>' + esc(nomeFamilia(f)) + '</td>' +
-              '<td>' + esc((f.filhos || []).join(', ')) + '</td>' +
+              '<td>' + esc((f.adultos || []).concat(f.filhos || []).join(', ')) + '</td>' +
               '<td>' + esc(f.status || '') + '</td>' +
               '<td>' + esc(formatarDataHora(f.ultimo_acesso_em)) + '</td>' +
             '</tr>'
@@ -789,7 +844,7 @@
     var pessoas = [];
     if (f.nome_pai) {
       pessoas.push({
-        papel: 'Responsável',
+        papel: 'Pai',
         tipo: 'resp',
         nome: f.nome_pai,
         key: (f.celular || '') + '|pai|' + f.nome_pai
@@ -797,12 +852,20 @@
     }
     if (f.nome_mae) {
       pessoas.push({
-        papel: 'Responsável',
+        papel: 'Mãe',
         tipo: 'resp',
         nome: f.nome_mae,
         key: (f.celular || '') + '|mae|' + f.nome_mae
       });
     }
+    ((f.adultos || [])).forEach(function (adulto) {
+      pessoas.push({
+        papel: 'Adulto',
+        tipo: 'adulto',
+        nome: adulto,
+        key: (f.celular || '') + '|adulto|' + adulto
+      });
+    });
     ((f.filhos || []).slice(0, 5)).forEach(function (kid) {
       pessoas.push({
         papel: 'Criança',
@@ -1006,6 +1069,7 @@
       var nA = 0;
       if (f.nome_pai) nA += 1;
       if (f.nome_mae) nA += 1;
+      nA += (f.adultos && f.adultos.length) ? f.adultos.length : 0;
       var nC = (f.filhos || []).length;
       var total = nA + nC;
       adultos += nA;
@@ -1311,7 +1375,8 @@
         '<th class="num">Qtd</th>' +
         '<th>Celular</th>' +
         '<th>☐ Pai</th>' +
-        '<th>☐ Mãe</th>';
+        '<th>☐ Mãe</th>' +
+        '<th>☐ Outros adultos</th>';
     for (var h = 1; h <= colsFilhos; h++) {
       headCols += '<th>☐ Filho ' + h + '</th>';
     }
@@ -1319,17 +1384,37 @@
     tabelaHeadEl.innerHTML = headCols;
 
     if (!ordenadas.length) {
-      tabelaBodyEl.innerHTML = '<tr><td colspan="' + (8 + colsFilhos) + '">Nenhum cadastro.</td></tr>';
+      tabelaBodyEl.innerHTML = '<tr><td colspan="' + (9 + colsFilhos) + '">Nenhum cadastro.</td></tr>';
     }
 
     var linhasHtml = ordenadas.map(function (f, i) {
-      var nA = (f.nome_pai ? 1 : 0) + (f.nome_mae ? 1 : 0);
+      var nA = (f.nome_pai ? 1 : 0) + (f.nome_mae ? 1 : 0) + ((f.adultos || []).length);
       var nC = (f.filhos || []).length;
       var qtd = nA + nC;
       var kids = f.filhos || [];
+      var adultos = f.adultos || [];
       var cols = '';
       for (var k = 0; k < colsFilhos; k++) {
         cols += pessoaCelulaHtml(f, kids[k] || '', 'crianca', checks);
+      }
+      var adultosHtml = '';
+      if (!adultos.length) {
+        adultosHtml = '<td class="pessoa-vazia"></td>';
+      } else {
+        adultosHtml =
+          '<td class="pessoa-cell">' +
+          adultos.map(function (nome) {
+            var key = (f.celular || '') + '|adulto|' + nome;
+            var familiaOk = f.status === 'confirmado' || f.status === 'presente';
+            var marcado = familiaOk || !!checks[key];
+            return (
+              '<label class="pessoa-check-linha">' +
+                '<input type="checkbox" class="presenca-check tabela-check" data-key="' + esc(key) + '" data-cel="' + esc(f.celular) + '"' + (marcado ? ' checked' : '') + ' />' +
+                '<span>' + esc(nome) + '</span>' +
+              '</label>'
+            );
+          }).join('') +
+          '</td>';
       }
       return (
         '<tr class="' + esc(f.status) + '">' +
@@ -1338,6 +1423,7 @@
           '<td>' + esc(exibirCelulares(f)) + '</td>' +
           pessoaCelulaHtml(f, f.nome_pai || '', 'pai', checks) +
           pessoaCelulaHtml(f, f.nome_mae || '', 'mae', checks) +
+          adultosHtml +
           cols +
           '<td>' + esc(f.status || '') + '</td>' +
           '<td>' + esc(formatarDataHora(f.criado_em)) + '</td>' +
@@ -1349,7 +1435,7 @@
     var inicioBranco = ordenadas.length + 1;
     for (var b = 0; b < 20; b++) {
       var colsVazias = '';
-      for (var c = 0; c < colsFilhos + 2; c++) {
+      for (var c = 0; c < colsFilhos + 3; c++) {
         colsVazias += '<td class="linha-branco"><span class="box-branco">☐</span></td>';
       }
       linhasHtml +=
@@ -1420,12 +1506,15 @@
     }
 
     var body = ordenadas.map(function (f, i) {
-      var nA = (f.nome_pai ? 1 : 0) + (f.nome_mae ? 1 : 0);
+      var nA = (f.nome_pai ? 1 : 0) + (f.nome_mae ? 1 : 0) + ((f.adultos || []).length);
       var kids = f.filhos || [];
       var nC = kids.length;
       var pessoasHtml =
         linhaPessoaPdf('Pai', f.nome_pai || '') +
         linhaPessoaPdf('Mãe', f.nome_mae || '') +
+        (f.adultos || []).map(function (nome) {
+          return linhaPessoaPdf('Adulto', nome);
+        }).join('') +
         kids.map(function (nome, idx) {
           return linhaPessoaPdf('Filho ' + (idx + 1), nome);
         }).join('');
@@ -1638,7 +1727,7 @@
         var phones = celularesDaFamilia(f).join(' ');
         if (phones.indexOf(filtroDigitos) !== -1) return true;
       }
-      var blob = [f.nome_pai, f.nome_mae, f.nome_responsavel, (f.filhos || []).join(' '), f.status].join(' ').toLowerCase();
+      var blob = [f.nome_pai, f.nome_mae, f.nome_responsavel, (f.adultos || []).join(' '), (f.filhos || []).join(' '), f.status].join(' ').toLowerCase();
       return blob.indexOf(filtro) !== -1;
     });
 
@@ -1761,6 +1850,7 @@
             paiInput.value = familia.nome_pai || '';
             maeInput.value = familia.nome_mae || '';
             setFilhos(familia.filhos, getChecksLocais(), chaveFamilia(familia));
+            setAdultos(familia.adultos, getChecksLocais(), chaveFamilia(familia));
             syncChecksFormulario(familia);
             abrirCadastro();
             setStatus('Cadastro carregado. Use os checks de presença e salve se alterar dados.', 'warn');
@@ -1842,6 +1932,11 @@
   addKidBtn.addEventListener('click', function () {
     kidsBox.appendChild(kidInput(''));
   });
+  if (addAdultBtn && adultsBox) {
+    addAdultBtn.addEventListener('click', function () {
+      adultsBox.appendChild(adultInput(''));
+    });
+  }
 
   // Enter em campos de texto do formulário: pergunta se quer salvar
   form.addEventListener('keydown', function (e) {
@@ -1918,4 +2013,5 @@
   });
 
   setFilhos(['']);
+  setAdultos(['']);
 })();

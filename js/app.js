@@ -9,6 +9,8 @@
   var wrapPais = document.getElementById('wrap-pais');
   var kidsBox = document.getElementById('kids');
   var addKidBtn = document.getElementById('add-kid');
+  var adultsBox = document.getElementById('adults');
+  var addAdultBtn = document.getElementById('add-adult');
   var btnBuscar = document.getElementById('btn-buscar');
   var btnConfirmar = document.getElementById('btn-confirmar');
   var btnNaoVai = document.getElementById('btn-nao-vai');
@@ -245,6 +247,38 @@
     return row;
   }
 
+  function adultInput(value) {
+    var row = document.createElement('div');
+    row.className = 'kid-row';
+    row.innerHTML =
+      '<input type="text" class="adult-name" placeholder="Nome do adulto" maxlength="60" />' +
+      '<button type="button" class="btn btn-danger remove-adult" aria-label="Remover">X</button>';
+    var input = row.querySelector('input');
+    input.value = value || '';
+    row.querySelector('.remove-adult').addEventListener('click', function () {
+      row.remove();
+      if (adultsBox && !adultsBox.querySelector('.kid-row')) {
+        adultsBox.appendChild(adultInput(''));
+      }
+    });
+    return row;
+  }
+
+  function getAdultos() {
+    if (!adultsBox) return [];
+    return Array.prototype.map.call(adultsBox.querySelectorAll('.adult-name'), function (el) {
+      return el.value.trim();
+    }).filter(Boolean);
+  }
+
+  function setAdultos(list) {
+    if (!adultsBox) return;
+    adultsBox.innerHTML = '';
+    (list && list.length ? list : ['']).forEach(function (nome) {
+      adultsBox.appendChild(adultInput(nome));
+    });
+  }
+
   function getFilhos() {
     return Array.prototype.map.call(kidsBox.querySelectorAll('.kid-name'), function (el) {
       return el.value.trim();
@@ -364,11 +398,13 @@
       if (maeInput) maeInput.value = f.nome_mae || '';
       if (responsavelInput) responsavelInput.value = '';
       setFilhos(f.filhos || []);
+      setAdultos(f.adultos || []);
     } else {
       if (paiInput) paiInput.value = '';
       if (maeInput) maeInput.value = '';
       if (responsavelInput) responsavelInput.value = '';
       setFilhos(['']);
+      setAdultos(['']);
     }
     montarBadgeStatus(f, encontrado);
   }
@@ -426,6 +462,7 @@
     var payload = {
       celular: ArturApi.onlyDigits(celularInput.value),
       filhos: getFilhos(),
+      adultos: getAdultos(),
       origem: 'convidado'
     };
 
@@ -509,6 +546,14 @@
     kidsBox.appendChild(kidInput(''));
     updateMeias();
   });
+
+  if (addAdultBtn && adultsBox) {
+    addAdultBtn.addEventListener('click', function () {
+      adultsBox.appendChild(adultInput(''));
+    });
+  }
+
+  setAdultos(['']);
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();

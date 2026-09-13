@@ -1,17 +1,18 @@
 /**
  * Backend: Google Apps Script + planilha do Artur 7 anos
- * Versao: v8-multi-fone-acesso
+ * Versao: v8.2-outros-adultos
  *
  * - Varios celulares por familia (coluna celular: "fone1 | fone2")
  * - ultimo_acesso_em atualizado a cada busca/confirmacao
  * - Aba Acessos para grafico dia x acessos
+ * - outros adultos alem de pai/mae (coluna adultos)
  */
 
 var ABA = 'Familias';
 var ABA_ACESSOS = 'Acessos';
 var ADMIN_SENHA_FIXA = '19122019@';
 var SHEET_ID_FIXO = '1ZFZ_UjSaF4BXecf0TizKXLt8EeCpErpPwmqWQJBGyok';
-var VERSAO = 'v8.1-acessos-lista';
+var VERSAO = 'v8.2-outros-adultos';
 
 var CABECALHO = [
   'celular',
@@ -25,7 +26,8 @@ var CABECALHO = [
   'criado_em',
   'atualizado_em',
   'observacao',
-  'ultimo_acesso_em'
+  'ultimo_acesso_em',
+  'adultos'
 ];
 
 var CABECALHO_ACESSOS = [
@@ -235,7 +237,8 @@ function salvarFamilia(body, isPre) {
     return { ok: false, erro: 'Informe o nome do responsável (pai e/ou mãe).' };
   }
 
-  var filhos = normalizarFilhos(body.filhos);
+  var filhos = normalizarListaNomes(body.filhos);
+  var adultos = normalizarListaNomes(body.adultos);
   var pediuNaoVai = String(body.status || '').toLowerCase() === 'nao_vai';
 
   if (!pediuNaoVai && !filhos.length) {
@@ -259,6 +262,7 @@ function salvarFamilia(body, isPre) {
     if (isPre && (atual.status === 'confirmado' || atual.status === 'nao_vai' || atual.status === 'presente')) {
       status = atual.status;
       if (!filhos.length) filhos = atual.filhos;
+      if (!adultos.length && atual.adultos) adultos = atual.adultos;
       qtdMeias = status === 'nao_vai' ? 0 : filhos.length;
     }
     if (!isPre) {
@@ -268,6 +272,9 @@ function salvarFamilia(body, isPre) {
         : 'convidado';
       if (pediuNaoVai && !filhos.length) {
         filhos = atual.filhos;
+      }
+      if (pediuNaoVai && !adultos.length && atual.adultos) {
+        adultos = atual.adultos;
       }
       qtdMeias = pediuNaoVai ? 0 : filhos.length;
     }
@@ -284,7 +291,8 @@ function salvarFamilia(body, isPre) {
       atual.criado_em || agora,
       agora,
       observacao || atual.observacao || '',
-      ultimoAcesso
+      ultimoAcesso,
+      adultos.join(' | ')
     ]]);
     gravarCelularNaLinha(sheet, rowIndex, celularGravar);
 
@@ -312,7 +320,8 @@ function salvarFamilia(body, isPre) {
     agora,
     agora,
     observacao,
-    isPre ? '' : agora
+    isPre ? '' : agora,
+    adultos.join(' | ')
   ]);
   var novaLinha = sheet.getLastRow();
   gravarCelularNaLinha(sheet, novaLinha, celularGravar);
@@ -329,7 +338,7 @@ function salvarFamilia(body, isPre) {
   };
 }
 
-function familiaObj(celularRaw, pai, mae, filhos, status, origem, qtdMeias, presente, criado, atualizado, obs, ultimoAcesso) {
+function familiaObj(celularRaw, pai, mae, filhos, status, origem, qtdMeias, presente, criado, atualizado, obs, ultimoAcesso, adultos) {
   var celulares = listaCelulares(celularRaw);
   return {
     celular: celulares[0] || '',
@@ -338,7 +347,8 @@ function familiaObj(celularRaw, pai, mae, filhos, status, origem, qtdMeias, pres
     nome_pai: pai,
     nome_mae: mae,
     nome_responsavel: nomeExibicao(pai, mae),
-    filhos: filhos,
+    filhos: filhos || [],
+    adultos: adultos || [],
     status: status,
     origem: origem,
     qtd_meias: qtdMeias,
@@ -421,6 +431,7 @@ function buscar(q, celularRaw) {
         familia.nome_mae + ' ' +
         familia.nome_responsavel + ' ' +
         familia.filhos.join(' ') + ' ' +
+        (familia.adultos || []).join(' ') + ' ' +
         familia.celulares.join(' ')
       ).toLowerCase();
       if (blob.indexOf(termo) !== -1) {
@@ -569,6 +580,7 @@ function getSheet() {
   }
   migrarCabecalhoSePreciso(sheet);
   garantirColunaUltimoAcesso(sheet);
+  garantirColunaAdultos(sheet);
   return sheet;
 }
 
@@ -579,6 +591,15 @@ function garantirColunaUltimoAcesso(sheet) {
   });
   if (header.indexOf('ultimo_acesso_em') >= 0) return;
   sheet.getRange(1, header.length + 1).setValue('ultimo_acesso_em');
+}
+
+function garantirColunaAdultos(sheet) {
+  var lastCol = Math.max(sheet.getLastColumn(), 1);
+  var header = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) {
+    return String(h || '').trim();
+  });
+  if (header.indexOf('adultos') >= 0) return;
+  sheet.getRange(1, header.length + 1).setValue('adultos');
 }
 
 function migrarCabecalhoSePreciso(sheet) {
@@ -670,7 +691,8 @@ function mapRow(row) {
       formatarDataCampo(row[8]),
       formatarDataCampo(row[9]),
       String(row[10] || ''),
-      formatarDataCampo(row[11])
+      formatarDataCampo(row[11]),
+      String(row[12] || '').split('|').map(function (s) { return s.trim(); }).filter(Boolean)
     );
   }
 
@@ -688,7 +710,8 @@ function mapRow(row) {
     formatarDataCampo(row[7]),
     formatarDataCampo(row[8]),
     String(row[9] || ''),
-    ''
+    '',
+    []
   );
 }
 
@@ -743,15 +766,19 @@ function gravarCelularNaLinha(sheet, rowIndex, celular) {
   cell.setValue(String(celular || ''));
 }
 
-function normalizarFilhos(filhos) {
-  if (!filhos) return [];
-  if (typeof filhos === 'string') {
-    return filhos.split(/[|,;]/).map(function (s) { return limparTexto(s); }).filter(Boolean);
+function normalizarListaNomes(lista) {
+  if (!lista) return [];
+  if (typeof lista === 'string') {
+    return lista.split(/[|,;]/).map(function (s) { return limparTexto(s); }).filter(Boolean);
   }
-  if (Object.prototype.toString.call(filhos) === '[object Array]') {
-    return filhos.map(function (s) { return limparTexto(s); }).filter(Boolean);
+  if (Object.prototype.toString.call(lista) === '[object Array]') {
+    return lista.map(function (s) { return limparTexto(s); }).filter(Boolean);
   }
   return [];
+}
+
+function normalizarFilhos(filhos) {
+  return normalizarListaNomes(filhos);
 }
 
 function limparTexto(v) {

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=24" />
+  <link rel="stylesheet" href="styles.css?v=25" />
 </head>
 <body>
   <div class="app">
@@ -101,6 +101,11 @@
             <div id="kids" class="kids"></div>
             <button type="button" class="btn btn-wood" id="add-kid" style="margin-top:10px">+ Filho(a)</button>
 
+            <label style="margin-top:14px">Outros adultos (opcional)</label>
+            <p class="rsvp-hint" style="margin-top:4px">Ex.: avós, tios, babá — além de pai e mãe.</p>
+            <div id="adults" class="kids"></div>
+            <button type="button" class="btn btn-wood" id="add-adult" style="margin-top:10px">+ Adulto</button>
+
             <button type="submit" class="btn btn-grass btn-block" style="margin-top:14px">Salvar pré-cadastro</button>
             <button type="button" class="btn btn-wood btn-block" id="btn-fechar-cadastro" style="margin-top:8px">Fechar cadastro</button>
           </form>
@@ -183,7 +188,7 @@
                   <th>Data cadastro</th>
                   <th>Celular</th>
                   <th>Família</th>
-                  <th>Filhos</th>
+                  <th>Adultos extras / Filhos</th>
                   <th>Status</th>
                   <th>Último acesso</th>
                 </tr>
@@ -237,6 +242,6 @@
 
   <script src="config.js?v=4"></script>
   <script src="js/api.js?v=4"></script>
-  <script src="js/admin.js?v=25"></script>
+  <script src="js/admin.js?v=26"></script>
 </body>
 </html>
