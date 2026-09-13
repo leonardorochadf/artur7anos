@@ -297,6 +297,200 @@ body::before {
   color: #10240f;
 }
 
+.modal-salvando-mc-box {
+  text-align: center;
+  background:
+    linear-gradient(180deg, #6ec4ff 0 36%, #5a9c3a 36% 72%, #8b5a2b 72%),
+    #f4f7ef;
+  border-color: #1a1208;
+}
+
+.modal-salvando-mc-box h3 {
+  color: #f4e4b8;
+  text-shadow:
+    2px 0 0 #111,
+    -2px 0 0 #111,
+    0 2px 0 #111,
+    0 -2px 0 #111,
+    3px 3px 0 #000;
+}
+
+.modal-salvando-mc-box .modal-confirm-msg {
+  color: #10240f;
+  background: rgba(244, 247, 239, 0.92);
+  border: 3px solid #1a1208;
+  padding: 8px;
+}
+
+.mc-progresso-barra {
+  border-color: #1a1208;
+  background: #2b1a0c;
+}
+
+.mc-progresso-barra .progresso-barra-fill {
+  background: repeating-linear-gradient(
+    90deg,
+    #7dce55 0 8px,
+    #56a836 8px 16px
+  );
+}
+
+.mc-crafter {
+  position: relative;
+  height: 110px;
+  margin: 0 auto 10px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 18px;
+}
+
+.mc-steve {
+  position: relative;
+  width: 48px;
+  height: 96px;
+}
+
+.mc-steve-head {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto;
+  background:
+    linear-gradient(#c68642 0 70%, #5a3a1a 70%),
+    #c68642;
+  border: 2px solid #111;
+  box-shadow: inset -6px 0 0 rgba(0,0,0,.12);
+  position: relative;
+}
+
+.mc-steve-head::before,
+.mc-steve-head::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  width: 6px;
+  height: 4px;
+  background: #2a1a08;
+}
+
+.mc-steve-head::before { left: 6px; }
+.mc-steve-head::after { right: 6px; }
+
+.mc-steve-body {
+  width: 28px;
+  height: 34px;
+  margin: 0 auto;
+  background: #3b7ea8;
+  border: 2px solid #111;
+  border-top: 0;
+}
+
+.mc-steve-arm {
+  position: absolute;
+  top: 34px;
+  right: 0;
+  width: 12px;
+  height: 28px;
+  background: #c68642;
+  border: 2px solid #111;
+  transform-origin: top center;
+  animation: mc-hammer-swing 0.45s ease-in-out infinite;
+}
+
+.mc-hammer {
+  position: absolute;
+  top: -4px;
+  left: 10px;
+  width: 28px;
+  height: 10px;
+  background: #8b5a2b;
+  border: 2px solid #111;
+  transform: rotate(-20deg);
+}
+
+.mc-hammer::after {
+  content: "";
+  position: absolute;
+  right: -2px;
+  top: -8px;
+  width: 14px;
+  height: 22px;
+  background: #7a7a7a;
+  border: 2px solid #111;
+}
+
+.mc-steve-legs {
+  width: 28px;
+  height: 26px;
+  margin: 0 auto;
+  background: #3d3d8b;
+  border: 2px solid #111;
+  border-top: 0;
+  box-shadow: inset 13px 0 0 #2f2f6a;
+}
+
+.mc-block {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 8px;
+}
+
+.mc-block-face {
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(135deg, #8b8b8b 0 45%, #6e6e6e 45% 55%, #9a9a9a 55%);
+  border: 3px solid #111;
+  box-shadow: 4px 4px 0 #1a1208;
+  animation: mc-block-hit 0.45s ease-in-out infinite;
+}
+
+.mc-sparks {
+  position: absolute;
+  inset: -8px;
+  pointer-events: none;
+}
+
+.mc-sparks::before,
+.mc-sparks::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #ffd36a;
+  border: 1px solid #111;
+  animation: mc-spark 0.45s ease-out infinite;
+}
+
+.mc-sparks::before { top: 0; right: 4px; }
+.mc-sparks::after { top: 8px; right: -2px; animation-delay: 0.12s; }
+
+@keyframes mc-hammer-swing {
+  0%, 100% { transform: rotate(18deg); }
+  50% { transform: rotate(-55deg); }
+}
+
+@keyframes mc-block-hit {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(1px, 2px); }
+}
+
+@keyframes mc-spark {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  40% { opacity: 1; }
+  100% { opacity: 0; transform: translate(8px, -10px) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-steve-arm,
+  .mc-block-face,
+  .mc-sparks::before,
+  .mc-sparks::after {
+    animation: none;
+  }
+}
+
 .btn-block {
   width: 100%;
 }

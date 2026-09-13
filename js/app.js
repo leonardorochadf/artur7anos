@@ -40,6 +40,13 @@
   var modalProgressoFill = document.getElementById('modal-progresso-fill');
   var modalProgressoPct = document.getElementById('modal-progresso-pct');
   var progressoTimer = null;
+  var modalSalvando = document.getElementById('modal-salvando-mc');
+  var modalSalvandoTitulo = document.getElementById('modal-salvando-titulo');
+  var modalSalvandoMsg = document.getElementById('modal-salvando-msg');
+  var modalSalvandoFill = document.getElementById('modal-salvando-fill');
+  var modalSalvandoPct = document.getElementById('modal-salvando-pct');
+  var salvandoProgressoTimer = null;
+  var formularioSujo = false;
   var modalConfirm = document.getElementById('modal-confirm');
   var modalConfirmBox = modalConfirm ? modalConfirm.querySelector('.modal-confirm-box') : null;
   var modalConfirmTitulo = document.getElementById('modal-confirm-titulo');
@@ -150,6 +157,44 @@
     });
   }
 
+  function setSalvandoVisual(pct) {
+    var p = Math.max(0, Math.min(100, Math.round(pct)));
+    if (modalSalvandoFill) modalSalvandoFill.style.width = p + '%';
+    if (modalSalvandoPct) modalSalvandoPct.textContent = p + '%';
+  }
+
+  function abrirSalvandoMc(titulo, mensagem) {
+    if (!modalSalvando) {
+      abrirProgresso(titulo, mensagem);
+      return;
+    }
+    if (modalSalvandoTitulo) modalSalvandoTitulo.textContent = titulo || 'Salvando...';
+    if (modalSalvandoMsg) modalSalvandoMsg.textContent = mensagem || 'Steve está gravando seu cadastro';
+    setSalvandoVisual(6);
+    modalSalvando.classList.remove('hidden');
+    clearInterval(salvandoProgressoTimer);
+    var atual = 6;
+    salvandoProgressoTimer = setInterval(function () {
+      if (atual < 88) {
+        atual += Math.max(1.5, (88 - atual) * 0.1);
+        setSalvandoVisual(atual);
+      }
+    }, 140);
+  }
+
+  function fecharSalvandoMc() {
+    clearInterval(salvandoProgressoTimer);
+    salvandoProgressoTimer = null;
+    setSalvandoVisual(100);
+    return new Promise(function (resolve) {
+      setTimeout(function () {
+        if (modalSalvando) modalSalvando.classList.add('hidden');
+        setSalvandoVisual(0);
+        resolve();
+      }, 320);
+    });
+  }
+
   if (modalConfirm) {
     modalConfirmSim.addEventListener('click', function () { fecharModalConfirm(true); });
     modalConfirmNao.addEventListener('click', function () { fecharModalConfirm(false); });
@@ -241,10 +286,11 @@
     row.querySelector('.remove-kid').addEventListener('click', function () {
       row.remove();
       atualizarVisibilidadeListas();
-      agendarAutoSave();
+      marcarFormularioSujo();
+      salvarAoSairDoCampo();
     });
     input.addEventListener('input', function () {
-      agendarAutoSave();
+      marcarFormularioSujo();
     });
     input.addEventListener('keydown', function (e) {
       if (e.key !== 'Enter') return;
@@ -252,7 +298,7 @@
       if (!input.value.trim()) return;
       kidsBox.appendChild(kidInput(''));
       atualizarVisibilidadeListas();
-      agendarAutoSave();
+      marcarFormularioSujo();
     });
     return row;
   }
@@ -268,9 +314,10 @@
     row.querySelector('.remove-adult').addEventListener('click', function () {
       row.remove();
       atualizarVisibilidadeListas();
-      agendarAutoSave();
+      marcarFormularioSujo();
+      salvarAoSairDoCampo();
     });
-    input.addEventListener('input', agendarAutoSave);
+    input.addEventListener('input', marcarFormularioSujo);
     return row;
   }
 
@@ -531,7 +578,8 @@
     }
     atualizarBotoesResponsaveis();
     setStatus('Responsável removido. Salvando...', 'warn');
-    agendarAutoSave(400);
+    marcarFormularioSujo();
+    salvarAoSairDoCampo();
   }
 
   function familiaTemCelular(f, celular) {
@@ -571,6 +619,7 @@
     }
     atualizarDicaCelular();
     montarBadgeStatus(f, encontrado);
+    formularioSujo = false;
     setTimeout(function () { ignorarAutoSave = false; }, 200);
   }
 
@@ -677,16 +726,22 @@
     return !!(payload.nome_pai || payload.nome_mae || payload.nome_responsavel);
   }
 
-  function agendarAutoSave(delayMs) {
+  function marcarFormularioSujo() {
     if (ignorarAutoSave) return;
     if (!blocoFamilia || blocoFamilia.classList.contains('hidden')) return;
-    clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(function () {
-      salvarAutomatico();
-    }, typeof delayMs === 'number' ? delayMs : 900);
+    formularioSujo = true;
   }
 
-  async function salvarAutomatico() {
+  function salvarAoSairDoCampo() {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(function () {
+      if (!formularioSujo) return;
+      salvarAutomatico({ comAnimacao: true });
+    }, 120);
+  }
+
+  async function salvarAutomatico(opts) {
+    opts = opts || {};
     if (ignorarAutoSave || salvandoRsvp || buscando) return;
     if (!ArturApi.ready()) return;
     if (!blocoFamilia || blocoFamilia.classList.contains('hidden')) return;
@@ -695,7 +750,11 @@
     if (!podeSalvarAutomatico(payload)) return;
 
     salvandoRsvp = true;
+    formularioSujo = false;
     setStatus('Salvando alterações...', '');
+    if (opts.comAnimacao) {
+      abrirSalvandoMc('Salvando...', 'Steve está martelando seu cadastro');
+    }
     try {
       var data = await ArturApi.salvar(payload);
       familiaAtual = data.familia || familiaAtual;
@@ -714,8 +773,14 @@
         montarBadgeStatus(data.familia, true);
       }
       setStatus('Salvo · ' + ArturApi.formatPhone(payload.celular), 'ok');
+      if (opts.comAnimacao) {
+        if (modalSalvandoTitulo) modalSalvandoTitulo.textContent = 'Salvo!';
+        if (modalSalvandoMsg) modalSalvandoMsg.textContent = 'Cadastro atualizado com sucesso';
+        await fecharSalvandoMc();
+      }
     } catch (err) {
       setStatus(err.message || 'Erro ao salvar', 'err');
+      if (opts.comAnimacao) await fecharSalvandoMc();
     } finally {
       salvandoRsvp = false;
     }
@@ -748,8 +813,7 @@
     aplicarCelularDigitado(celularInput.value);
     atualizarDicaCelular();
     if (formularioAberto() && familiaAtual) {
-      // Cadastro já existente: editar celular atualiza o mesmo registro
-      agendarAutoSave(1000);
+      marcarFormularioSujo();
       return;
     }
     agendarBuscaPorCelular(350);
@@ -759,7 +823,7 @@
     aplicarCelularDigitado(celularInput.value);
     atualizarDicaCelular();
     if (formularioAberto() && familiaAtual) {
-      agendarAutoSave(400);
+      marcarFormularioSujo();
       return;
     }
     agendarBuscaPorCelular(120);
@@ -776,7 +840,7 @@
     aplicarCelularDigitado(texto || celularInput.value);
     atualizarDicaCelular();
     if (formularioAberto() && familiaAtual) {
-      agendarAutoSave(400);
+      marcarFormularioSujo();
       return;
     }
     agendarBuscaPorCelular(80);
@@ -786,6 +850,10 @@
     aplicarCelularDigitado(celularInput.value);
     atualizarDicaCelular();
     var digitos = ArturApi.normalizarCelular(celularInput.value);
+    if (formularioAberto() && familiaAtual && formularioSujo) {
+      salvarAoSairDoCampo();
+      return;
+    }
     if (digitos.length >= 10 && !familiaAtual) {
       agendarBuscaPorCelular(50);
     }
@@ -796,8 +864,8 @@
       e.preventDefault();
       clearTimeout(debounceTimer);
       if (formularioAberto() && familiaAtual) {
-        clearTimeout(autoSaveTimer);
-        salvarAutomatico();
+        marcarFormularioSujo();
+        salvarAoSairDoCampo();
         return;
       }
       buscarPorTelefone();
@@ -828,7 +896,7 @@
     if (!kidsBox) return;
     kidsBox.appendChild(kidInput(''));
     atualizarVisibilidadeListas();
-    agendarAutoSave();
+    marcarFormularioSujo();
   });
 
   if (btnRemoverPai) {
@@ -845,6 +913,7 @@
         paiInput.focus();
       }
       atualizarBotoesResponsaveis();
+      marcarFormularioSujo();
     });
   }
   if (btnAddMae) {
@@ -855,21 +924,35 @@
         maeInput.focus();
       }
       atualizarBotoesResponsaveis();
+      marcarFormularioSujo();
     });
   }
 
   if (form) {
     form.addEventListener('input', function () {
-      agendarAutoSave();
+      marcarFormularioSujo();
     });
     form.addEventListener('change', function () {
-      agendarAutoSave(500);
+      marcarFormularioSujo();
+    });
+    form.addEventListener('focusout', function () {
+      setTimeout(function () {
+        var ativo = document.activeElement;
+        if (form.contains(ativo)) return;
+        if (celularInput && ativo === celularInput) return;
+        if (formularioSujo) salvarAoSairDoCampo();
+      }, 60);
     });
   }
 
-  if (paiInput) paiInput.addEventListener('input', agendarAutoSave);
-  if (maeInput) maeInput.addEventListener('input', agendarAutoSave);
-  if (responsavelInput) responsavelInput.addEventListener('input', agendarAutoSave);
+  if (paiInput) paiInput.addEventListener('input', marcarFormularioSujo);
+  if (maeInput) maeInput.addEventListener('input', marcarFormularioSujo);
+  if (responsavelInput) {
+    responsavelInput.addEventListener('input', marcarFormularioSujo);
+    responsavelInput.addEventListener('blur', function () {
+      if (formularioSujo) salvarAoSairDoCampo();
+    });
+  }
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();

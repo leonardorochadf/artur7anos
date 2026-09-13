@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=31" />
+  <link rel="stylesheet" href="styles.css?v=32" />
 </head>
 <body>
   <div class="mc-fx" aria-hidden="true">
@@ -233,10 +233,36 @@
     </div>
   </div>
 
+  <div id="modal-salvando-mc" class="modal-confirm hidden" role="dialog" aria-modal="true" aria-labelledby="modal-salvando-titulo">
+    <div class="modal-confirm-backdrop"></div>
+    <div class="modal-confirm-box modal-salvando-mc-box">
+      <div class="mc-crafter" aria-hidden="true">
+        <div class="mc-steve">
+          <div class="mc-steve-head"></div>
+          <div class="mc-steve-body"></div>
+          <div class="mc-steve-arm">
+            <div class="mc-hammer"></div>
+          </div>
+          <div class="mc-steve-legs"></div>
+        </div>
+        <div class="mc-block">
+          <div class="mc-block-face"></div>
+          <div class="mc-sparks"></div>
+        </div>
+      </div>
+      <h3 id="modal-salvando-titulo">Salvando...</h3>
+      <p id="modal-salvando-msg" class="modal-confirm-msg">Steve está gravando seu cadastro</p>
+      <div class="progresso-barra mc-progresso-barra" aria-hidden="true">
+        <div class="progresso-barra-fill" id="modal-salvando-fill"></div>
+      </div>
+      <p class="progresso-pct" id="modal-salvando-pct">0%</p>
+    </div>
+  </div>
+
   <div id="toast-temporario" class="toast-temporario hidden" role="status" aria-live="polite" aria-hidden="true"></div>
 
   <script src="config.js?v=8"></script>
   <script src="js/api.js?v=6"></script>
-  <script src="js/app.js?v=26"></script>
+  <script src="js/app.js?v=27"></script>
 </body>
 </html>
