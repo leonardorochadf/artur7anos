@@ -15,7 +15,6 @@
   var btnAddMae = document.getElementById('btn-add-mae');
   var wrapFilhos = document.getElementById('wrap-filhos');
   var wrapAdultos = document.getElementById('wrap-adultos');
-  var wrapMeias = document.getElementById('wrap-meias');
   var kidsBox = document.getElementById('kids');
   var addKidBtn = document.getElementById('add-kid');
   var adultsBox = document.getElementById('adults');
@@ -26,7 +25,6 @@
   var blocoFamilia = document.getElementById('bloco-familia');
   var badgeCadastro = document.getElementById('badge-cadastro');
   var statusEl = document.getElementById('status');
-  var meiasEl = document.getElementById('meias-count');
   var familiaAtual = null;
   var celularChave = '';
   var debounceTimer = null;
@@ -252,12 +250,10 @@
     input.value = value || '';
     row.querySelector('.remove-kid').addEventListener('click', function () {
       row.remove();
-      updateMeias();
       atualizarVisibilidadeListas();
       agendarAutoSave();
     });
     input.addEventListener('input', function () {
-      updateMeias();
       agendarAutoSave();
     });
     input.addEventListener('keydown', function (e) {
@@ -265,7 +261,6 @@
       e.preventDefault();
       if (!input.value.trim()) return;
       kidsBox.appendChild(kidInput(''));
-      updateMeias();
       atualizarVisibilidadeListas();
       agendarAutoSave();
     });
@@ -315,13 +310,11 @@
   function atualizarVisibilidadeListas() {
     var linhasFilhos = kidsBox ? kidsBox.querySelectorAll('.kid-row').length : 0;
     var linhasAdultos = adultsBox ? adultsBox.querySelectorAll('.kid-row').length : 0;
-    var qtdFilhos = getFilhos().length;
     var temFilhos = linhasFilhos > 0;
     var temAdultos = linhasAdultos > 0;
 
     if (wrapFilhos) wrapFilhos.classList.toggle('hidden', !temFilhos);
     if (wrapAdultos) wrapAdultos.classList.toggle('hidden', !temAdultos);
-    if (wrapMeias) wrapMeias.classList.toggle('hidden', qtdFilhos === 0);
 
     // Sempre pode incluir filho (novo cadastro ou família sem filhos ainda)
     if (addKidBtn) addKidBtn.classList.remove('hidden');
@@ -351,13 +344,7 @@
     nomes.forEach(function (nome) {
       kidsBox.appendChild(kidInput(nome));
     });
-    updateMeias();
     atualizarVisibilidadeListas();
-  }
-
-  function updateMeias() {
-    if (meiasEl) meiasEl.textContent = String(getFilhos().length);
-    if (wrapMeias) wrapMeias.classList.toggle('hidden', getFilhos().length === 0);
   }
 
   var btnVoltarRsvp = document.getElementById('btn-voltar-rsvp');
@@ -858,7 +845,6 @@
   addKidBtn.addEventListener('click', function () {
     if (!kidsBox) return;
     kidsBox.appendChild(kidInput(''));
-    updateMeias();
     atualizarVisibilidadeListas();
     agendarAutoSave();
   });
@@ -930,10 +916,8 @@
       var data = await ArturApi.salvar(payload);
       await fecharProgresso();
       familiaAtual = data.familia || familiaAtual;
-      var msg =
-        (data.msg || 'Confirmado!') +
-        '\n\nMeias: ' + (data.familia && data.familia.qtd_meias != null ? data.familia.qtd_meias : payload.filhos.length) + '.';
-      setStatus(msg.replace(/\n\n/g, ' '), 'ok');
+      var msg = data.msg || 'Confirmado!';
+      setStatus(msg, 'ok');
       if (data.familia) abrirFormulario(data.familia, true);
       await mostrarAviso(msg, 'Presença confirmada');
     } catch (err) {
