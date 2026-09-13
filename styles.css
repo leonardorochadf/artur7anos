@@ -1058,6 +1058,22 @@ body.modo-rsvp #painel-rsvp {
   display: none;
 }
 
+#painel-rsvp.rsvp-dados-abertos #btn-buscar {
+  display: none !important;
+}
+
+#painel-rsvp.rsvp-dados-abertos .phone-lookup {
+  grid-template-columns: 1fr;
+}
+
+#painel-rsvp.rsvp-dados-abertos #celular {
+  background: #e8f4e0;
+  font-weight: 700;
+  text-align: center;
+  pointer-events: none;
+  caret-color: transparent;
+}
+
 #painel-rsvp.rsvp-dados-abertos #badge-cadastro {
   display: none !important;
 }

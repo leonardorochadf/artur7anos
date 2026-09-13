@@ -398,12 +398,20 @@
   function mostrarLookup() {
     if (painelRsvp) painelRsvp.classList.remove('rsvp-dados-abertos');
     if (rsvpTermo) rsvpTermo.classList.add('hidden');
+    if (celularInput) {
+      celularInput.readOnly = false;
+      celularInput.removeAttribute('aria-readonly');
+    }
   }
 
   function ocultarLookup() {
-    // Mantém o celular visível/editável; só esconde o texto introdutório via CSS
+    // Mantém o celular visível só como informação (sem Buscar)
     if (painelRsvp) painelRsvp.classList.add('rsvp-dados-abertos');
     if (rsvpTermo) rsvpTermo.classList.remove('hidden');
+    if (celularInput) {
+      celularInput.readOnly = true;
+      celularInput.setAttribute('aria-readonly', 'true');
+    }
   }
 
   function sairModoRsvp() {
