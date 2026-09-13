@@ -244,12 +244,23 @@
       return s.length > 19 ? s.slice(0, 19).replace('T', ' ') : s;
     }
     return d.toLocaleString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  function diaBrasilia(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) {
+      var m = String(iso).match(/(\d{4}-\d{2}-\d{2})/);
+      return m ? m[1] : '';
+    }
+    return d.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
   }
 
   function diaCurto(isoDia) {
@@ -1572,8 +1583,8 @@
       if (!Object.keys(window.__cadastrosPorDia).length) {
         var mapCad = {};
         window.__familias.forEach(function (f) {
-          var dia = String(f.criado_em || '').slice(0, 10);
-          if (/^\d{4}-\d{2}-\d{2}$/.test(dia)) {
+          var dia = diaBrasilia(f.criado_em);
+          if (dia) {
             mapCad[dia] = (mapCad[dia] || 0) + 1;
           }
         });

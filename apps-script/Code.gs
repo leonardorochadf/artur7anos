@@ -513,11 +513,16 @@ function agregarCadastrosPorDia() {
 }
 
 function isoParaDia(v) {
-  if (!v) return '';
+  var tz = 'America/Sao_Paulo';
+  if (!v && v !== 0) return '';
   if (Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v.getTime())) {
-    return Utilities.formatDate(v, Session.getScriptTimeZone() || 'America/Sao_Paulo', 'yyyy-MM-dd');
+    return Utilities.formatDate(v, tz, 'yyyy-MM-dd');
   }
   var s = String(v);
+  var d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    return Utilities.formatDate(d, tz, 'yyyy-MM-dd');
+  }
   var m = s.match(/(\d{4}-\d{2}-\d{2})/);
   return m ? m[1] : '';
 }
