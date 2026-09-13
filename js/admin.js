@@ -2058,6 +2058,14 @@
       else setStatus('Digite a senha.', 'warn');
       return false;
     }
+    var mostrouProgresso = !!fromLogin;
+    if (mostrouProgresso) {
+      abrirProgresso('Entrando', 'Validando senha e carregando a lista...');
+      if (btnEntrar) {
+        btnEntrar.disabled = true;
+        btnEntrar.textContent = 'Entrando...';
+      }
+    }
     try {
       var data = await ArturApi.listar(senha());
       window.__familias = ordenarPorTelefone(data.familias || []);
@@ -2082,11 +2090,15 @@
       if (!Object.keys(window.__acessosPorDia).length) {
         window.__acessosPorDia = agregarMapaDeAcessos(window.__acessosLista);
       }
+      if (mostrouProgresso) {
+        if (modalProgressoMsg) modalProgressoMsg.textContent = 'Montando dashboard e lista...';
+        setProgressoVisual(92);
+      }
       mostrarApp();
       renderLista(window.__familias);
       var apiVer = data.versao || '';
       window.__apiVersao = apiVer;
-      if (apiVer && !/v8\.[4-9]|filhos-opcional|check-confirma/.test(apiVer)) {
+      if (apiVer && !/v8\.[4-9]|filhos-opcional|check-confirma|celular-55/.test(apiVer)) {
         var avisoApi = 'API desatualizada (' + apiVer + '). Abra o site com Ctrl+F5 e republiche o Apps Script.';
         setStatus(avisoApi, 'err');
         if (fromLogin) setLoginStatus(avisoApi, 'err');
@@ -2095,18 +2107,26 @@
           (fromLogin ? 'Lista carregada.' : 'Lista atualizada.') + (apiVer ? ' API ' + apiVer : ''),
           'ok'
         );
+        if (fromLogin) setLoginStatus('Entrada ok.', 'ok');
       }
+      if (mostrouProgresso) await fecharProgresso();
       return true;
     } catch (err) {
       var erro = err.message || 'Erro ao listar';
+      if (mostrouProgresso) await fecharProgresso();
       if (fromLogin) setLoginStatus(erro, 'err');
       else setStatus(erro, 'err');
       return false;
+    } finally {
+      if (mostrouProgresso && btnEntrar) {
+        btnEntrar.disabled = false;
+        btnEntrar.textContent = 'Entrar';
+      }
     }
   }
 
   async function entrar() {
-    setLoginStatus('Verificando...', '');
+    setLoginStatus('Entrando...', '');
     await refresh(true);
   }
 
