@@ -108,7 +108,6 @@
   let gators = [];
   let chest = { x: 0, y: 0, w: TILE, h: TILE };
   let decor = [];
-  let slideHolding = false;
 
   const player = {
     x: 70,
@@ -121,7 +120,7 @@
     walkPhase: 0,
     swing: 0,
     invuln: 0,
-    slideDetach: 0,
+    slideCoast: 0,
   };
 
   function tip(desktop, mobile) {
@@ -183,7 +182,7 @@
       });
     }
 
-    // 3) Tobogã — sem margem segura no fim; quem não segurar cai no rio
+    // 3) Tobogã — desce até a grama no final
     const slideStartX = 1040;
     const steps = 9;
     for (let i = 0; i < steps; i++) {
@@ -200,31 +199,32 @@
       slides.push(tile);
     }
 
-    // 4) Rio logo após o tobogã + pedras mais espaçadas
+    // 4) Grama no fim do tobogã (dá para parar) → depois o rio
     const lowY = GROUND;
-    waters.push({ x: 1320, y: lowY - 8, w: 560, h: 100 });
+    addGround(1320, 1520, lowY); // plataforma de grama para ficar parado
+    waters.push({ x: 1520, y: lowY - 8, w: 400, h: 100 });
 
     [
-      [1420, 32],
-      [1600, 34],
-      [1780, 32],
+      [1600, 32],
+      [1740, 34],
+      [1880, 32],
     ].forEach(([x, h], i) => {
       solids.push({ x, y: lowY - h, w: 44, h, type: "rock" });
       gators.push({
-        x: x + 50,
+        x: x + 48,
         y: lowY - 22,
         w: 54,
         h: 22,
-        baseX: x + 50,
-        range: 26,
+        baseX: x + 48,
+        range: 24,
         phase: i * 1.3,
       });
     });
 
-    addGround(1900, 1980, lowY);
+    addGround(1960, 2040, lowY);
 
     // 5) Escada + prêmio
-    const stairX = 1980;
+    const stairX = 2040;
     for (let i = 0; i < 3; i++) {
       const stepTop = lowY - (i + 1) * TILE;
       solids.push({
@@ -243,16 +243,16 @@
       });
     }
     const platY = lowY - 3 * TILE;
-    addGround(2100, worldW, platY);
-    chest = { x: 2220, y: platY - TILE, w: TILE, h: TILE };
+    addGround(2160, worldW, platY);
+    chest = { x: 2280, y: platY - TILE, w: TILE, h: TILE };
 
     // decor
-    [90, 280, 520, 800, 2150, 2350].forEach((x) => {
-      const y = x < 760 ? GROUND : x < 1040 ? HIGH : x < 1900 ? lowY : platY;
+    [90, 280, 520, 800, 2200, 2400].forEach((x) => {
+      const y = x < 760 ? GROUND : x < 1040 ? HIGH : x < 1960 ? lowY : platY;
       decor.push({ type: "tree", x, y });
     });
-    [150, 400, 700, 2200].forEach((x) => {
-      const y = x < 760 ? GROUND : x < 1900 ? lowY : platY;
+    [150, 400, 700, 2250].forEach((x) => {
+      const y = x < 760 ? GROUND : x < 1960 ? lowY : platY;
       decor.push({ type: "bush", x, y });
     });
     for (let i = 0; i < 12; i++) {
@@ -298,7 +298,7 @@
     player.swing = 0;
     player.onSlide = false;
     player.invuln = 0;
-    player.slideDetach = 0;
+    player.slideCoast = 0;
     cameraX = 0;
     updateHUD();
     setHint(tip("Level 1 · ← → andar · Espaço pular", "Level 1 · ◀ ▶ andar · ⬆ pular"));
@@ -363,12 +363,12 @@
     if (player.x >= 780 && player.y < HIGH + 20) reachLevel(2);
     // Level 3: quebrou os 3 blocos
     if (state.collected >= 3) reachLevel(3);
-    // Level 4: sobreviveu ao tobogã
-    if (player.x >= 1420 && player.onGround && !player.onSlide && player.slideDetach <= 0) {
+    // Level 4: chegou na grama depois do tobogã
+    if (player.x >= 1320 && player.x < 1520 && player.onGround && !player.onSlide) {
       reachLevel(4);
     }
     // Level 5: atravessou o rio
-    if (player.x >= 1900 && player.onGround) reachLevel(5);
+    if (player.x >= 1960 && player.onGround) reachLevel(5);
     // Level 6: montou a escada
     if (state.placed.every(Boolean)) reachLevel(6);
     // Level 7 acontece ao abrir o baú
@@ -441,45 +441,25 @@
 
   function moveAndCollide(dt) {
     player.vy += GRAVITY * dt;
-    slideHolding = !!keys.jump;
 
     if (player.onSlide) {
+      // escorrega sozinho até a grama
       player.facing = 1;
-      if (slideHolding) {
-        // segurando: desce rápido e controlado em direção à 1ª pedra
-        player.vx = 380;
-        player.vy = Math.max(player.vy, 280);
-        // no fim do tobogã, impulsiona para a primeira pedra
-        if (player.x > 1260) {
-          player.vx = 420;
-          player.vy = Math.min(player.vy, -120);
-        }
-      } else {
-        // sem segurar: depois do meio, solta e cai no rio
-        player.vx = 500;
-        player.vy = Math.max(player.vy, 360);
-        if (player.x > 1180) {
-          player.onSlide = false;
-          player.slideDetach = 0.55;
-          player.vx = 280;
-          player.vy = 520;
-        }
-      }
+      player.vx = 420;
+      player.vy = Math.max(player.vy, 300);
     }
     player.x += player.vx * dt;
 
     const solidsNow = getSolidRects();
     const p = { x: player.x, y: player.y, w: PLAYER_W, h: PLAYER_H };
-    const ignoreSlide = player.slideDetach > 0;
 
     for (const s of solidsNow) {
-      if (ignoreSlide && s.type === "slide") continue;
       if (rectsOverlap(p, s)) {
         if (player.onSlide && s.type === "slide") continue;
         if (player.vx > 0) player.x = s.x - PLAYER_W;
         else if (player.vx < 0) player.x = s.x + s.w;
         if (!(player.onSlide && s.type === "slide")) {
-          player.vx = player.onSlide ? (slideHolding ? 380 : 500) : 0;
+          player.vx = player.onSlide ? 420 : 0;
         }
         p.x = player.x;
       }
@@ -488,16 +468,21 @@
     player.y += player.vy * dt;
     p.y = player.y;
     player.onGround = false;
+    const wasSlide = player.onSlide;
     player.onSlide = false;
 
     for (const s of solidsNow) {
-      if (ignoreSlide && s.type === "slide") continue;
       if (rectsOverlap(p, s)) {
         if (player.vy > 0) {
           player.y = s.y - PLAYER_H;
           player.vy = 0;
           player.onGround = true;
           if (s.type === "slide") player.onSlide = true;
+          // saiu do tobogã na grama: ainda leva impulso — se não parar, cai no rio
+          if (wasSlide && s.type === "ground") {
+            player.vx = 280;
+            player.slideCoast = 1.2;
+          }
         } else if (player.vy < 0) {
           player.y = s.y + s.h;
           player.vy = 0;
@@ -527,6 +512,7 @@
     player.vx = 0;
     player.vy = 0;
     player.onSlide = false;
+    player.slideCoast = 0;
     player.invuln = 1.4;
   }
 
@@ -602,16 +588,11 @@
 
     // dicas de zona mesmo sem ação
     if (!worldTip) {
-      if (player.x > 960 && player.x < 1400) {
-        worldTip = tip(
-          slideHolding || player.onSlide
-            ? "Segure ESPAÇO no tobogã!"
-            : "Segure ESPAÇO ou cai no rio!",
-          slideHolding || player.onSlide
-            ? "Segure ⬆ no tobogã!"
-            : "Segure ⬆ ou cai no rio!"
-        );
-      } else if (player.x > 1400 && player.x < 1900) {
+      if (player.onSlide || (player.x > 1000 && player.x < 1320)) {
+        worldTip = "Tobogã → grama no final";
+      } else if (player.x >= 1320 && player.x < 1520) {
+        worldTip = tip("Pare com ← e pule com Espaço", "Pare com ◀ e pule com ⬆");
+      } else if (player.x >= 1520 && player.x < 1960) {
         worldTip = tip("Pule as pedras (Espaço)", "Pule as pedras (⬆)");
       }
     }
@@ -698,8 +679,9 @@
       setHint(tip("Chegue no baú e aperte E", "Chegue no baú e toque em ABRIR"));
       state.hintId = "chest";
     } else if (state.collected === 3 || state.placed.some(Boolean)) {
-      if (player.x < 1400) setHint(tip("Tobogã: segure Espaço!", "Tobogã: segure ⬆!"));
-      else if (player.x < 1900) setHint(tip("Pule as pedras do rio!", "Pule as pedras do rio!"));
+      if (player.x < 1320) setHint("Desça o tobogã até a grama!");
+      else if (player.x < 1520) setHint(tip("Pare (←) e pule (Espaço)!", "Pare (◀) e pule (⬆)!"));
+      else if (player.x < 1960) setHint(tip("Pule as pedras do rio!", "Pule as pedras do rio!"));
       else setHint(tip("Suba: B para colocar blocos", "Suba: toque em CONSTRUIR"));
       state.hintId = "build";
     } else if (player.x >= 780 || state.broken.some(Boolean)) {
@@ -722,20 +704,41 @@
     if (keys.right) move += 1;
 
     if (player.onSlide) {
-      // no tobogã: anda sozinho; Espaço/⬆ = segurar
       player.facing = 1;
+    } else if (player.slideCoast > 0) {
+      // impulso do tobogã: seta esquerda freia; direita continua e pode cair no rio
+      player.slideCoast -= dt;
+      if (keys.left) {
+        player.vx = -MOVE_SPEED;
+        player.slideCoast = 0;
+        player.facing = -1;
+      } else if (keys.right) {
+        player.vx = MOVE_SPEED + 40;
+        player.facing = 1;
+      } else {
+        player.vx *= Math.max(0, 1 - dt * 1.8);
+        if (Math.abs(player.vx) < 20) {
+          player.vx = 0;
+          player.slideCoast = 0;
+        }
+      }
+      if (keys.jumpPressed && player.onGround) {
+        player.vy = JUMP_VEL;
+        player.onGround = false;
+        player.slideCoast = 0;
+        sfxJump();
+      }
     } else {
       player.vx = move * MOVE_SPEED;
       if (move) {
         player.facing = move > 0 ? 1 : -1;
         player.walkPhase += dt * 10;
       }
-    }
-
-    if (keys.jumpPressed && player.onGround && !player.onSlide) {
-      player.vy = JUMP_VEL;
-      player.onGround = false;
-      sfxJump();
+      if (keys.jumpPressed && player.onGround) {
+        player.vy = JUMP_VEL;
+        player.onGround = false;
+        sfxJump();
+      }
     }
     keys.jumpPressed = false;
 
@@ -750,7 +753,6 @@
 
     if (player.swing > 0) player.swing -= dt;
     if (player.invuln > 0) player.invuln -= dt;
-    if (player.slideDetach > 0) player.slideDetach -= dt;
 
     moveAndCollide(dt);
     updateGators(dt);
