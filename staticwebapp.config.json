@@ -1,0 +1,24 @@
+{
+  "routes": [
+    {
+      "route": "/admin",
+      "rewrite": "/admin.html"
+    },
+    {
+      "route": "/admin/",
+      "rewrite": "/admin.html"
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/admin*", "/js/*", "/styles.css", "/config.js", "/*.jpeg", "/*.jpg", "/*.png", "/*.ico", "/staticwebapp.config.json"]
+  },
+  "mimeTypes": {
+    ".js": "text/javascript",
+    ".css": "text/css",
+    ".html": "text/html",
+    ".jpeg": "image/jpeg",
+    ".jpg": "image/jpeg",
+    ".png": "image/png"
+  }
+}
