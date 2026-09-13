@@ -633,16 +633,6 @@
     }
   }
 
-  function whatsappUrl(celular, texto) {
-    if (ehSemCelular(celular)) return '';
-    var digitos = ArturApi.onlyDigits(celular);
-    if (!digitos) return '';
-    if (digitos.indexOf('55') !== 0) digitos = '55' + digitos;
-    var url = 'https://wa.me/' + digitos;
-    if (texto) url += '?text=' + encodeURIComponent(texto);
-    return url;
-  }
-
   function ehSemCelular(celular) {
     var c = String(celular || '').replace(/\D/g, '');
     if (!c) return true;
@@ -669,35 +659,47 @@
   function mensagemWhatsappConfirmacao(f, filtro) {
     var nome = nomeFamilia(f) || 'familia';
     var link = linkConvite();
+    // Somente ASCII + *negrito* (evita "?" no WhatsApp)
 
     if (filtro === 'pendentes') {
       return (
         'Oi, *' + nome + '*! Tudo bem?\n\n' +
-        'Passando para confirmar se voc\u00EAs v\u00E3o ao *anivers\u00E1rio de 7 anos do Artur*!\n\n' +
+        'Passando para confirmar se voces vao ao *aniversario de 7 anos do Artur*!\n\n' +
         '- *Data:* 25/11 (quarta-feira)\n' +
-        '- *Hor\u00E1rio:* das 17h45 \u00E0s 21h30\n' +
+        '- *Horario:* das 17h45 as 21h30\n' +
         '- *Local:* Jump Trampolim Park\n\n' +
-        'Por favor, confirme pelo link se *v\u00E3o* ou *n\u00E3o*:\n' +
+        'Por favor, confirme pelo link se *vao* ou *nao*:\n' +
         link
       );
     }
     if (filtro === 'nao_vao') {
       return (
         'Oi, *' + nome + '*! Tudo bem?\n\n' +
-        'Vi o registro de que *n\u00E3o poder\u00E3o ir* ao anivers\u00E1rio do Artur.\n' +
-        'Se mudarem de ideia, \u00E9 s\u00F3 confirmar pelo link:\n' +
+        'Vi o registro de que *nao poderao ir* ao aniversario do Artur.\n' +
+        'Se mudarem de ideia, e so confirmar pelo link:\n' +
         link
       );
     }
     return (
       'Oi, *' + nome + '*! Tudo bem?\n\n' +
-      'Obrigado pela *confirma\u00E7\u00E3o* no anivers\u00E1rio do Artur!\n\n' +
+      'Obrigado pela *confirmacao* no aniversario do Artur!\n\n' +
       '- *Data:* 25/11\n' +
-      '- *Hor\u00E1rio:* 17h45-21h30\n' +
+      '- *Horario:* 17h45-21h30\n' +
       '- *Local:* Jump Trampolim Park\n\n' +
       'Qualquer ajuste, use o link:\n' +
       link
     );
+  }
+
+  function whatsappUrl(celular, texto) {
+    if (ehSemCelular(celular)) return '';
+    var digitos = ArturApi.onlyDigits(celular);
+    if (!digitos) return '';
+    if (digitos.indexOf('55') !== 0) digitos = '55' + digitos;
+    // api.whatsapp.com costuma preservar melhor o texto no mobile
+    var url = 'https://api.whatsapp.com/send?phone=' + digitos;
+    if (texto) url += '&text=' + encodeURIComponent(texto);
+    return url;
   }
 
   function filtroWhatsappPorStatus(f) {
@@ -883,11 +885,11 @@
     var familias = familiasPorFiltroDash(filtro);
     if (tituloEl) tituloEl.textContent = titulos[filtro] || 'Lista';
     if (subEl) {
-      subEl.textContent = (subs[filtro] || '') + (familias.length ? (' · ' + familias.length + ' família' + (familias.length === 1 ? '' : 's')) : '');
+      subEl.textContent = (subs[filtro] || '') + (familias.length ? (' - ' + familias.length + ' familia' + (familias.length === 1 ? '' : 's')) : '');
     }
 
     if (!familias.length) {
-      bodyEl.innerHTML = '<p class="dash-lista-vazia">Nenhuma família neste grupo.</p>';
+      bodyEl.innerHTML = '<p class="dash-lista-vazia">Nenhuma familia neste grupo.</p>';
     } else {
       bodyEl.innerHTML = familias.map(function (f) {
         var msg = mensagemWhatsappConfirmacao(f, filtro);
@@ -895,14 +897,14 @@
         return (
           '<article class="dash-lista-item">' +
             '<div class="dash-lista-info">' +
-              '<strong>' + esc(nomeFamilia(f) || 'Sem nome') + '</strong>' +
+              '<strong class="dash-lista-titulo">' + esc(nomeFamilia(f) || 'Sem nome') + '</strong>' +
               '<span class="badge ' + esc(f.status) + '">' + esc(statusLabel(f.status)) + '</span>' +
               htmlCelularesEmpilhados(f) +
               htmlPessoasDashLista(f) +
+              (wa
+                ? '<a class="btn btn-grass btn-wa btn-block" href="' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a>'
+                : '<span class="dash-lista-sem-fone">Sem celular</span>') +
             '</div>' +
-            (wa
-              ? '<a class="btn btn-grass btn-wa" href="' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a>'
-              : '<span class="dash-lista-sem-fone">Sem celular</span>') +
           '</article>'
         );
       }).join('');
@@ -912,31 +914,32 @@
   }
 
   function htmlPessoasDashLista(f) {
-    var pais = [];
-    if (f.nome_pai) pais.push(f.nome_pai);
-    if (f.nome_mae) pais.push(f.nome_mae);
+    var html = '';
+    var temAlgo = !!(f.nome_pai || f.nome_mae || (f.filhos && f.filhos.length) || (f.adultos && f.adultos.length));
+    if (!temAlgo) return '';
 
-    var demais = [];
-    (f.adultos || []).forEach(function (n) {
-      if (n) demais.push(n);
-    });
-    (f.filhos || []).forEach(function (n) {
-      if (n) demais.push(n);
-    });
-
-    if (!pais.length && !demais.length) return '';
-
-    var html = '<ul class="dash-lista-nomes">';
-    pais.forEach(function (n) {
-      html += '<li>- ' + esc(n) + '</li>';
-    });
-    if (pais.length && demais.length) {
-      html += '<li class="dash-lista-sep">—</li>';
+    html += '<div class="dash-lista-bloco">';
+    if (f.nome_pai) {
+      html += '<p class="dash-lista-linha"><span class="dash-lista-papel">Pai:</span> ' + esc(f.nome_pai) + '</p>';
     }
-    demais.forEach(function (n) {
-      html += '<li>- ' + esc(n) + '</li>';
-    });
-    html += '</ul>';
+    if (f.nome_mae) {
+      html += '<p class="dash-lista-linha"><span class="dash-lista-papel">Mae:</span> ' + esc(f.nome_mae) + '</p>';
+    }
+
+    if (f.filhos && f.filhos.length) {
+      html += '<p class="dash-lista-grupo">Filhos:</p>';
+      f.filhos.forEach(function (n) {
+        if (n) html += '<p class="dash-lista-linha dash-lista-item-nome">- ' + esc(n) + '</p>';
+      });
+    }
+
+    if (f.adultos && f.adultos.length) {
+      html += '<p class="dash-lista-grupo">Adultos:</p>';
+      f.adultos.forEach(function (n) {
+        if (n) html += '<p class="dash-lista-linha dash-lista-item-nome">- ' + esc(n) + '</p>';
+      });
+    }
+    html += '</div>';
     return html;
   }
 

@@ -793,10 +793,12 @@ body.modo-rsvp #painel-rsvp {
 
 .phone-number {
   display: block;
-  font-family: var(--font-display);
-  font-size: 0.58rem;
+  font-family: var(--font-body);
+  font-size: 1.05rem;
   line-height: 1.35;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 .phone-card-head .badge {
