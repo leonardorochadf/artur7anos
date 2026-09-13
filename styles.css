@@ -386,6 +386,99 @@ body::before {
   margin-bottom: 6px;
 }
 
+/* Faixa estilo logo Minecraft (bloco 3D + cena gramado/céu) */
+.note-socks-mc {
+  margin-top: 14px;
+  position: relative;
+  overflow: hidden;
+  border: 4px solid #1a1208;
+  box-shadow: 6px 6px 0 #1a1208;
+  padding: 22px 16px 20px;
+  background:
+    linear-gradient(180deg, #6ec4ff 0%, #8ed6ff 38%, #b8e8ff 38%, #b8e8ff 52%, #5a9c3a 52%, #3d7a28 78%, #8b5a2b 78%, #6b4423 100%);
+  text-align: center;
+  animation: mc-socks-rise 0.55s ease-out both;
+}
+
+.note-socks-mc::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(90deg, transparent 0 12%, rgba(255,255,255,.18) 12% 18%, transparent 18% 62%, rgba(255,255,255,.14) 62% 70%, transparent 70%),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 18px,
+      rgba(0, 0, 0, 0.05) 18px,
+      rgba(0, 0, 0, 0.05) 20px
+    );
+  pointer-events: none;
+}
+
+.note-socks-mc-text {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(0.52rem, 2.8vw, 0.68rem);
+  line-height: 1.75;
+  color: #d8d8d8;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  text-shadow:
+    2px 0 0 #111,
+    -2px 0 0 #111,
+    0 2px 0 #111,
+    0 -2px 0 #111,
+    3px 3px 0 #000,
+    4px 4px 0 rgba(0, 0, 0, 0.45);
+  animation: mc-socks-pulse 2.4s ease-in-out infinite;
+}
+
+.note-socks-mc-text .mc-emoji {
+  display: inline-block;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+  font-size: 1.15em;
+  line-height: 1;
+  text-shadow: none;
+  vertical-align: -0.1em;
+  animation: mc-socks-bob 1.8s ease-in-out infinite;
+}
+
+.note-socks-mc-text .mc-emoji:last-child {
+  animation-delay: 0.35s;
+}
+
+@keyframes mc-socks-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mc-socks-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.08); }
+}
+
+@keyframes mc-socks-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note-socks-mc,
+  .note-socks-mc-text,
+  .note-socks-mc-text .mc-emoji {
+    animation: none;
+  }
+}
+
 .termo-intro {
   margin: 0 0 12px;
   font-size: 1.15rem;
