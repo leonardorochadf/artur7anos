@@ -1,19 +1,20 @@
 /**
  * Backend: Google Apps Script + planilha do Artur 7 anos
- * Versao: v8.8-remover-pai-mae
+ * Versao: v8.9-autosave-celular
  *
  * - Varios celulares por familia (coluna celular: "fone1 | fone2")
  * - ultimo_acesso_em atualizado a cada busca/confirmacao
  * - Aba Acessos para grafico dia x acessos
  * - outros adultos alem de pai/mae (coluna adultos)
  * - convite pode limpar pai OU mae (sempre resta 1 responsavel)
+ * - celular_chave permite trocar o numero usado no acesso
  */
 
 var ABA = 'Familias';
 var ABA_ACESSOS = 'Acessos';
 var ADMIN_SENHA_FIXA = '19122019@';
 var SHEET_ID_FIXO = '1ZFZ_UjSaF4BXecf0TizKXLt8EeCpErpPwmqWQJBGyok';
-var VERSAO = 'v8.8-remover-pai-mae';
+var VERSAO = 'v8.9-autosave-celular';
 
 var CABECALHO = [
   'celular',
@@ -198,8 +199,23 @@ function coletarCelularesDoBody(body, atual, isPre) {
     return limpos;
   }
 
-  // Convidado: mantém telefones já cadastrados e inclui o digitado
+  // Convidado: mantém telefones já cadastrados e inclui o digitado.
+  // Se veio celular_chave diferente do novo, troca o número usado no acesso.
   if (atual && atual.celulares && atual.celulares.length) {
+    var chave = normalizarCelular(body.celular_chave || '');
+    var novoDig = limpos.length ? limpos[0] : normalizarCelular(body.celular || '');
+    if (chave && novoDig && chave !== novoDig) {
+      var lista = atual.celulares.slice();
+      var idx = lista.indexOf(chave);
+      if (idx >= 0) {
+        lista[idx] = novoDig;
+      } else if (lista.length === 1) {
+        lista[0] = novoDig;
+      } else if (lista.indexOf(novoDig) < 0) {
+        lista.push(novoDig);
+      }
+      return listaCelulares(lista.join('|'));
+    }
     limpos = listaCelulares(atual.celulares.concat(limpos).join('|'));
   }
   return limpos;

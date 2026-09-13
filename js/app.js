@@ -28,9 +28,14 @@
   var statusEl = document.getElementById('status');
   var meiasEl = document.getElementById('meias-count');
   var familiaAtual = null;
+  var celularChave = '';
   var debounceTimer = null;
+  var autoSaveTimer = null;
   var buscando = false;
   var salvandoRsvp = false;
+  var ignorarAutoSave = false;
+  var celularAtivoTxt = document.getElementById('celular-ativo-txt');
+  var rsvpCelularHint = document.getElementById('rsvp-celular-hint');
   var modalProgresso = document.getElementById('modal-progresso');
   var modalProgressoMsg = document.getElementById('modal-progresso-msg');
   var modalProgressoTitulo = document.getElementById('modal-progresso-titulo');
@@ -249,27 +254,20 @@
       row.remove();
       updateMeias();
       atualizarVisibilidadeListas();
+      agendarAutoSave();
     });
-    input.addEventListener('input', updateMeias);
-    input.addEventListener('keydown', async function (e) {
+    input.addEventListener('input', function () {
+      updateMeias();
+      agendarAutoSave();
+    });
+    input.addEventListener('keydown', function (e) {
       if (e.key !== 'Enter') return;
       e.preventDefault();
-      if (!input.value.trim()) {
-        await mostrarAviso('Digite o nome do filho(a) antes.', 'Atenção');
-        setStatus('Digite o nome do filho(a) antes.', 'warn');
-        return;
-      }
-      var salvarAgora = await pedirConfirmacao('Deseja confirmar/salvar este cadastro agora?', {
-        titulo: 'Salvar cadastro',
-        textoSim: 'Sim, confirmar',
-        textoNao: 'Ainda não',
-        classeSim: 'btn-grass'
-      });
-      if (salvarAgora) {
-        form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true }));
-        return;
-      }
-      setStatus('Para incluir mais um filho, clique em “+ Incluir filho(a)”.', 'warn');
+      if (!input.value.trim()) return;
+      kidsBox.appendChild(kidInput(''));
+      updateMeias();
+      atualizarVisibilidadeListas();
+      agendarAutoSave();
     });
     return row;
   }
@@ -285,7 +283,9 @@
     row.querySelector('.remove-adult').addEventListener('click', function () {
       row.remove();
       atualizarVisibilidadeListas();
+      agendarAutoSave();
     });
+    input.addEventListener('input', agendarAutoSave);
     return row;
   }
 
@@ -376,11 +376,24 @@
   function mostrarLookup() {
     if (painelRsvp) painelRsvp.classList.remove('rsvp-dados-abertos');
     if (rsvpTermo) rsvpTermo.classList.add('hidden');
+    if (rsvpCelularHint) rsvpCelularHint.classList.add('hidden');
   }
 
   function ocultarLookup() {
+    // Mantém o celular visível/editável; só esconde o texto introdutório via CSS
     if (painelRsvp) painelRsvp.classList.add('rsvp-dados-abertos');
     if (rsvpTermo) rsvpTermo.classList.remove('hidden');
+    if (rsvpCelularHint) rsvpCelularHint.classList.remove('hidden');
+    atualizarDicaCelular();
+  }
+
+  function atualizarDicaCelular() {
+    var cel = ArturApi.normalizarCelular(celularInput.value);
+    if (celularAtivoTxt) {
+      celularAtivoTxt.textContent = cel.length >= 10
+        ? ArturApi.formatPhone(cel)
+        : (celularInput.value || '—');
+    }
   }
 
   function sairModoRsvp() {
@@ -389,6 +402,8 @@
     blocoFamilia.classList.add('hidden');
     mostrarLookup();
     familiaAtual = null;
+    celularChave = '';
+    clearTimeout(autoSaveTimer);
     setStatus('', '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -538,7 +553,8 @@
       if (rowMae) rowMae.classList.add('hidden');
     }
     atualizarBotoesResponsaveis();
-    setStatus('Responsável removido. Confirme a presença para salvar.', 'warn');
+    setStatus('Responsável removido. Salvando...', 'warn');
+    agendarAutoSave(400);
   }
 
   function familiaTemCelular(f, celular) {
@@ -549,13 +565,17 @@
   }
 
   function abrirFormulario(f, encontrado) {
+    ignorarAutoSave = true;
+    clearTimeout(autoSaveTimer);
     familiaAtual = f || null;
     blocoFamilia.classList.remove('hidden');
     ocultarLookup();
     entrarModoRsvp();
     modoFormulario(!!encontrado);
 
+    var celAgora = ArturApi.normalizarCelular(celularInput.value);
     if (encontrado && f) {
+      celularChave = celAgora || f.celular || (f.celulares && f.celulares[0]) || '';
       if (responsavelInput) responsavelInput.value = '';
       configurarResponsaveis(f.nome_pai || '', f.nome_mae || '');
       setFilhos(f.filhos || []);
@@ -566,12 +586,15 @@
         }, 50);
       }
     } else {
+      celularChave = celAgora || '';
       if (responsavelInput) responsavelInput.value = '';
       configurarResponsaveis('', '');
       setFilhos([]);
       setAdultos([]);
     }
+    atualizarDicaCelular();
     montarBadgeStatus(f, encontrado);
+    setTimeout(function () { ignorarAutoSave = false; }, 200);
   }
 
   async function buscarPorTelefone(opts) {
@@ -659,15 +682,16 @@
 
   function payloadBase() {
     var cel = ArturApi.normalizarCelular(celularInput.value);
-    var encontrado = !!(familiaAtual && familiaTemCelular(familiaAtual, cel));
+    var editando = !!familiaAtual;
     var payload = {
       celular: cel,
+      celular_chave: celularChave || (familiaAtual && familiaAtual.celular) || cel,
       filhos: getFilhos(),
-      adultos: encontrado ? getAdultos() : [],
+      adultos: editando ? getAdultos() : [],
       origem: 'convidado'
     };
 
-    if (encontrado) {
+    if (editando || (wrapPais && !wrapPais.classList.contains('hidden'))) {
       payload.nome_pai = (paiVisivel() && paiInput) ? paiInput.value.trim() : '';
       payload.nome_mae = (maeVisivel() && maeInput) ? maeInput.value.trim() : '';
     } else {
@@ -677,6 +701,55 @@
       payload.nome_mae = '';
     }
     return payload;
+  }
+
+  function podeSalvarAutomatico(payload) {
+    if (!payload || payload.celular.length < 10) return false;
+    return !!(payload.nome_pai || payload.nome_mae || payload.nome_responsavel);
+  }
+
+  function agendarAutoSave(delayMs) {
+    if (ignorarAutoSave) return;
+    if (!blocoFamilia || blocoFamilia.classList.contains('hidden')) return;
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(function () {
+      salvarAutomatico();
+    }, typeof delayMs === 'number' ? delayMs : 900);
+  }
+
+  async function salvarAutomatico() {
+    if (ignorarAutoSave || salvandoRsvp || buscando) return;
+    if (!ArturApi.ready()) return;
+    if (!blocoFamilia || blocoFamilia.classList.contains('hidden')) return;
+
+    var payload = payloadBase();
+    if (!podeSalvarAutomatico(payload)) return;
+
+    salvandoRsvp = true;
+    setStatus('Salvando alterações...', '');
+    try {
+      var data = await ArturApi.salvar(payload);
+      familiaAtual = data.familia || familiaAtual;
+      celularChave = ArturApi.normalizarCelular(celularInput.value) || celularChave;
+      atualizarDicaCelular();
+      if (data.familia) {
+        var eraNovo = wrapUnico && !wrapUnico.classList.contains('hidden');
+        if (eraNovo) {
+          ignorarAutoSave = true;
+          modoFormulario(true);
+          configurarResponsaveis(data.familia.nome_pai || '', data.familia.nome_mae || '');
+          setFilhos(data.familia.filhos || []);
+          setAdultos(data.familia.adultos || []);
+          setTimeout(function () { ignorarAutoSave = false; }, 200);
+        }
+        montarBadgeStatus(data.familia, true);
+      }
+      setStatus('Salvo · ' + ArturApi.formatPhone(payload.celular), 'ok');
+    } catch (err) {
+      setStatus(err.message || 'Erro ao salvar', 'err');
+    } finally {
+      salvandoRsvp = false;
+    }
   }
 
   async function validarConfirmacao(payload, recusar) {
@@ -694,18 +767,32 @@
     return true;
   }
 
+  function formularioAberto() {
+    return !!(blocoFamilia && !blocoFamilia.classList.contains('hidden'));
+  }
+
   celularInput.addEventListener('focus', function () {
     entrarModoRsvp();
   });
 
   celularInput.addEventListener('input', function () {
     aplicarCelularDigitado(celularInput.value);
+    atualizarDicaCelular();
+    if (formularioAberto() && familiaAtual) {
+      // Cadastro já existente: editar celular atualiza o mesmo registro
+      agendarAutoSave(1000);
+      return;
+    }
     agendarBuscaPorCelular(350);
   });
 
-  // Autocomplete / sugestão do teclado (ex.: +55 11 95382-2691)
   celularInput.addEventListener('change', function () {
     aplicarCelularDigitado(celularInput.value);
+    atualizarDicaCelular();
+    if (formularioAberto() && familiaAtual) {
+      agendarAutoSave(400);
+      return;
+    }
     agendarBuscaPorCelular(120);
   });
 
@@ -718,11 +805,17 @@
       texto = '';
     }
     aplicarCelularDigitado(texto || celularInput.value);
+    atualizarDicaCelular();
+    if (formularioAberto() && familiaAtual) {
+      agendarAutoSave(400);
+      return;
+    }
     agendarBuscaPorCelular(80);
   });
 
   celularInput.addEventListener('blur', function () {
     aplicarCelularDigitado(celularInput.value);
+    atualizarDicaCelular();
     var digitos = ArturApi.normalizarCelular(celularInput.value);
     if (digitos.length >= 10 && !familiaAtual) {
       agendarBuscaPorCelular(50);
@@ -733,6 +826,11 @@
     if (e.key === 'Enter') {
       e.preventDefault();
       clearTimeout(debounceTimer);
+      if (formularioAberto() && familiaAtual) {
+        clearTimeout(autoSaveTimer);
+        salvarAutomatico();
+        return;
+      }
       buscarPorTelefone();
     }
   });
@@ -762,6 +860,7 @@
     kidsBox.appendChild(kidInput(''));
     updateMeias();
     atualizarVisibilidadeListas();
+    agendarAutoSave();
   });
 
   if (btnRemoverPai) {
@@ -790,6 +889,19 @@
       atualizarBotoesResponsaveis();
     });
   }
+
+  if (form) {
+    form.addEventListener('input', function () {
+      agendarAutoSave();
+    });
+    form.addEventListener('change', function () {
+      agendarAutoSave(500);
+    });
+  }
+
+  if (paiInput) paiInput.addEventListener('input', agendarAutoSave);
+  if (maeInput) maeInput.addEventListener('input', agendarAutoSave);
+  if (responsavelInput) responsavelInput.addEventListener('input', agendarAutoSave);
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();

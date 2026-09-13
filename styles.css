@@ -696,12 +696,33 @@ body.modo-rsvp #painel-rsvp {
   box-shadow: 6px 6px 0 rgba(0,0,0,.28);
 }
 
-#painel-rsvp.rsvp-dados-abertos #rsvp-lookup-wrap {
+#painel-rsvp.rsvp-dados-abertos #rsvp-intro,
+#painel-rsvp.rsvp-dados-abertos #rsvp-hint-busca {
   display: none;
+}
+
+#painel-rsvp.rsvp-dados-abertos #rsvp-celular-hint {
+  display: block;
 }
 
 #painel-rsvp.rsvp-dados-abertos #badge-cadastro {
   display: none !important;
+}
+
+#rsvp-celular-hint {
+  display: none;
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border: 3px solid #1f5c2e;
+  background: #e8ffe0;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  color: #10240f;
+}
+
+#rsvp-celular-hint strong {
+  font-family: var(--font-body);
+  letter-spacing: 0.02em;
 }
 
 .rsvp-head {
