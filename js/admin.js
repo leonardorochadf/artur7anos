@@ -1546,6 +1546,7 @@
           ? 'Nenhum resultado para “' + (buscaInput.value || '').trim() + '”.'
           : 'Nenhuma família na lista.';
       }
+      atualizarBarraExcluir();
       return;
     }
 
