@@ -788,14 +788,30 @@ body.modo-rsvp #painel-rsvp {
 
 .phone-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  width: 100%;
 }
 
-.phone-actions .btn {
-  font-size: 0.45rem;
-  padding: 10px 8px;
+.phone-actions .btn,
+.phone-actions a.btn {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  font-size: 0.55rem !important;
+  padding: 14px 12px !important;
+  margin: 0;
+  text-decoration: none;
+  flex: none;
+}
+
+.btn-wa {
+  text-decoration: none;
+}
+
+.phone-actions a.btn {
   text-decoration: none;
 }
 
@@ -872,13 +888,17 @@ body.modo-rsvp #painel-rsvp {
 
   .phone-actions {
     flex-direction: column;
+    width: 100%;
   }
 
-  .phone-actions .btn {
+  .phone-actions .btn,
+  .phone-actions a.btn {
+    display: block;
     width: 100%;
+    box-sizing: border-box;
     text-align: center;
-    font-size: 0.52rem;
-    padding: 12px 10px;
+    font-size: 0.55rem !important;
+    padding: 14px 12px !important;
   }
 
   .dash-lista-item {
@@ -930,8 +950,6 @@ body.modo-rsvp #painel-rsvp {
 }
 
 .btn-wa {
-  font-size: 0.42rem !important;
-  padding: 8px 10px !important;
   text-decoration: none;
 }
 
