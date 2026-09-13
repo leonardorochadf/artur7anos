@@ -1137,6 +1137,7 @@ th {
 body.modo-rsvp .mc-fx,
 body.modo-rsvp .hero,
 body.modo-rsvp .hero-actions,
+body.modo-rsvp #missao-energia,
 body.modo-rsvp #detalhes,
 body.modo-rsvp #termo,
 body.modo-rsvp .footer {
@@ -2353,6 +2354,93 @@ button.dash-click:active {
   }
 }
 
+.missao-call {
+  padding-top: 8px;
+}
+
+.missao-banner {
+  display: grid;
+  gap: 8px;
+  text-decoration: none;
+  color: #102418;
+  background:
+    linear-gradient(180deg, #7ec8ff 0%, #7ec8ff 42%, #5aad32 42%, #5aad32 52%, #8b5a2b 52%);
+  border: 4px solid #000;
+  box-shadow: 5px 5px 0 #000;
+  padding: 16px 16px 14px;
+  position: relative;
+  overflow: hidden;
+  animation: missao-glow 2.4s ease-in-out infinite;
+}
+
+.missao-banner::after {
+  content: "20%";
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  color: #ffd24a;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.missao-banner-eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.48rem;
+  letter-spacing: 0.04em;
+  color: #1a1208;
+  background: #ffd24a;
+  border: 2px solid #000;
+  display: inline-block;
+  width: fit-content;
+  padding: 4px 8px;
+}
+
+.missao-banner-title {
+  font-family: var(--font-display);
+  font-size: clamp(0.62rem, 3.4vw, 0.78rem);
+  line-height: 1.45;
+  text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.35);
+  max-width: 16ch;
+}
+
+.missao-banner-text {
+  font-family: var(--font-body);
+  font-size: 1.18rem;
+  line-height: 1.3;
+  max-width: 34ch;
+  color: #1a1208;
+  background: rgba(244, 247, 239, 0.88);
+  border: 2px solid #000;
+  padding: 8px 10px;
+}
+
+.missao-banner-cta {
+  font-family: var(--font-display);
+  font-size: 0.58rem;
+  line-height: 1.3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin-top: 4px;
+  padding: 12px 14px;
+  background: #ffd24a;
+  border: 3px solid #000;
+  box-shadow: 3px 3px 0 #000;
+  color: #000;
+}
+
+.missao-banner:active .missao-banner-cta {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+@keyframes missao-glow {
+  0%, 100% { box-shadow: 5px 5px 0 #000; }
+  50% { box-shadow: 5px 5px 0 #000, 0 0 0 3px rgba(255, 210, 74, 0.45); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mc-fx,
   .hero-pixel-shine,
@@ -2360,6 +2448,9 @@ button.dash-click:active {
     display: none !important;
   }
   .btn-pulse {
+    animation: none !important;
+  }
+  .missao-banner {
     animation: none !important;
   }
 }
