@@ -1258,7 +1258,7 @@
       '.vazio-msg{padding:20px;text-align:center;color:#666}';
 
     baixarPdf(conteudo, cssExtra, {
-      filename: 'artur-7-anos-presenca.pdf',
+      filename: 'artur-7-anos-presenca_' + carimboArquivo() + '.pdf',
       orientation: 'portrait',
       btn: btnPdfPresenca
     });
@@ -1421,6 +1421,23 @@
     setTimeout(function () {
       URL.revokeObjectURL(url);
     }, 60000);
+  }
+
+  function carimboArquivo() {
+    var agora = new Date();
+    var partes = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'America/Sao_Paulo',
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).formatToParts(agora);
+    var map = {};
+    partes.forEach(function (p) {
+      if (p.type !== 'literal') map[p.type] = p.value;
+    });
+    return map.day + '_' + map.month + '_' + map.hour + 'h_' + map.minute + 'min';
   }
 
   function baixarPdf(conteudoHtml, cssExtra, opts) {
@@ -1799,7 +1816,7 @@
       '.legenda{margin-top:12px;font-size:9pt;color:#555}';
 
     baixarPdf(conteudo, cssExtra, {
-      filename: 'artur-7-anos-lista-porta.pdf',
+      filename: 'artur-7-anos-lista-porta_' + carimboArquivo() + '.pdf',
       orientation: 'portrait',
       btn: btnPdfTabela
     });
