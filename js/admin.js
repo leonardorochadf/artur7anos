@@ -655,13 +655,19 @@
   function mensagemWhatsappConfirmacao(f, filtro) {
     var nome = nomeFamilia(f) || 'família';
     var link = linkConvite();
+    // Emojis via escape Unicode (não quebram no WhatsApp)
+    var festa = '\uD83C\uDF89';
+    var data = '\uD83D\uDCC5';
+    var hora = '\uD83D\uDD54';
+    var local = '\uD83D\uDCCD';
+
     if (filtro === 'pendentes') {
       return (
         'Oi, ' + nome + '! Tudo bem?\n\n' +
         'Passando para confirmar se vocês vão ao aniversário de 7 anos do Artur!\n\n' +
-        '📅 25/11 (quarta-feira)\n' +
-        '🕔 Das 17h45 às 21h30\n' +
-        '📍 Jump Trampolim Park\n\n' +
+        data + ' 25/11 (quarta-feira)\n' +
+        hora + ' Das 17h45 às 21h30\n' +
+        local + ' Jump Trampolim Park\n\n' +
         'Por favor, confirme pelo link se vão ou não:\n' +
         link
       );
@@ -675,9 +681,9 @@
     }
     return (
       'Oi, ' + nome + '! Tudo bem?\n\n' +
-      'Obrigado pela confirmação no aniversário do Artur! 🎉\n\n' +
-      '📅 25/11 · 17h45–21h30\n' +
-      '📍 Jump Trampolim Park\n\n' +
+      'Obrigado pela confirmação no aniversário do Artur! ' + festa + '\n\n' +
+      data + ' 25/11 | 17h45-21h30\n' +
+      local + ' Jump Trampolim Park\n\n' +
       'Qualquer ajuste, use o link:\n' +
       link
     );
