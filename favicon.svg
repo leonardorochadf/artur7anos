@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8" shape-rendering="crispEdges">
+  <!-- Steve head 8x8 -->
+  <rect width="8" height="8" fill="#5a9c3a"/>
+  <!-- hair -->
+  <rect x="0" y="0" width="8" height="2" fill="#3b2214"/>
+  <rect x="0" y="2" width="1" height="1" fill="#3b2214"/>
+  <rect x="7" y="2" width="1" height="1" fill="#3b2214"/>
+  <!-- face -->
+  <rect x="1" y="2" width="6" height="5" fill="#c68642"/>
+  <rect x="0" y="3" width="1" height="4" fill="#c68642"/>
+  <rect x="7" y="3" width="1" height="4" fill="#c68642"/>
+  <!-- eyes -->
+  <rect x="1" y="3" width="2" height="1" fill="#fff"/>
+  <rect x="5" y="3" width="2" height="1" fill="#fff"/>
+  <rect x="2" y="3" width="1" height="1" fill="#3b5fcc"/>
+  <rect x="5" y="3" width="1" height="1" fill="#3b5fcc"/>
+  <!-- nose / shade -->
+  <rect x="3" y="4" width="2" height="1" fill="#b06f34"/>
+  <!-- beard / mouth -->
+  <rect x="2" y="5" width="4" height="1" fill="#6b3e22"/>
+  <rect x="3" y="6" width="2" height="1" fill="#6b3e22"/>
+  <rect x="1" y="6" width="1" height="1" fill="#c68642"/>
+  <rect x="6" y="6" width="1" height="1" fill="#c68642"/>
+  <rect x="0" y="7" width="8" height="1" fill="#c68642"/>
+</svg>
