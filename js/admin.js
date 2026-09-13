@@ -1042,7 +1042,8 @@
 
     var cssExtra =
       '.grade{display:grid;grid-template-columns:1fr 1fr;gap:10px}' +
-      '.fam{border:1.5px solid #2d4a2a;border-radius:6px;overflow:hidden;background:#fff}' +
+      '.fam{border:1.5px solid #2d4a2a;border-radius:6px;overflow:hidden;background:#fff;' +
+        'page-break-inside:avoid;break-inside:avoid;-webkit-column-break-inside:avoid}' +
       '.fam header{display:flex;gap:10px;align-items:center;background:#e8f2e4;border-bottom:1px solid #b7cbb0;padding:8px 10px}' +
       '.fam .num{width:28px;height:28px;border-radius:50%;background:#1f5c2e;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:11pt;flex-shrink:0}' +
       '.fam .tit{min-width:0}' +
@@ -1305,7 +1306,10 @@
                 y: 0
               },
               jsPDF: { unit: 'mm', format: 'a4', orientation: orientation },
-              pagebreak: { mode: ['css'] }
+              pagebreak: {
+                mode: ['css', 'legacy'],
+                avoid: ['.fam', '.porta-row', 'tr.pdf-keep']
+              }
             })
             .from(el)
             .outputPdf('blob');
@@ -1535,28 +1539,28 @@
         }).join('');
 
       return (
-        '<tr class="st-' + esc(f.status || '') + '">' +
-          '<td class="c num">' + (i + 1) + '</td>' +
-          '<td class="c qtd">' + (nA + nC) + '</td>' +
-          '<td class="pessoas">' + pessoasHtml + '</td>' +
-          '<td class="col-status"><span class="pdf-badge">' + esc(statusPdfLabel(f.status)) + '</span></td>' +
-        '</tr>'
+        '<div class="porta-row st-' + esc(f.status || '') + '">' +
+          '<div class="c num">' + (i + 1) + '</div>' +
+          '<div class="c qtd">' + (nA + nC) + '</div>' +
+          '<div class="pessoas">' + pessoasHtml + '</div>' +
+          '<div class="col-status"><span class="pdf-badge">' + esc(statusPdfLabel(f.status)) + '</span></div>' +
+        '</div>'
       );
     }).join('');
 
     var inicioBranco = ordenadas.length + 1;
     for (var b = 0; b < 12; b++) {
       body +=
-        '<tr class="extra">' +
-          '<td class="c num">' + (inicioBranco + b) + '</td>' +
-          '<td class="c qtd"></td>' +
-          '<td class="pessoas">' +
+        '<div class="porta-row extra">' +
+          '<div class="c num">' + (inicioBranco + b) + '</div>' +
+          '<div class="c qtd"></div>' +
+          '<div class="pessoas">' +
             '<div class="p-linha"><span class="ck">☐</span><span class="nm linha-vazia"></span></div>' +
             '<div class="p-linha"><span class="ck">☐</span><span class="nm linha-vazia"></span></div>' +
             '<div class="p-linha"><span class="ck">☐</span><span class="nm linha-vazia"></span></div>' +
-          '</td>' +
-          '<td class="col-status"></td>' +
-        '</tr>';
+          '</div>' +
+          '<div class="col-status"></div>' +
+        '</div>';
     }
 
     var conteudo =
@@ -1572,48 +1576,46 @@
         '<div class="card"><strong>Famílias</strong><span>' + ordenadas.length + '</span></div>' +
       '</div>' +
       '<div class="porta-wrap">' +
-        '<table class="porta">' +
-          '<thead><tr>' +
-            '<th class="c">#</th>' +
-            '<th class="c">Qtd</th>' +
-            '<th>Pessoas</th>' +
-            '<th class="col-status">Status</th>' +
-          '</tr></thead>' +
-          '<tbody>' + body + '</tbody>' +
-        '</table>' +
+        '<div class="porta-head">' +
+          '<div class="c">#</div>' +
+          '<div class="c">Qtd</div>' +
+          '<div>Pessoas</div>' +
+          '<div class="col-status">Status</div>' +
+        '</div>' +
+        '<div class="porta-body">' + body + '</div>' +
       '</div>' +
       '<p class="legenda">Linhas em branco no final para chegadas sem cadastro.</p>';
 
     var cssExtra =
       '.sheet{font-size:11pt;padding:12px 24px 20px 12px;box-sizing:border-box}' +
       '.topo h1{font-size:18pt}' +
-      /* Contorno externo: garante a borda da direita no PDF (html2canvas corta borda da última célula) */
       '.porta-wrap{border:2px solid #2d4a2a;background:#fff;overflow:visible;box-sizing:border-box;margin:0 2px 0 0}' +
-      'table.porta{width:100%;border-collapse:collapse;table-layout:fixed;border:none;margin:0}' +
-      'table.porta th,table.porta td{border:1px solid #2d4a2a;padding:8px 10px;vertical-align:top;background:transparent}' +
-      'table.porta th{background:#1f5c2e;color:#fff;font-size:10pt;text-align:left;font-weight:700}' +
-      'table.porta th.c,table.porta td.c{text-align:center;vertical-align:middle;width:52px}' +
-      'table.porta td.num{font-weight:700;background:#eef5eb;font-size:12pt}' +
-      'table.porta td.qtd{font-weight:700;font-size:12pt;vertical-align:middle}' +
-      'table.porta td.pessoas{width:auto}' +
-      'table.porta td.col-status{width:90px;max-width:90px;text-align:center;vertical-align:middle;background:#fff !important;padding:6px 6px}' +
-      'table.porta th:last-child{width:90px;max-width:90px;text-align:center;padding:8px 6px;white-space:nowrap;overflow:visible;font-size:9pt;letter-spacing:0}' +
-      'table.porta th:last-child,table.porta td:last-child{border-right:none}' +
-      'table.porta th:first-child,table.porta td:first-child{border-left:none}' +
-      'table.porta thead th{border-top:none}' +
-      'table.porta tbody tr:last-child td{border-bottom:none}' +
+      '.porta-head,.porta-row{display:grid;grid-template-columns:52px 52px 1fr 90px;align-items:stretch}' +
+      '.porta-head{background:#1f5c2e;color:#fff;font-size:10pt;font-weight:700}' +
+      '.porta-head > div{padding:8px 10px;border-right:1px solid #2d4a2a;border-bottom:1px solid #2d4a2a}' +
+      '.porta-head > div:last-child{border-right:none;text-align:center;padding:8px 6px;font-size:9pt}' +
+      '.porta-head .c{text-align:center}' +
+      '.porta-row{page-break-inside:avoid;break-inside:avoid;-webkit-column-break-inside:avoid;border-bottom:1px solid #2d4a2a}' +
+      '.porta-row:last-child{border-bottom:none}' +
+      '.porta-row > div{padding:8px 10px;border-right:1px solid #2d4a2a;vertical-align:top}' +
+      '.porta-row > div:last-child{border-right:none}' +
+      '.porta-row .c{text-align:center;display:flex;align-items:center;justify-content:center}' +
+      '.porta-row .num{font-weight:700;background:#eef5eb;font-size:12pt}' +
+      '.porta-row .qtd{font-weight:700;font-size:12pt}' +
+      '.porta-row .pessoas{width:auto}' +
+      '.porta-row .col-status{width:90px;max-width:90px;text-align:center;display:flex;align-items:center;justify-content:center;background:#fff !important;padding:6px 6px}' +
       '.p-linha{display:flex;align-items:center;gap:8px;padding:3px 0}' +
       '.p-linha .ck{font-size:14pt;color:#1f5c2e;width:20px;flex:0 0 20px;line-height:1}' +
       '.p-linha .papel{flex:0 0 58px;font-size:9pt;text-transform:uppercase;letter-spacing:.03em;color:#666}' +
       '.p-linha .nm{flex:1;font-size:12pt;font-weight:700;color:#111;white-space:normal;word-break:normal}' +
       '.p-linha .nm.linha-vazia{border-bottom:1px solid #bbb;min-height:16px;display:block}' +
       '.pdf-badge{display:inline-block;padding:3px 5px;border-radius:8px;font-size:8pt;font-weight:700;background:#e8eee6;color:#234;white-space:nowrap}' +
-      'tr.st-confirmado .pdf-badge{background:#d7f0d8;color:#145214}' +
-      'tr.st-presente .pdf-badge{background:#cfe8ff;color:#0b4a7a}' +
-      'tr.st-pre_cadastro .pdf-badge{background:#fff3cd;color:#7a5b00}' +
-      'tr.st-nao_vai .pdf-badge{background:#f8d7da;color:#842029}' +
-      'tbody tr:nth-child(even):not(.extra) td.pessoas,tbody tr:nth-child(even):not(.extra) td.qtd{background:#f7faf6}' +
-      'tr.extra td{background:#fff}' +
+      '.porta-row.st-confirmado .pdf-badge{background:#d7f0d8;color:#145214}' +
+      '.porta-row.st-presente .pdf-badge{background:#cfe8ff;color:#0b4a7a}' +
+      '.porta-row.st-pre_cadastro .pdf-badge{background:#fff3cd;color:#7a5b00}' +
+      '.porta-row.st-nao_vai .pdf-badge{background:#f8d7da;color:#842029}' +
+      '.porta-row:nth-child(even):not(.extra) .pessoas,.porta-row:nth-child(even):not(.extra) .qtd{background:#f7faf6}' +
+      '.porta-row.extra > div{background:#fff}' +
       '.legenda{margin-top:12px;font-size:9pt;color:#555}';
 
     baixarPdf(conteudo, cssExtra, {
