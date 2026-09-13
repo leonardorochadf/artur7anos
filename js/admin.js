@@ -37,6 +37,11 @@
   var buscaResultado = document.getElementById('busca-resultado');
   var checkTodosExcluir = document.getElementById('check-todos-excluir');
   var btnExcluirSelecionados = document.getElementById('btn-excluir-selecionados');
+  var buscaLogsInput = document.getElementById('busca-logs');
+  var buscaLogsResultado = document.getElementById('busca-logs-resultado');
+  var tabelaCadastrosLogBody = document.getElementById('tabela-cadastros-log-body');
+  var tabelaAcessosLogBody = document.getElementById('tabela-acessos-log-body');
+  var buscaLogsTimer = null;
   var telaLogin = document.getElementById('tela-login');
   var telaApp = document.getElementById('tela-app');
   var logado = false;
@@ -662,6 +667,122 @@
 
     renderGraficoBarras(document.getElementById('chart-cadastros'), window.__cadastrosPorDia || {}, '#1f5c2e');
     renderGraficoBarras(document.getElementById('chart-acessos'), window.__acessosPorDia || {}, '#0b4a7a');
+    renderTabelasLogs();
+  }
+
+  function montarAcessosFallback(familias) {
+    var lista = [];
+    (familias || []).forEach(function (f) {
+      if (!f.ultimo_acesso_em) return;
+      lista.push({
+        data_hora: f.ultimo_acesso_em,
+        celular_busca: chaveFamilia(f),
+        celulares_familia: celularesDaFamilia(f).join(' | '),
+        nome_familia: nomeFamilia(f)
+      });
+    });
+    lista.sort(function (a, b) {
+      return String(b.data_hora || '').localeCompare(String(a.data_hora || ''));
+    });
+    return lista;
+  }
+
+  function agregarMapaDeAcessos(lista) {
+    var map = {};
+    (lista || []).forEach(function (a) {
+      var dia = diaBrasilia(a.data_hora);
+      if (!dia) return;
+      map[dia] = (map[dia] || 0) + 1;
+    });
+    return map;
+  }
+
+  function renderTabelasLogs() {
+    var filtro = ((buscaLogsInput && buscaLogsInput.value) || '').trim().toLowerCase();
+    var filtroDigitos = ArturApi.onlyDigits(filtro);
+    var cadastros = (window.__familias || []).slice().sort(function (a, b) {
+      return String(b.criado_em || '').localeCompare(String(a.criado_em || ''));
+    });
+    var acessos = (window.__acessosLista || []).slice();
+
+    var cadFiltrados = cadastros.filter(function (f) {
+      if (!filtro) return true;
+      var blob = [
+        formatarDataHora(f.criado_em),
+        formatarDataHora(f.ultimo_acesso_em),
+        exibirCelulares(f),
+        nomeFamilia(f),
+        (f.filhos || []).join(' '),
+        f.status
+      ].join(' ').toLowerCase();
+      if (blob.indexOf(filtro) !== -1) return true;
+      if (filtroDigitos && celularesDaFamilia(f).join(' ').indexOf(filtroDigitos) !== -1) return true;
+      return false;
+    });
+
+    var aceFiltrados = acessos.filter(function (a) {
+      if (!filtro) return true;
+      var blob = [
+        formatarDataHora(a.data_hora),
+        a.celular_busca,
+        a.celulares_familia,
+        a.nome_familia
+      ].join(' ').toLowerCase();
+      if (blob.indexOf(filtro) !== -1) return true;
+      if (filtroDigitos && String(a.celular_busca || '').indexOf(filtroDigitos) !== -1) return true;
+      if (filtroDigitos && String(a.celulares_familia || '').replace(/\D/g, '').indexOf(filtroDigitos) !== -1) return true;
+      return false;
+    });
+
+    if (buscaLogsResultado) {
+      buscaLogsResultado.textContent = filtro
+        ? (cadFiltrados.length + ' cadastro(s) · ' + aceFiltrados.length + ' acesso(s) filtrados.')
+        : (cadastros.length + ' cadastro(s) · ' + acessos.length + ' acesso(s).');
+    }
+
+    if (tabelaCadastrosLogBody) {
+      if (!cadFiltrados.length) {
+        tabelaCadastrosLogBody.innerHTML = '<tr><td colspan="6">Nenhum cadastro.</td></tr>';
+      } else {
+        tabelaCadastrosLogBody.innerHTML = cadFiltrados.map(function (f) {
+          return (
+            '<tr>' +
+              '<td>' + esc(formatarDataHora(f.criado_em)) + '</td>' +
+              '<td>' + esc(exibirCelulares(f)) + '</td>' +
+              '<td>' + esc(nomeFamilia(f)) + '</td>' +
+              '<td>' + esc((f.filhos || []).join(', ')) + '</td>' +
+              '<td>' + esc(f.status || '') + '</td>' +
+              '<td>' + esc(formatarDataHora(f.ultimo_acesso_em)) + '</td>' +
+            '</tr>'
+          );
+        }).join('');
+      }
+    }
+
+    if (tabelaAcessosLogBody) {
+      if (!aceFiltrados.length) {
+        tabelaAcessosLogBody.innerHTML =
+          '<tr><td colspan="4">Nenhum acesso registrado ainda. Republiche o Apps Script (v8.1) e peça para alguém buscar o celular no convite.</td></tr>';
+      } else {
+        tabelaAcessosLogBody.innerHTML = aceFiltrados.map(function (a) {
+          var cel = a.celular_busca ? ArturApi.formatPhone(a.celular_busca) : '—';
+          var celsFam = String(a.celulares_familia || '')
+            .split('|')
+            .map(function (s) { return ArturApi.onlyDigits(s); })
+            .filter(Boolean)
+            .map(function (c) { return ehSemCelular(c) ? 'Sem celular' : ArturApi.formatPhone(c); })
+            .join(' · ') || '—';
+          return (
+            '<tr>' +
+              '<td>' + esc(formatarDataHora(a.data_hora)) + '</td>' +
+              '<td>' + esc(cel) + '</td>' +
+              '<td>' + esc(a.nome_familia || '—') + '</td>' +
+              '<td>' + esc(celsFam) + '</td>' +
+            '</tr>'
+          );
+        }).join('');
+      }
+    }
   }
 
   function pessoasDoTelefone(f) {
@@ -1671,6 +1792,7 @@
     try {
       var data = await ArturApi.listar(senha());
       window.__familias = ordenarPorTelefone(data.familias || []);
+      window.__acessosLista = data.acessos || [];
       window.__acessosPorDia = data.acessos_por_dia || {};
       window.__cadastrosPorDia = data.cadastros_por_dia || {};
       // fallback se API antiga ainda não tiver cadastros_por_dia
@@ -1683,6 +1805,13 @@
           }
         });
         window.__cadastrosPorDia = mapCad;
+      }
+      // fallback acessos: lista vazia ou gráfico vazio → usa ultimo_acesso_em
+      if (!window.__acessosLista.length) {
+        window.__acessosLista = montarAcessosFallback(window.__familias);
+      }
+      if (!Object.keys(window.__acessosPorDia).length) {
+        window.__acessosPorDia = agregarMapaDeAcessos(window.__acessosLista);
       }
       mostrarApp();
       renderLista(window.__familias);
@@ -1760,6 +1889,16 @@
   if (btnExcluirSelecionados) {
     btnExcluirSelecionados.addEventListener('click', function () {
       excluirFamiliasComProgresso(celularesSelecionadosExcluir());
+    });
+  }
+
+  function agendarFiltroLogs() {
+    clearTimeout(buscaLogsTimer);
+    buscaLogsTimer = setTimeout(renderTabelasLogs, 80);
+  }
+  if (buscaLogsInput) {
+    ['input', 'keyup', 'search', 'paste'].forEach(function (evName) {
+      buscaLogsInput.addEventListener(evName, agendarFiltroLogs);
     });
   }
 

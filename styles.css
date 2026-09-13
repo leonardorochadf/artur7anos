@@ -1169,10 +1169,19 @@ body.modo-rsvp #painel-rsvp {
   white-space: nowrap;
 }
 
-.chart-empty {
-  margin: 0;
-  opacity: 0.75;
-  font-size: 1rem;
+.logs-table {
+  font-size: 0.95rem;
+}
+
+.logs-table th,
+.logs-table td {
+  white-space: nowrap;
+}
+
+.logs-table td:nth-child(3),
+.logs-table td:nth-child(4) {
+  white-space: normal;
+  min-width: 120px;
 }
 
 .footer {

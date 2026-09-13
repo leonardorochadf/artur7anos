@@ -11,7 +11,7 @@ var ABA = 'Familias';
 var ABA_ACESSOS = 'Acessos';
 var ADMIN_SENHA_FIXA = '19122019@';
 var SHEET_ID_FIXO = '1ZFZ_UjSaF4BXecf0TizKXLt8EeCpErpPwmqWQJBGyok';
-var VERSAO = 'v8-multi-fone-acesso';
+var VERSAO = 'v8.1-acessos-lista';
 
 var CABECALHO = [
   'celular',
@@ -124,6 +124,7 @@ function respostaListar() {
   return {
     ok: true,
     familias: listarTodas(),
+    acessos: listarAcessos(),
     acessos_por_dia: agregarAcessosPorDia(),
     cadastros_por_dia: agregarCadastrosPorDia(),
     versao: VERSAO
@@ -485,6 +486,30 @@ function getAcessosSheet() {
     sheet.setFrozenRows(1);
   }
   return sheet;
+}
+
+function listarAcessos() {
+  var sheet = getAcessosSheet();
+  var last = sheet.getLastRow();
+  var out = [];
+  if (last < 2) return out;
+  var valores = sheet.getRange(2, 1, last, 4).getValues();
+  for (var i = 0; i < valores.length; i++) {
+    var row = valores[i];
+    var dataHora = formatarDataCampo(row[0]);
+    if (!dataHora && !row[1] && !row[3]) continue;
+    out.push({
+      data_hora: dataHora,
+      celular_busca: normalizarCelular(row[1]),
+      celulares_familia: String(row[2] || ''),
+      nome_familia: limparTexto(row[3] || '')
+    });
+  }
+  // mais recentes primeiro
+  out.sort(function (a, b) {
+    return String(b.data_hora || '').localeCompare(String(a.data_hora || ''));
+  });
+  return out;
 }
 
 function agregarAcessosPorDia() {
