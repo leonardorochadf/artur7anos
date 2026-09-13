@@ -16,6 +16,10 @@ Copy-Item (Join-Path $root 'config.js') $deploy
 Copy-Item (Join-Path $root 'styles.css') $deploy
 Copy-Item (Join-Path $root 'convite_new.png') $deploy
 Copy-Item (Join-Path $root 'js') (Join-Path $deploy 'js') -Recurse
+Copy-Item (Join-Path $root 'missao-energia') (Join-Path $deploy 'missao-energia') -Recurse
+if (Test-Path (Join-Path $root 'staticwebapp.config.json')) {
+  Copy-Item (Join-Path $root 'staticwebapp.config.json') $deploy
+}
 
 $key = az storage account keys list --account-name $sa --resource-group $rg --query "[0].value" -o tsv
 az storage blob upload-batch --account-name $sa --account-key $key -d "`$web" -s $deploy --overwrite true -o none
@@ -23,4 +27,5 @@ az storage blob upload-batch --account-name $sa --account-key $key -d "`$web" -s
 Write-Host ''
 Write-Host 'Publicado!'
 Write-Host 'Convite: https://startur7anos1512.z20.web.core.windows.net/'
+Write-Host 'Missão:  https://startur7anos1512.z20.web.core.windows.net/missao-energia/'
 Write-Host 'Admin:   https://startur7anos1512.z20.web.core.windows.net/admin.html'

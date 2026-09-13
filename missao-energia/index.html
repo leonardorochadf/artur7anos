@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#3d9be9" />
+  <meta name="description" content="Missão Energia Solar — quebre blocos, construa seu caminho e descubra 20% de desconto com a COOPERE-BR." />
+  <title>Missão Energia Solar ☀️ · COOPERE-BR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="game.css" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="game" width="960" height="540" aria-label="Jogo Missão Energia Solar"></canvas>
+
+    <div id="hud" class="hidden" aria-live="polite">
+      <div class="hud-chip" id="hud-blocks">Blocos: 0/3</div>
+      <div class="hud-chip" id="hud-hint">Pule os obstáculos!</div>
+      <button type="button" id="btn-mute" class="hud-mute" aria-pressed="false" title="Som">🔊</button>
+    </div>
+
+    <div id="touch" class="touch hidden" aria-hidden="true">
+      <div class="touch-left">
+        <button type="button" class="touch-btn" data-dir="left" aria-label="Esquerda">◀</button>
+        <button type="button" class="touch-btn" data-dir="right" aria-label="Direita">▶</button>
+      </div>
+      <div class="touch-right">
+        <button type="button" class="touch-btn touch-jump" data-action="jump" aria-label="Pular">⬆</button>
+        <button type="button" class="touch-btn touch-act" id="btn-action" data-action="act" aria-label="Ação">Quebrar</button>
+      </div>
+    </div>
+
+    <section id="screen-menu" class="screen">
+      <div class="panel">
+        <h1>Missão Energia Solar ☀️</h1>
+        <p class="lead">Quebre blocos, desça o tobogã, pule os jacarés e chegue ao baú — no final te espera uma recompensa eletrizante!</p>
+        <button type="button" class="btn btn-primary" id="btn-play">JOGAR</button>
+        <div class="help" id="help-desktop">
+          <p><strong>PC:</strong> ← → andar · Espaço pular · clique 2× ou E para quebrar/abrir · B construir</p>
+        </div>
+        <div class="help" id="help-mobile">
+          <p><strong>Celular:</strong> ◀ ▶ andar · ⬆ pular · toque 2× no bloco ou use QUEBRAR / CONSTRUIR / ABRIR</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-win" class="screen hidden">
+      <div class="panel win-panel">
+        <div id="confetti" class="confetti" aria-hidden="true"></div>
+        <div class="sun-wrap" aria-hidden="true">
+          <div class="sun"></div>
+        </div>
+        <h2>☀️ Sua conta da EDP mais barata todos os meses!</h2>
+        <p class="lead">
+          Você ganhou <strong>20% de desconto na energia compensada</strong> com os créditos solares da COOPERE-BR. A economia se repete mês após mês! 💚
+        </p>
+        <a class="btn btn-primary btn-cta" id="btn-desconto" href="https://desconto.cooperebr.com.br/" target="_self" rel="noopener">
+          QUERO MEU DESCONTO TODO MÊS
+        </a>
+        <p class="legal">
+          Válido após cadastro e ativação, conforme as condições da campanha.
+        </p>
+        <button type="button" class="btn btn-secondary" id="btn-again">Jogar novamente</button>
+        <a class="btn btn-artur" id="btn-artur" href="https://www.artur7anos.com.br/" target="_blank" rel="noopener">
+          ⛏️ Jogar o aniversário do Artur
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

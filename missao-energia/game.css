@@ -1,0 +1,329 @@
+:root {
+  --sky: #3d9be9;
+  --sky-2: #7ec8ff;
+  --grass: #5aad32;
+  --grass-dark: #3f8a22;
+  --dirt: #8b5a2b;
+  --wood: #c4a574;
+  --ink: #1a1208;
+  --gold: #ffd24a;
+  --panel: #f4f7ef;
+  --font-pixel: "Press Start 2P", monospace;
+  --font-body: "VT323", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #0d1b2a;
+  font-family: var(--font-body);
+  color: var(--ink);
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-height: 100dvh;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--sky) 0%, var(--sky-2) 55%, #b8e8ff 55%, #b8e8ff 62%, var(--grass) 62%);
+}
+
+#game {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  background: transparent;
+}
+
+.hidden { display: none !important; }
+
+.screen {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(10, 25, 40, 0.55);
+  backdrop-filter: blur(2px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+.panel {
+  width: min(100%, 440px);
+  background: var(--panel);
+  border: 5px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--ink);
+  padding: 22px 18px 18px;
+  text-align: center;
+}
+
+.brand {
+  margin: 0 0 10px;
+  font-family: var(--font-pixel);
+  font-size: 0.55rem;
+  color: var(--grass-dark);
+  letter-spacing: 0.06em;
+}
+
+h1, h2 {
+  margin: 0 0 14px;
+  font-family: var(--font-pixel);
+  font-size: clamp(0.78rem, 3.6vw, 1rem);
+  line-height: 1.55;
+  color: #153d12;
+  text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.45);
+}
+
+.lead {
+  margin: 0 0 18px;
+  font-size: 1.28rem;
+  line-height: 1.35;
+}
+
+.lead strong {
+  color: #1a5c12;
+  font-weight: 700;
+}
+
+.win-panel h2 {
+  font-size: clamp(0.62rem, 3.1vw, 0.82rem);
+  line-height: 1.55;
+}
+
+.help {
+  margin-top: 14px;
+  font-size: 1.12rem;
+  line-height: 1.35;
+  opacity: 0.92;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 16px;
+  border: 4px solid var(--ink);
+  font-family: var(--font-pixel);
+  font-size: 0.58rem;
+  line-height: 1.4;
+  text-decoration: none;
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--ink);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.btn-primary {
+  background: var(--gold);
+}
+
+.btn-cta {
+  background: linear-gradient(180deg, #ffe27a, #ffc107);
+  font-size: clamp(0.48rem, 2.8vw, 0.56rem);
+  min-height: 64px;
+  margin-bottom: 12px;
+}
+
+.btn-secondary {
+  background: var(--wood);
+  margin-top: 10px;
+}
+
+.btn-artur {
+  background: #5aad32;
+  color: #fff8dc;
+  margin-top: 10px;
+  font-size: clamp(0.42rem, 2.4vw, 0.5rem);
+  min-height: 48px;
+}
+
+.legal {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  opacity: 0.88;
+}
+
+.win-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.win-panel::before {
+  content: "20%";
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-family: var(--font-pixel);
+  font-size: 0.7rem;
+  color: #c99700;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.confetti {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.confetti i {
+  position: absolute;
+  top: -12px;
+  width: 8px;
+  height: 8px;
+  background: #ffd24a;
+  animation: confetti-fall 1.4s linear forwards;
+}
+
+@keyframes confetti-fall {
+  to {
+    transform: translateY(460px) rotate(400deg);
+    opacity: 0;
+  }
+}
+
+.sun-wrap {
+  height: 90px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sun {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  background: radial-gradient(circle at 35% 35%, #fff7b0, #ffd24a 45%, #f0a202 80%);
+  border: 4px solid var(--ink);
+  box-shadow: 0 0 0 6px rgba(255, 210, 74, 0.35), 4px 4px 0 var(--ink);
+  animation: sun-rise 1.2s ease-out both, sun-spin 8s linear infinite;
+}
+
+@keyframes sun-rise {
+  from { transform: translateY(40px) scale(0.4); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes sun-spin {
+  from { filter: brightness(1); }
+  50% { filter: brightness(1.12); }
+  to { filter: brightness(1); }
+}
+
+#hud {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  left: 10px;
+  right: 10px;
+  z-index: 12;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.hud-chip {
+  pointer-events: none;
+  background: rgba(244, 247, 239, 0.94);
+  border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 8px 10px;
+  font-family: var(--font-pixel);
+  font-size: 0.42rem;
+  line-height: 1.45;
+  max-width: min(72vw, 340px);
+}
+
+.hud-mute {
+  pointer-events: auto;
+  margin-left: auto;
+  border: 3px solid var(--ink);
+  background: #fff;
+  box-shadow: 3px 3px 0 var(--ink);
+  width: 44px;
+  height: 44px;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.touch {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  z-index: 15;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 12px;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.touch-left,
+.touch-right {
+  display: flex;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.touch-right {
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.touch-btn {
+  width: 64px;
+  height: 64px;
+  border: 4px solid var(--ink);
+  background: rgba(244, 247, 239, 0.92);
+  box-shadow: 4px 4px 0 var(--ink);
+  font-size: 1.4rem;
+  font-family: var(--font-pixel);
+  color: var(--ink);
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-jump { background: #9be37a; }
+.touch-act {
+  width: auto;
+  min-width: 110px;
+  padding: 0 12px;
+  font-size: 0.45rem;
+  background: var(--gold);
+}
+
+.touch-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+@media (min-width: 900px) {
+  .touch { display: none !important; }
+}
+
+body.is-mobile #help-desktop { display: none; }
+body:not(.is-mobile) #help-mobile { display: none; }
