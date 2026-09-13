@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=36" />
+  <link rel="stylesheet" href="styles.css?v=37" />
 </head>
 <body>
   <div class="mc-fx" aria-hidden="true">
@@ -227,9 +227,23 @@
 
   <div id="modal-progresso" class="modal-confirm hidden" role="dialog" aria-modal="true" aria-labelledby="modal-progresso-titulo">
     <div class="modal-confirm-backdrop"></div>
-    <div class="modal-confirm-box modal-progresso-box">
-      <h3 id="modal-progresso-titulo">Buscando</h3>
-      <p id="modal-progresso-msg" class="modal-confirm-msg">Aguarde, procurando o cadastro...</p>
+    <div class="modal-confirm-box modal-progresso-box" id="modal-progresso-box">
+      <div id="modal-progresso-anim" class="mc-searcher hidden" aria-hidden="true">
+        <div class="mc-steve mc-steve-search">
+          <div class="mc-steve-head"></div>
+          <div class="mc-steve-body"></div>
+          <div class="mc-steve-arm mc-steve-arm-lupa">
+            <div class="mc-lupa"></div>
+          </div>
+          <div class="mc-steve-legs"></div>
+        </div>
+        <div class="mc-search-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+      <h3 id="modal-progresso-titulo">Procurando o cadastro</h3>
+      <p id="modal-progresso-fone" class="modal-progresso-fone hidden"></p>
+      <p id="modal-progresso-msg" class="modal-confirm-msg">Aguarde...</p>
       <div class="progresso-barra" aria-hidden="true">
         <div class="progresso-barra-fill" id="modal-progresso-fill"></div>
       </div>
@@ -267,6 +281,6 @@
 
   <script src="config.js?v=8"></script>
   <script src="js/api.js?v=6"></script>
-  <script src="js/app.js?v=30"></script>
+  <script src="js/app.js?v=31"></script>
 </body>
 </html>

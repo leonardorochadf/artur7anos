@@ -269,6 +269,116 @@ body::before {
   color: #1f5c2e;
 }
 
+.modal-buscando-mc-box {
+  background:
+    linear-gradient(180deg, #6ec4ff 0 36%, #5a9c3a 36% 72%, #8b5a2b 72%),
+    #f4f7ef;
+  border-color: #1a1208;
+}
+
+.modal-buscando-mc-box h3 {
+  color: #f4e4b8;
+  font-size: 0.62rem;
+  line-height: 1.45;
+  text-shadow:
+    2px 0 0 #111,
+    -2px 0 0 #111,
+    0 2px 0 #111,
+    0 -2px 0 #111,
+    3px 3px 0 #000;
+}
+
+.modal-progresso-fone {
+  margin: 10px 0 12px;
+  padding: 10px 12px;
+  border: 3px solid #1a1208;
+  background: rgba(244, 247, 239, 0.95);
+  font-family: var(--font-body);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  color: #10240f;
+  word-break: keep-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mc-searcher {
+  position: relative;
+  height: 110px;
+  margin: 0 auto 8px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+}
+
+.mc-steve-search .mc-steve-arm-lupa {
+  right: -2px;
+  animation: mc-lupa-bob 0.7s ease-in-out infinite;
+}
+
+.mc-lupa {
+  position: absolute;
+  top: -10px;
+  left: 8px;
+  width: 22px;
+  height: 22px;
+  border: 4px solid #111;
+  border-radius: 50%;
+  background: rgba(180, 230, 255, 0.55);
+  box-shadow: 2px 2px 0 #1a1208;
+}
+
+.mc-lupa::after {
+  content: "";
+  position: absolute;
+  right: -10px;
+  bottom: -6px;
+  width: 14px;
+  height: 5px;
+  background: #8b5a2b;
+  border: 2px solid #111;
+  transform: rotate(40deg);
+}
+
+.mc-search-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.mc-search-dots span {
+  width: 10px;
+  height: 10px;
+  background: #f4e4b8;
+  border: 2px solid #111;
+  animation: mc-dot-pulse 1s ease-in-out infinite;
+}
+
+.mc-search-dots span:nth-child(2) { animation-delay: 0.15s; }
+.mc-search-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes mc-lupa-bob {
+  0%, 100% { transform: rotate(10deg) translateY(0); }
+  50% { transform: rotate(-25deg) translateY(-4px); }
+}
+
+@keyframes mc-dot-pulse {
+  0%, 100% { transform: translateY(0); opacity: 0.55; }
+  50% { transform: translateY(-5px); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-steve-search .mc-steve-arm-lupa,
+  .mc-search-dots span {
+    animation: none;
+  }
+}
+
 .progresso-barra {
   width: 100%;
   height: 18px;

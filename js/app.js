@@ -36,8 +36,11 @@
   var salvandoRsvp = false;
   var ignorarAutoSave = false;
   var modalProgresso = document.getElementById('modal-progresso');
+  var modalProgressoBox = document.getElementById('modal-progresso-box');
   var modalProgressoMsg = document.getElementById('modal-progresso-msg');
   var modalProgressoTitulo = document.getElementById('modal-progresso-titulo');
+  var modalProgressoFone = document.getElementById('modal-progresso-fone');
+  var modalProgressoAnim = document.getElementById('modal-progresso-anim');
   var modalProgressoFill = document.getElementById('modal-progresso-fill');
   var modalProgressoPct = document.getElementById('modal-progresso-pct');
   var progressoTimer = null;
@@ -129,10 +132,34 @@
     if (modalProgressoPct) modalProgressoPct.textContent = p + '%';
   }
 
-  function abrirProgresso(titulo, mensagem) {
+  function abrirProgresso(titulo, mensagem, opts) {
+    opts = opts || {};
     if (!modalProgresso) return;
     if (modalProgressoTitulo) modalProgressoTitulo.textContent = titulo || 'Aguarde';
-    if (modalProgressoMsg) modalProgressoMsg.textContent = mensagem || 'Carregando...';
+    if (modalProgressoMsg) {
+      if (opts.fone) {
+        modalProgressoMsg.classList.add('hidden');
+        modalProgressoMsg.textContent = '';
+      } else {
+        modalProgressoMsg.classList.remove('hidden');
+        modalProgressoMsg.textContent = mensagem || 'Carregando...';
+      }
+    }
+    if (modalProgressoFone) {
+      if (opts.fone) {
+        modalProgressoFone.textContent = opts.fone;
+        modalProgressoFone.classList.remove('hidden');
+      } else {
+        modalProgressoFone.textContent = '';
+        modalProgressoFone.classList.add('hidden');
+      }
+    }
+    if (modalProgressoAnim) {
+      modalProgressoAnim.classList.toggle('hidden', !opts.buscaMc);
+    }
+    if (modalProgressoBox) {
+      modalProgressoBox.classList.toggle('modal-buscando-mc-box', !!opts.buscaMc);
+    }
     setProgressoVisual(8);
     modalProgresso.classList.remove('hidden');
     clearInterval(progressoTimer);
@@ -152,6 +179,10 @@
     return new Promise(function (resolve) {
       setTimeout(function () {
         if (modalProgresso) modalProgresso.classList.add('hidden');
+        if (modalProgressoAnim) modalProgressoAnim.classList.add('hidden');
+        if (modalProgressoFone) modalProgressoFone.classList.add('hidden');
+        if (modalProgressoMsg) modalProgressoMsg.classList.remove('hidden');
+        if (modalProgressoBox) modalProgressoBox.classList.remove('modal-buscando-mc-box');
         setProgressoVisual(0);
         resolve();
       }, 250);
@@ -659,8 +690,11 @@
       btnBuscar.disabled = true;
       btnBuscar.textContent = 'Buscando...';
     }
-    setStatus('Buscando cadastro de ' + ArturApi.formatPhone(celular) + '...', '');
-    abrirProgresso('Buscando', 'Procurando o cadastro de ' + ArturApi.formatPhone(celular) + '...');
+    setStatus('', '');
+    abrirProgresso('Procurando o cadastro', '', {
+      fone: ArturApi.formatPhone(celular),
+      buscaMc: true
+    });
     try {
       var data = await ArturApi.buscar('', celular);
       var results = data.resultados || [];
