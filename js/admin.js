@@ -336,6 +336,20 @@
     return list.map(function (c) { return ArturApi.formatPhone(c); }).join(' · ');
   }
 
+  function htmlCelularesEmpilhados(f) {
+    var list = celularesDaFamilia(f).filter(function (c) { return !ehSemCelular(c); });
+    if (!list.length) {
+      return '<span class="phone-number">Sem celular</span>';
+    }
+    return (
+      '<div class="phone-numbers">' +
+      list.map(function (c) {
+        return '<strong class="phone-number">' + esc(ArturApi.formatPhone(c)) + '</strong>';
+      }).join('') +
+      '</div>'
+    );
+  }
+
   function nomeFamilia(f) {
     if (!f) return '';
     if (f.nome_pai && f.nome_mae) return f.nome_pai + ' / ' + f.nome_mae;
@@ -878,9 +892,9 @@
           '<article class="dash-lista-item">' +
             '<div class="dash-lista-info">' +
               '<strong>' + esc(nomeFamilia(f) || 'Sem nome') + '</strong>' +
-              '<span class="dash-lista-fone">' + esc(exibirCelulares(f)) + '</span>' +
-              htmlPessoasDashLista(f) +
               '<span class="badge ' + esc(f.status) + '">' + esc(statusLabel(f.status)) + '</span>' +
+              htmlCelularesEmpilhados(f) +
+              htmlPessoasDashLista(f) +
             '</div>' +
             (wa
               ? '<a class="btn btn-grass btn-wa" href="' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a>'
@@ -2026,9 +2040,11 @@
           '<div class="phone-card-top">' +
             '<label class="phone-card-select">' +
               '<input type="checkbox" class="excluir-check" data-cel="' + esc(celKey) + '" aria-label="Selecionar para excluir" />' +
-              '<strong class="phone-number">' + esc(exibirCelulares(f)) + '</strong>' +
+              '<div class="phone-card-head">' +
+                '<span class="badge ' + esc(f.status) + '">' + esc(statusLabel(f.status)) + '</span>' +
+                htmlCelularesEmpilhados(f) +
+              '</div>' +
             '</label>' +
-            '<span class="badge ' + esc(f.status) + '">' + esc(statusLabel(f.status)) + '</span>' +
           '</div>' +
           pessoas +
           '<p class="phone-meias">Meias: ' + esc(f.qtd_meias || (f.filhos || []).length || 0) + '</p>' +
