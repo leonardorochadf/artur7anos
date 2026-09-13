@@ -619,12 +619,14 @@
     }
   }
 
-  function whatsappUrl(celular) {
+  function whatsappUrl(celular, texto) {
     if (ehSemCelular(celular)) return '';
     var digitos = ArturApi.onlyDigits(celular);
     if (!digitos) return '';
     if (digitos.indexOf('55') !== 0) digitos = '55' + digitos;
-    return 'https://wa.me/' + digitos;
+    var url = 'https://wa.me/' + digitos;
+    if (texto) url += '?text=' + encodeURIComponent(texto);
+    return url;
   }
 
   function ehSemCelular(celular) {
@@ -646,10 +648,45 @@
     return ArturApi.formatPhone(celular);
   }
 
-  function whatsappUrlLista(f) {
+  function linkConvite() {
+    return 'https://www.artur7anos.com.br/';
+  }
+
+  function mensagemWhatsappConfirmacao(f, filtro) {
+    var nome = nomeFamilia(f) || 'família';
+    var link = linkConvite();
+    if (filtro === 'pendentes') {
+      return (
+        'Oi, ' + nome + '! Tudo bem?\n\n' +
+        'Passando para confirmar se vocês vão ao aniversário de 7 anos do Artur!\n\n' +
+        '📅 25/11 (quarta-feira)\n' +
+        '🕔 Das 17h45 às 21h30\n' +
+        '📍 Jump Trampolim Park\n\n' +
+        'Por favor, confirme pelo link se vão ou não:\n' +
+        link
+      );
+    }
+    if (filtro === 'nao_vao') {
+      return (
+        'Oi, ' + nome + '! Tudo bem?\n\n' +
+        'Vi o registro de que não poderão ir ao aniversário do Artur. Se mudarem de ideia, é só confirmar pelo link:\n' +
+        link
+      );
+    }
+    return (
+      'Oi, ' + nome + '! Tudo bem?\n\n' +
+      'Obrigado pela confirmação no aniversário do Artur! 🎉\n\n' +
+      '📅 25/11 · 17h45–21h30\n' +
+      '📍 Jump Trampolim Park\n\n' +
+      'Qualquer ajuste, use o link:\n' +
+      link
+    );
+  }
+
+  function whatsappUrlLista(f, texto) {
     var list = celularesDaFamilia(f).filter(function (c) { return !ehSemCelular(c); });
     if (!list.length) return '';
-    return whatsappUrl(list[0]);
+    return whatsappUrl(list[0], texto);
   }
 
   function pct(parte, total) {
@@ -784,6 +821,78 @@
     renderGraficoBarras(document.getElementById('chart-cadastros'), window.__cadastrosPorDia || {}, '#1f5c2e');
     renderGraficoBarras(document.getElementById('chart-acessos'), window.__acessosPorDia || {}, '#0b4a7a');
     renderTabelasLogs();
+  }
+
+  function familiasPorFiltroDash(filtro) {
+    var lista = window.__familias || [];
+    return ordenarPorTelefone(lista).filter(function (f) {
+      if (filtro === 'confirmados') return familiaConfirmou(f);
+      if (filtro === 'nao_vao') return f.status === 'nao_vai';
+      if (filtro === 'pendentes') return f.status !== 'nao_vai' && !familiaConfirmou(f);
+      return false;
+    });
+  }
+
+  function fecharModalDashLista() {
+    var modal = document.getElementById('modal-dash-lista');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function abrirListaDash(filtro) {
+    var modal = document.getElementById('modal-dash-lista');
+    var tituloEl = document.getElementById('modal-dash-titulo');
+    var subEl = document.getElementById('modal-dash-sub');
+    var bodyEl = document.getElementById('modal-dash-lista-body');
+    if (!modal || !bodyEl) return;
+
+    var titulos = {
+      confirmados: 'Famílias que confirmaram',
+      pendentes: 'Ainda não confirmaram',
+      nao_vao: 'Famílias que não vão'
+    };
+    var subs = {
+      confirmados: 'Lista de quem já confirmou presença.',
+      pendentes: 'Toque em WhatsApp para pedir confirmação (vão ou não).',
+      nao_vao: 'Quem registrou que não poderá ir.'
+    };
+
+    var familias = familiasPorFiltroDash(filtro);
+    if (tituloEl) tituloEl.textContent = titulos[filtro] || 'Lista';
+    if (subEl) {
+      subEl.textContent = (subs[filtro] || '') + (familias.length ? (' · ' + familias.length + ' família' + (familias.length === 1 ? '' : 's')) : '');
+    }
+
+    if (!familias.length) {
+      bodyEl.innerHTML = '<p class="dash-lista-vazia">Nenhuma família neste grupo.</p>';
+    } else {
+      bodyEl.innerHTML = familias.map(function (f) {
+        var msg = mensagemWhatsappConfirmacao(f, filtro);
+        var wa = whatsappUrlLista(f, msg);
+        var pessoas = [];
+        if (f.nome_pai) pessoas.push(f.nome_pai);
+        if (f.nome_mae) pessoas.push(f.nome_mae);
+        (f.adultos || []).forEach(function (n) { pessoas.push(n); });
+        (f.filhos || []).forEach(function (n) { pessoas.push(n); });
+
+        return (
+          '<article class="dash-lista-item">' +
+            '<div class="dash-lista-info">' +
+              '<strong>' + esc(nomeFamilia(f) || 'Sem nome') + '</strong>' +
+              '<span class="dash-lista-fone">' + esc(exibirCelulares(f)) + '</span>' +
+              (pessoas.length
+                ? '<span class="dash-lista-pessoas">' + esc(pessoas.join(' · ')) + '</span>'
+                : '') +
+              '<span class="badge ' + esc(f.status) + '">' + esc(statusLabel(f.status)) + '</span>' +
+            '</div>' +
+            (wa
+              ? '<a class="btn btn-grass btn-wa" href="' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a>'
+              : '<span class="dash-lista-sem-fone">Sem celular</span>') +
+          '</article>'
+        );
+      }).join('');
+    }
+
+    modal.classList.remove('hidden');
   }
 
   function montarAcessosFallback(familias) {
@@ -2051,6 +2160,23 @@
   btnToggleTabela.addEventListener('click', toggleTabela);
   btnFecharTabela.addEventListener('click', fecharTabela);
   btnPdfTabela.addEventListener('click', gerarPdfTabela);
+
+  document.querySelectorAll('.dash-click[data-filtro]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      abrirListaDash(btn.getAttribute('data-filtro'));
+    });
+  });
+  var modalDashLista = document.getElementById('modal-dash-lista');
+  if (modalDashLista) {
+    modalDashLista.querySelectorAll('[data-dash-fechar]').forEach(function (el) {
+      el.addEventListener('click', fecharModalDashLista);
+    });
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var m = document.getElementById('modal-dash-lista');
+    if (m && !m.classList.contains('hidden')) fecharModalDashLista();
+  });
 
   if (checkTodosExcluir) {
     checkTodosExcluir.addEventListener('change', function () {

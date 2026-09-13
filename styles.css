@@ -1077,6 +1077,96 @@ body.modo-rsvp #painel-rsvp {
 .dash-item.dash-warn { background: #fff1c2; }
 .dash-item.dash-muted { background: #f0f0f0; }
 
+button.dash-click {
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+button.dash-click:active {
+  transform: scale(0.98);
+}
+
+.dash-hint {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  opacity: 0.75;
+  line-height: 1.2;
+}
+
+.modal-dash-box {
+  width: min(520px, 94vw);
+  max-height: min(86vh, 720px);
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-lista-body {
+  overflow: auto;
+  max-height: 52vh;
+  margin: 8px 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.dash-lista-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  border: 2px solid #000;
+  background: #fff;
+  padding: 10px;
+}
+
+.dash-lista-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dash-lista-info strong {
+  font-size: 1.05rem;
+}
+
+.dash-lista-fone,
+.dash-lista-pessoas {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: #333;
+  word-break: break-word;
+}
+
+.dash-lista-item .badge {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.dash-lista-item .btn-wa {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.dash-lista-sem-fone {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.dash-lista-vazia {
+  text-align: center;
+  padding: 16px 8px;
+  opacity: 0.8;
+}
+
 .dash-label {
   display: block;
   width: 100%;

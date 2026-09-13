@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=26" />
+  <link rel="stylesheet" href="styles.css?v=27" />
 </head>
 <body>
   <div class="app">
@@ -49,21 +49,24 @@
           </div>
           <p class="dash-resumo" id="dash-resumo-familias">Ex.: 4 de 5 famílias confirmaram</p>
           <div class="dash-grid dash-grid-3" id="dash-confirmacao">
-            <div class="dash-item dash-ok">
+            <button type="button" class="dash-item dash-ok dash-click" id="btn-dash-confirmados" data-filtro="confirmados">
               <span class="dash-label">Confirmaram (vão)</span>
               <strong class="dash-value" id="dash-confirmados">0</strong>
               <span class="dash-sub" id="dash-confirmados-detalhe"></span>
-            </div>
-            <div class="dash-item dash-warn">
+              <span class="dash-hint">Toque para ver a lista</span>
+            </button>
+            <button type="button" class="dash-item dash-warn dash-click" id="btn-dash-pendentes" data-filtro="pendentes">
               <span class="dash-label">Ainda não confirmaram</span>
               <strong class="dash-value" id="dash-nao-confirmados">0</strong>
               <span class="dash-sub" id="dash-nao-confirmados-detalhe"></span>
-            </div>
-            <div class="dash-item dash-muted">
+              <span class="dash-hint">Toque para pedir confirmação</span>
+            </button>
+            <button type="button" class="dash-item dash-muted dash-click" id="btn-dash-nao-vao" data-filtro="nao_vao">
               <span class="dash-label">Não vão</span>
               <strong class="dash-value" id="dash-nao-vao">0</strong>
               <span class="dash-sub" id="dash-nao-vao-detalhe"></span>
-            </div>
+              <span class="dash-hint">Toque para ver a lista</span>
+            </button>
           </div>
           <div class="dash-grid dash-grid-2" style="margin-top:10px">
             <div class="dash-item">
@@ -237,6 +240,18 @@
     </div>
   </div>
 
+  <div id="modal-dash-lista" class="modal-confirm hidden" role="dialog" aria-modal="true" aria-labelledby="modal-dash-titulo">
+    <div class="modal-confirm-backdrop" data-dash-fechar></div>
+    <div class="modal-confirm-box modal-dash-box">
+      <h3 id="modal-dash-titulo">Lista</h3>
+      <p id="modal-dash-sub" class="modal-confirm-msg"></p>
+      <div id="modal-dash-lista-body" class="dash-lista-body"></div>
+      <div class="modal-confirm-actions">
+        <button type="button" class="btn btn-secondary" data-dash-fechar>Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <div id="modal-confirm" class="modal-confirm hidden" role="dialog" aria-modal="true" aria-labelledby="modal-confirm-titulo">
     <div class="modal-confirm-backdrop" data-modal-cancel></div>
     <div class="modal-confirm-box">
@@ -263,6 +278,6 @@
 
   <script src="config.js?v=7"></script>
   <script src="js/api.js?v=5"></script>
-  <script src="js/admin.js?v=32"></script>
+  <script src="js/admin.js?v=33"></script>
 </body>
 </html>
