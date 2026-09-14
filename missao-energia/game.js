@@ -1036,18 +1036,21 @@
       ctx.lineTo(x + chest.w - 4, y + 12);
       ctx.fill();
       const elapsed = (performance.now() - chestOpenAt) / 900;
-      const sunY = y - 18 - 55 * Math.min(1, Math.max(0, elapsed));
+      // sobe o sol, mas mantém o 20% sempre visível na tela
+      const sunY = Math.max(70, y - 18 - 40 * Math.min(1, Math.max(0, elapsed)));
       drawMinecraftSun(x + chest.w / 2, sunY);
       if (elapsed > 0.35) {
+        const labelY = Math.max(48, sunY - 28);
         ctx.save();
         ctx.globalAlpha = Math.min(1, (elapsed - 0.35) * 2);
         ctx.fillStyle = "#fff8dc";
         ctx.strokeStyle = "#1a1208";
-        ctx.lineWidth = 3;
-        ctx.font = 'bold 28px "Press Start 2P", monospace';
+        ctx.lineWidth = 4;
+        ctx.font = 'bold 26px "Press Start 2P", monospace';
         ctx.textAlign = "center";
-        ctx.strokeText("20%", x + chest.w / 2, sunY - 36);
-        ctx.fillText("20%", x + chest.w / 2, sunY - 36);
+        ctx.textBaseline = "middle";
+        ctx.strokeText("20%", x + chest.w / 2, labelY);
+        ctx.fillText("20%", x + chest.w / 2, labelY);
         ctx.restore();
       }
     } else {
