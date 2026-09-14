@@ -245,6 +245,8 @@
     logado = true;
     telaLogin.classList.add('hidden');
     telaApp.classList.remove('hidden');
+    var scrollNav = document.getElementById('admin-scroll-nav');
+    if (scrollNav) scrollNav.classList.remove('hidden');
   }
 
   function formatarDataHora(iso) {
@@ -2390,4 +2392,25 @@
 
   setFilhos(['']);
   setAdultos(['']);
+
+  var btnScrollTop = document.getElementById('btn-scroll-top');
+  var btnScrollBottom = document.getElementById('btn-scroll-bottom');
+  if (btnScrollTop) {
+    btnScrollTop.addEventListener('click', function () {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    });
+  }
+  if (btnScrollBottom) {
+    btnScrollBottom.addEventListener('click', function () {
+      var y = Math.max(
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight
+      );
+      window.scrollTo(0, y);
+      document.documentElement.scrollTop = y;
+      document.body.scrollTop = y;
+    });
+  }
 })();

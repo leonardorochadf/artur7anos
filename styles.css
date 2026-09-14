@@ -2389,6 +2389,38 @@ button.dash-click:active {
   }
 }
 
+.admin-scroll-nav {
+  position: fixed;
+  right: max(10px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-scroll-btn {
+  width: 48px;
+  height: 48px;
+  border: 3px solid #1a1208;
+  background: #fff3c4;
+  color: #1a1208;
+  box-shadow: 3px 3px 0 #1a1208;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  font-family: var(--font-pixel);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.admin-scroll-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #1a1208;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mc-fx,
   .hero-pixel-shine,
