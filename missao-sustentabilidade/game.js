@@ -1415,6 +1415,14 @@
         ArturApi.missaoEvento(missaoSessionId(), evento);
       }
     } catch (_) {}
+    try {
+      if (window.ArturAnalytics && typeof ArturAnalytics.event === "function") {
+        ArturAnalytics.event("missao_" + evento, {
+          event_category: "missao_energetica",
+          session_id: missaoSessionId(),
+        });
+      }
+    } catch (_) {}
   }
 
   function startGame() {
