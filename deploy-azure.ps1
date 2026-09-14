@@ -15,6 +15,7 @@ Copy-Item (Join-Path $root 'admin.html') $deploy
 Copy-Item (Join-Path $root 'config.js') $deploy
 Copy-Item (Join-Path $root 'styles.css') $deploy
 Copy-Item (Join-Path $root 'convite_new.png') $deploy
+if (Test-Path (Join-Path $root 'og-convite.jpg')) { Copy-Item (Join-Path $root 'og-convite.jpg') $deploy }
 if (Test-Path (Join-Path $root 'favicon.png')) { Copy-Item (Join-Path $root 'favicon.png') $deploy }
 if (Test-Path (Join-Path $root 'favicon.svg')) { Copy-Item (Join-Path $root 'favicon.svg') $deploy }
 Copy-Item (Join-Path $root 'js') (Join-Path $deploy 'js') -Recurse
