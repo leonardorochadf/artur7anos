@@ -1139,6 +1139,7 @@ body.modo-rsvp .hero,
 body.modo-rsvp .hero-actions,
 body.modo-rsvp #detalhes,
 body.modo-rsvp #termo,
+body.modo-rsvp #missao-final,
 body.modo-rsvp .footer {
   display: none !important;
 }
@@ -2072,6 +2073,11 @@ button.dash-click:active {
 .missao-cta-hero {
   margin-top: 0;
   margin-bottom: 16px;
+}
+
+.missao-cta-final {
+  margin: 0 auto;
+  max-width: none;
 }
 
 .missao-cta-badge {
