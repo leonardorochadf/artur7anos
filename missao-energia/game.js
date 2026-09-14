@@ -24,12 +24,19 @@
   const coinsEl = document.getElementById("hud-coins");
   const progressTextEl = document.getElementById("hud-progress-text");
   const progressFillEl = document.getElementById("hud-bar-fill");
+  const progressChipEl = document.getElementById("hud-progress");
+  const levelBannerEl = document.getElementById("level-banner");
+  const levelBannerKickerEl = document.getElementById("level-banner-kicker");
+  const levelBannerTitleEl = document.getElementById("level-banner-title");
+  const levelBannerNextEl = document.getElementById("level-banner-next");
   const winStatsEl = document.getElementById("win-stats");
   const muteBtn = document.getElementById("btn-mute");
   const actBtn = document.getElementById("btn-action");
   const btnPlay = document.getElementById("btn-play");
   const btnAgain = document.getElementById("btn-again");
   const btnRetry = document.getElementById("btn-retry");
+  let levelBannerTimer = 0;
+  let hintLockUntil = 0;
 
   const isTouch =
     "ontouchstart" in window ||
@@ -67,13 +74,55 @@
 
   /** Níveis da missão — o baú da promo é o Level 7 */
   const LEVELS = {
-    1: { id: "start", coins: 0, label: "Level 1 · Começo" },
-    2: { id: "climb", coins: 15, label: "Level 2 · Subiu!" },
-    3: { id: "blocks", coins: 30, label: "Level 3 · Blocos!" },
-    4: { id: "slide", coins: 25, label: "Level 4 · Tobogã!" },
-    5: { id: "river", coins: 30, label: "Level 5 · Rio!" },
-    6: { id: "stairs", coins: 35, label: "Level 6 · Escada!" },
-    7: { id: "chest", coins: 50, label: "Level 7 · PROMO!" },
+    1: {
+      id: "start",
+      coins: 0,
+      title: "Começo da missão",
+      label: "Level 1 · Começo",
+      nextGoal: "Suba a plataforma alta",
+    },
+    2: {
+      id: "climb",
+      coins: 15,
+      title: "Você subiu!",
+      label: "Level 2 · Subiu!",
+      nextGoal: "Quebre os 3 blocos",
+    },
+    3: {
+      id: "blocks",
+      coins: 30,
+      title: "Blocos quebrados!",
+      label: "Level 3 · Blocos!",
+      nextGoal: "Desça o tobogã até a grama",
+    },
+    4: {
+      id: "slide",
+      coins: 25,
+      title: "Tobogã concluído!",
+      label: "Level 4 · Tobogã!",
+      nextGoal: "Atravesse o rio pelos jacarés",
+    },
+    5: {
+      id: "river",
+      coins: 30,
+      title: "Rio atravessado!",
+      label: "Level 5 · Rio!",
+      nextGoal: "Construa a escada de 3 blocos",
+    },
+    6: {
+      id: "stairs",
+      coins: 35,
+      title: "Escada montada!",
+      label: "Level 6 · Escada!",
+      nextGoal: "Abra o baú da promoção",
+    },
+    7: {
+      id: "chest",
+      coins: 50,
+      title: "Baú aberto · PROMO!",
+      label: "Level 7 · PROMO!",
+      nextGoal: "Pegue seu desconto!",
+    },
   };
 
   const state = {
@@ -300,16 +349,57 @@
     player.invuln = 0;
     player.slideCoast = 0;
     cameraX = 0;
+    hideLevelBanner();
+    progressChipEl.classList.remove("is-level-up");
     updateHUD();
-    setHint(tip("Level 1 · ← → andar · Espaço pular", "Level 1 · ◀ ▶ andar · ⬆ pular"));
+    setHint(tip(
+      "Level 1/7 · Próximo: Suba a plataforma · ← → andar · Espaço pular",
+      "Level 1/7 · Próximo: Suba a plataforma · ◀ ▶ andar · ⬆ pular"
+    ));
   }
 
   function updateHUD() {
     blocksEl.textContent = `Blocos: ${state.collected}/3`;
     livesEl.textContent = `Vidas: ${state.lives}`;
     coinsEl.textContent = `Moedas: ${state.coins}`;
-    progressTextEl.textContent = `Level ${state.level}/${MAX_LEVEL}`;
+    const info = LEVELS[state.level];
+    if (state.level >= MAX_LEVEL) {
+      progressTextEl.textContent = `Level ${state.level}/${MAX_LEVEL} · FINAL`;
+    } else if (info && info.nextGoal) {
+      progressTextEl.textContent = `L${state.level}/${MAX_LEVEL} → ${info.nextGoal}`;
+    } else {
+      progressTextEl.textContent = `Level ${state.level}/${MAX_LEVEL}`;
+    }
     progressFillEl.style.width = `${((state.level - 1) / (MAX_LEVEL - 1)) * 100}%`;
+    if (info) progressChipEl.title = info.nextGoal || info.label;
+  }
+
+  function hideLevelBanner() {
+    levelBannerEl.classList.add("hidden");
+    levelBannerEl.classList.remove("is-show");
+  }
+
+  function showLevelBanner(levelNum) {
+    const info = LEVELS[levelNum];
+    if (!info) return;
+    levelBannerKickerEl.textContent = `LEVEL ${levelNum} DE ${MAX_LEVEL}`;
+    levelBannerTitleEl.textContent = info.title;
+    if (levelNum >= MAX_LEVEL) {
+      levelBannerNextEl.textContent = "Missão completa · desconto liberado!";
+    } else {
+      levelBannerNextEl.textContent = `Próximo → Level ${levelNum + 1}: ${info.nextGoal}`;
+    }
+    levelBannerEl.classList.remove("hidden");
+    levelBannerEl.classList.remove("is-show");
+    // reinicia animação
+    void levelBannerEl.offsetWidth;
+    levelBannerEl.classList.add("is-show");
+    clearTimeout(levelBannerTimer);
+    levelBannerTimer = setTimeout(hideLevelBanner, 2800);
+
+    progressChipEl.classList.remove("is-level-up");
+    void progressChipEl.offsetWidth;
+    progressChipEl.classList.add("is-level-up");
   }
 
   function sfxCoin() {
@@ -341,6 +431,7 @@
     updateHUD();
     sfxLevelUp();
     sfxCoin();
+    showLevelBanner(levelNum);
     floatingTexts.push({
       x: player.x - 36,
       y: player.y - 30,
@@ -348,14 +439,15 @@
       life: 1.8,
       color: "#fff8dc",
     });
-    floatingTexts.push({
-      x: player.x - 50,
-      y: player.y - 48,
-      text: info.label,
-      life: 1.6,
-      color: "#7ec8ff",
-    });
-    setHint(info.label + (info.coins ? ` +${info.coins} moedas` : ""));
+    if (levelNum >= MAX_LEVEL) {
+      setHint(`Level ${levelNum}/${MAX_LEVEL} · Missão completa!`);
+    } else {
+      setHint(
+        `Level ${levelNum}/${MAX_LEVEL} · Próximo: ${info.nextGoal}` +
+          (info.coins ? ` · +${info.coins} moedas` : "")
+      );
+    }
+    hintLockUntil = performance.now() + 2800;
   }
 
   function checkChallengeProgress() {
@@ -727,6 +819,7 @@
 
   function updateHintsByProgress() {
     if (state.chestOpen) return;
+    if (performance.now() < hintLockUntil) return;
     if (state.placed.every(Boolean)) {
       setHint(tip("Chegue no baú e aperte E", "Chegue no baú e toque em ABRIR"));
       state.hintId = "chest";
@@ -1220,6 +1313,7 @@
 
   function finishWin() {
     running = false;
+    hideLevelBanner();
     sfxWin();
     spawnConfetti();
     if (winStatsEl) {
@@ -1233,6 +1327,7 @@
 
   function finishGameOver() {
     running = false;
+    hideLevelBanner();
     player.vx = 0;
     player.vy = 0;
     beep(80, 0.35, "sawtooth", 0.06);
