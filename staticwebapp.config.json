@@ -3,11 +3,21 @@
     {
       "route": "/admin",
       "rewrite": "/admin.html"
+    },
+    {
+      "route": "/missao-energia",
+      "redirect": "/missao-sustentabilidade/",
+      "statusCode": 301
+    },
+    {
+      "route": "/missao-energia/*",
+      "redirect": "/missao-sustentabilidade/",
+      "statusCode": 301
     }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/admin*", "/js/*", "/styles.css", "/config.js", "/missao-energia*", "/*.jpeg", "/*.jpg", "/*.png", "/*.svg", "/*.ico", "/staticwebapp.config.json", "/favicon.png", "/favicon.svg"]
+    "exclude": ["/admin*", "/js/*", "/styles.css", "/config.js", "/missao-energia*", "/missao-sustentabilidade*", "/*.jpeg", "/*.jpg", "/*.png", "/*.svg", "/*.ico", "/staticwebapp.config.json", "/favicon.png", "/favicon.svg"]
   },
   "mimeTypes": {
     ".js": "text/javascript",

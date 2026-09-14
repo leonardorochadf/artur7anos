@@ -18,7 +18,10 @@ Copy-Item (Join-Path $root 'convite_new.png') $deploy
 if (Test-Path (Join-Path $root 'favicon.png')) { Copy-Item (Join-Path $root 'favicon.png') $deploy }
 if (Test-Path (Join-Path $root 'favicon.svg')) { Copy-Item (Join-Path $root 'favicon.svg') $deploy }
 Copy-Item (Join-Path $root 'js') (Join-Path $deploy 'js') -Recurse
-Copy-Item (Join-Path $root 'missao-energia') (Join-Path $deploy 'missao-energia') -Recurse
+Copy-Item (Join-Path $root 'missao-sustentabilidade') (Join-Path $deploy 'missao-sustentabilidade') -Recurse
+if (Test-Path (Join-Path $root 'missao-energia')) {
+  Copy-Item (Join-Path $root 'missao-energia') (Join-Path $deploy 'missao-energia') -Recurse
+}
 if (Test-Path (Join-Path $root 'staticwebapp.config.json')) {
   Copy-Item (Join-Path $root 'staticwebapp.config.json') $deploy
 }
@@ -29,5 +32,5 @@ az storage blob upload-batch --account-name $sa --account-key $key -d "`$web" -s
 Write-Host ''
 Write-Host 'Publicado!'
 Write-Host 'Convite: https://startur7anos1512.z20.web.core.windows.net/'
-Write-Host 'Missão:  https://startur7anos1512.z20.web.core.windows.net/missao-energia/'
+Write-Host 'Missão:  https://startur7anos1512.z20.web.core.windows.net/missao-sustentabilidade/'
 Write-Host 'Admin:   https://startur7anos1512.z20.web.core.windows.net/admin.html'

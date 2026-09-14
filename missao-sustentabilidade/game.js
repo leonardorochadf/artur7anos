@@ -79,7 +79,7 @@
   const MAX_LIVES = 7;
   const MAX_LEVEL = 7;
 
-  /** Níveis da missão — o baú da promo é o Level 7 */
+  /** Níveis da Missão Energética — a surpresa só aparece no baú (Level 7) */
   const LEVELS = {
     1: {
       id: "start",
@@ -121,14 +121,14 @@
       coins: 35,
       title: "Escada montada!",
       label: "Level 6 · Escada!",
-      nextGoal: "Abra o baú da promoção",
+      nextGoal: "Abra o baú surpresa",
     },
     7: {
       id: "chest",
       coins: 50,
-      title: "Baú aberto · PROMO!",
-      label: "Level 7 · PROMO!",
-      nextGoal: "Pegue seu desconto!",
+      title: "Baú aberto!",
+      label: "Level 7 · Surpresa!",
+      nextGoal: "Surpresa revelada!",
     },
   };
 
@@ -392,7 +392,7 @@
     levelBannerKickerEl.textContent = `LEVEL ${levelNum} DE ${MAX_LEVEL}`;
     levelBannerTitleEl.textContent = info.title;
     if (levelNum >= MAX_LEVEL) {
-      levelBannerNextEl.textContent = "Missão completa · desconto liberado!";
+      levelBannerNextEl.textContent = "Missão completa · surpresa revelada!";
     } else {
       levelBannerNextEl.textContent = `Próximo → Level ${levelNum + 1}: ${info.nextGoal}`;
     }
@@ -1188,23 +1188,9 @@
       ctx.lineTo(x + chest.w - 4, y + 12);
       ctx.fill();
       const elapsed = (performance.now() - chestOpenAt) / 900;
-      // sobe o sol, mas mantém o 20% sempre visível na tela
+      // sol sobe; o prêmio (20%) só aparece na tela de vitória
       const sunY = Math.max(70, y - 18 - 40 * Math.min(1, Math.max(0, elapsed)));
       drawMinecraftSun(x + chest.w / 2, sunY);
-      if (elapsed > 0.35) {
-        const labelY = Math.max(48, sunY - 28);
-        ctx.save();
-        ctx.globalAlpha = Math.min(1, (elapsed - 0.35) * 2);
-        ctx.fillStyle = "#fff8dc";
-        ctx.strokeStyle = "#1a1208";
-        ctx.lineWidth = 4;
-        ctx.font = 'bold 26px "Press Start 2P", monospace';
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.strokeText("20%", x + chest.w / 2, labelY);
-        ctx.fillText("20%", x + chest.w / 2, labelY);
-        ctx.restore();
-      }
     } else {
       ctx.fillRect(x, y, chest.w, 16);
       ctx.fillStyle = "#ffd24a";
