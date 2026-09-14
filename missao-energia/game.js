@@ -439,6 +439,36 @@
     return list;
   }
 
+  function resolveStuckInSolids() {
+    const solidsNow = getSolidRects();
+    const p = { x: player.x, y: player.y, w: PLAYER_W, h: PLAYER_H };
+    for (const s of solidsNow) {
+      if (s.type === "slide") continue;
+      if (!rectsOverlap(p, s)) continue;
+
+      // Prefere sair por cima do bloco (caso típico ao construir)
+      const upDist = player.y + PLAYER_H - s.y;
+      const leftDist = player.x + PLAYER_W - s.x;
+      const rightDist = s.x + s.w - player.x;
+
+      if (upDist > 0 && upDist <= PLAYER_H + 8) {
+        player.y = s.y - PLAYER_H;
+        player.vy = 0;
+        player.onGround = true;
+        p.y = player.y;
+        continue;
+      }
+
+      if (leftDist <= rightDist) {
+        player.x = s.x - PLAYER_W;
+      } else {
+        player.x = s.x + s.w;
+      }
+      player.vx = 0;
+      p.x = player.x;
+    }
+  }
+
   function moveAndCollide(dt) {
     player.vy += GRAVITY * dt;
 
@@ -458,6 +488,12 @@
         if (player.onSlide && s.type === "slide") continue;
         if (player.vx > 0) player.x = s.x - PLAYER_W;
         else if (player.vx < 0) player.x = s.x + s.w;
+        else {
+          // parado, mas dentro: empurra para o lado mais próximo
+          const leftDist = player.x + PLAYER_W - s.x;
+          const rightDist = s.x + s.w - player.x;
+          player.x = leftDist <= rightDist ? s.x - PLAYER_W : s.x + s.w;
+        }
         if (!(player.onSlide && s.type === "slide")) {
           player.vx = player.onSlide ? 420 : 0;
         }
@@ -478,7 +514,6 @@
           player.vy = 0;
           player.onGround = true;
           if (s.type === "slide") player.onSlide = true;
-          // saiu do tobogã na grama: ainda leva impulso — se não parar, cai no rio
           if (wasSlide && s.type === "ground") {
             player.vx = 280;
             player.slideCoast = 1.2;
@@ -486,11 +521,17 @@
         } else if (player.vy < 0) {
           player.y = s.y + s.h;
           player.vy = 0;
+        } else {
+          // vy == 0 e ainda sobreposto: sobe para o topo
+          player.y = s.y - PLAYER_H;
+          player.onGround = true;
+          if (s.type === "slide") player.onSlide = true;
         }
         p.y = player.y;
       }
     }
 
+    resolveStuckInSolids();
     if (player.y > H + 140) loseLife();
   }
 
@@ -633,6 +674,17 @@
       state.inventory -= 1;
       spawnBurst(s.x + s.w / 2, s.y + s.h / 2, ["#c4a574", "#a06a3a"], 10);
       sfxPlace();
+
+      // Se o bloco nasceu em cima/dentro do personagem, sobe ele para o topo
+      const body = { x: player.x, y: player.y, w: PLAYER_W, h: PLAYER_H };
+      if (rectsOverlap(body, s)) {
+        player.y = s.y - PLAYER_H;
+        player.vy = 0;
+        player.onGround = true;
+        player.vx = 0;
+      }
+      resolveStuckInSolids();
+
       if (state.placed.every(Boolean)) reachLevel(6);
       return true;
     }
