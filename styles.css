@@ -1159,6 +1159,12 @@ body.modo-rsvp #rsvp-termo:not(.hidden) {
   display: block;
 }
 
+body.modo-rsvp .missao-cta-rsvp {
+  display: flex !important;
+  margin-top: 14px;
+  max-width: none;
+}
+
 body.modo-rsvp #painel-rsvp {
   border: 4px solid #000;
   box-shadow: 6px 6px 0 rgba(0,0,0,.28);
@@ -2043,26 +2049,93 @@ button.dash-click:active {
   color: inherit;
 }
 
-.gift-box {
-  display: block;
+.missao-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   width: 100%;
-  max-width: 420px;
-  margin: 0 auto 16px;
-  padding: 16px 14px;
+  max-width: 520px;
+  margin: 14px auto 0;
+  padding: 16px 14px 14px;
   text-decoration: none;
   text-align: center;
-  font-family: var(--font-display);
-  font-size: clamp(0.52rem, 2.8vw, 0.62rem);
-  line-height: 1.45;
-  color: #1a1208;
-  background: #f1c232;
+  color: #10240f;
+  background: linear-gradient(180deg, #ffe27a 0%, #f1c232 55%, #e0a800 100%);
   border: 4px solid #000;
-  box-shadow: 4px 4px 0 #000;
+  box-shadow: 5px 5px 0 #000, 0 0 0 3px rgba(241, 194, 50, 0.35);
+  animation: missao-cta-pulse 1.6s ease-in-out infinite;
+  box-sizing: border-box;
 }
 
-.gift-box:active {
+.missao-cta-badge {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 0.42rem;
+  letter-spacing: 0.08em;
+  padding: 4px 8px;
+  background: #1a1208;
+  color: #ffd24a;
+  border: 2px solid #000;
+}
+
+.missao-cta-title {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(0.72rem, 3.6vw, 0.92rem);
+  line-height: 1.35;
+  color: #1a1208;
+  text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.45);
+}
+
+.missao-cta-sub {
+  display: block;
+  font-family: var(--font-body);
+  font-size: clamp(1.05rem, 4vw, 1.25rem);
+  line-height: 1.25;
+  color: #2a3d18;
+}
+
+.missao-cta-go {
+  display: inline-block;
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: 0.55rem;
+  padding: 8px 14px;
+  background: #5aad32;
+  color: #fff8dc;
+  border: 3px solid #000;
+  box-shadow: 3px 3px 0 #000;
+}
+
+.missao-cta:active {
   transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 #000;
+  box-shadow: 2px 2px 0 #000, 0 0 0 3px rgba(241, 194, 50, 0.35);
+  animation: none;
+}
+
+.missao-cta-rsvp {
+  display: none;
+}
+
+.missao-cta-footer {
+  margin-bottom: 16px;
+}
+
+@keyframes missao-cta-pulse {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 5px 5px 0 #000, 0 0 0 3px rgba(241, 194, 50, 0.28);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 7px 8px 0 #000, 0 0 0 5px rgba(241, 194, 50, 0.45);
+  }
+}
+
+.gift-box {
+  /* legado: usa .missao-cta */
 }
 
 @keyframes rise {
@@ -2428,6 +2501,9 @@ button.dash-click:active {
     display: none !important;
   }
   .btn-pulse {
+    animation: none !important;
+  }
+  .missao-cta {
     animation: none !important;
   }
 }
