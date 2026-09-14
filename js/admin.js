@@ -43,6 +43,7 @@
   var buscaLogsResultado = document.getElementById('busca-logs-resultado');
   var tabelaCadastrosLogBody = document.getElementById('tabela-cadastros-log-body');
   var tabelaAcessosLogBody = document.getElementById('tabela-acessos-log-body');
+  var tabelaMissaoLogBody = document.getElementById('tabela-missao-log-body');
   var buscaLogsTimer = null;
   var telaLogin = document.getElementById('tela-login');
   var telaApp = document.getElementById('tela-app');
@@ -846,7 +847,55 @@
 
     renderGraficoBarras(document.getElementById('chart-cadastros'), window.__cadastrosPorDia || {}, '#1f5c2e');
     renderGraficoBarras(document.getElementById('chart-acessos'), window.__acessosPorDia || {}, '#0b4a7a');
+    renderMissaoDash();
     renderTabelasLogs();
+  }
+
+  function simNao(v) {
+    return v ? 'Sim' : 'Não';
+  }
+
+  function renderMissaoDash() {
+    var r = window.__missaoResumo || {};
+    var acessos = r.acessos || 0;
+    var iniciou = r.iniciou || 0;
+    var finalizou = r.finalizou || 0;
+    var clicou = r.clicou_20 || 0;
+    var elA = document.getElementById('dash-missao-acessos');
+    var elI = document.getElementById('dash-missao-iniciou');
+    var elF = document.getElementById('dash-missao-finalizou');
+    var elC = document.getElementById('dash-missao-clicou');
+    var elRes = document.getElementById('dash-missao-resumo');
+    if (elA) elA.textContent = String(acessos);
+    if (elI) elI.textContent = String(iniciou);
+    if (elF) elF.textContent = String(finalizou);
+    if (elC) elC.textContent = String(clicou);
+    if (elRes) {
+      var pctIni = acessos ? Math.round((iniciou / acessos) * 100) : 0;
+      var pctFim = acessos ? Math.round((finalizou / acessos) * 100) : 0;
+      var pctCli = acessos ? Math.round((clicou / acessos) * 100) : 0;
+      elRes.textContent = acessos
+        ? (acessos + ' acessos · ' + pctIni + '% iniciaram · ' + pctFim + '% finalizaram · ' + pctCli + '% clicaram 20%')
+        : 'Ainda sem acessos na Missão Energética. Abra /missao-sustentabilidade/ para gerar o primeiro.';
+    }
+    if (!tabelaMissaoLogBody) return;
+    var lista = (window.__missaoSessoes || []).slice();
+    if (!lista.length) {
+      tabelaMissaoLogBody.innerHTML =
+        '<tr><td colspan="5">Nenhuma sessão ainda. Republiche o Apps Script (v8.10) se a aba MissaoEnergetica não existir.</td></tr>';
+      return;
+    }
+    tabelaMissaoLogBody.innerHTML = lista.map(function (s) {
+      return (
+        '<tr>' +
+          '<td>' + esc(formatarDataHora(s.data_hora)) + '</td>' +
+          '<td>' + esc(simNao(s.entrou)) + '</td>' +
+          '<td>' + esc(simNao(s.iniciou)) + '</td>' +
+          '<td>' + esc(simNao(s.finalizou)) + '</td>' +
+          '<td>' + esc(simNao(s.clicou_20)) + '</td>' +
+        '</tr>'
+      );
+    }).join('');
   }
 
   function familiasPorFiltroDash(filtro) {
@@ -2170,6 +2219,8 @@
       window.__acessosLista = data.acessos || [];
       window.__acessosPorDia = data.acessos_por_dia || {};
       window.__cadastrosPorDia = data.cadastros_por_dia || {};
+      window.__missaoResumo = data.missao_resumo || { acessos: 0, iniciou: 0, finalizou: 0, clicou_20: 0 };
+      window.__missaoSessoes = data.missao_sessoes || [];
       // fallback se API antiga ainda não tiver cadastros_por_dia
       if (!Object.keys(window.__cadastrosPorDia).length) {
         var mapCad = {};
@@ -2196,7 +2247,7 @@
       renderLista(window.__familias);
       var apiVer = data.versao || '';
       window.__apiVersao = apiVer;
-      if (apiVer && !/v8\.[4-9]|filhos-opcional|check-confirma|celular-55/.test(apiVer)) {
+      if (apiVer && !/v8\.(9|10)|v8\.1[0-9]|missao-energetica|filhos-opcional|check-confirma|celular-55/.test(apiVer)) {
         var avisoApi = 'API desatualizada (' + apiVer + '). Abra o site com Ctrl+F5 e republiche o Apps Script.';
         setStatus(avisoApi, 'err');
         if (fromLogin) setLoginStatus(avisoApi, 'err');

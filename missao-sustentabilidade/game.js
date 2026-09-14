@@ -1346,6 +1346,7 @@
   function finishWin() {
     running = false;
     hideLevelBanner();
+    trackMissao("finalizou");
     sfxWin();
     spawnConfetti();
     if (winStatsEl) {
@@ -1386,6 +1387,36 @@
     }
   }
 
+  function missaoSessionId() {
+    try {
+      const key = "missao_energetica_sid";
+      let sid = sessionStorage.getItem(key);
+      if (!sid) {
+        sid =
+          "m" +
+          Date.now().toString(36) +
+          "_" +
+          Math.random().toString(36).slice(2, 10);
+        sessionStorage.setItem(key, sid);
+      }
+      return sid;
+    } catch (_) {
+      return "m" + Date.now().toString(36);
+    }
+  }
+
+  const missaoFlags = { entrou: false, iniciou: false, finalizou: false, clicou_20: false };
+
+  function trackMissao(evento) {
+    if (!evento || missaoFlags[evento]) return;
+    missaoFlags[evento] = true;
+    try {
+      if (window.ArturApi && typeof ArturApi.missaoEvento === "function" && ArturApi.ready()) {
+        ArturApi.missaoEvento(missaoSessionId(), evento);
+      }
+    } catch (_) {}
+  }
+
   function startGame() {
     ensureAudio();
     menu.classList.add("hidden");
@@ -1399,6 +1430,7 @@
     }
     resetGame();
     running = true;
+    trackMissao("iniciou");
   }
 
   function handleDoubleAction(clientX, clientY) {
@@ -1523,11 +1555,19 @@
     muteBtn.setAttribute("aria-pressed", muted ? "true" : "false");
   });
 
+  const btnDesconto = document.getElementById("btn-desconto");
+  if (btnDesconto) {
+    btnDesconto.addEventListener("click", () => {
+      trackMissao("clicou_20");
+    });
+  }
+
   window.addEventListener("resize", resize);
   window.addEventListener("orientationchange", () => setTimeout(resize, 120));
 
   resize();
   buildWorld();
   draw();
+  trackMissao("entrou");
   requestAnimationFrame(loop);
 })();

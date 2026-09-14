@@ -1719,8 +1719,22 @@ body.modo-rsvp #painel-rsvp {
   margin-top: 8px;
 }
 
+.dash-grid-4 {
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+  .dash-grid-4 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 520px) {
   .dash-grid-3 {
+    grid-template-columns: 1fr;
+  }
+  .dash-grid-4 {
     grid-template-columns: 1fr;
   }
 }

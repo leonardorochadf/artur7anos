@@ -105,6 +105,29 @@
     },
     excluir: function (senha, celular) {
       return request('POST', null, { action: 'excluir', senha: senha, celular: celular });
+    },
+    missaoEvento: function (sessionId, evento) {
+      if (!ready()) return Promise.resolve({ ok: false });
+      var url = apiUrl();
+      var payload = {
+        action: 'missao_evento',
+        session_id: sessionId,
+        evento: evento
+      };
+      try {
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload),
+          keepalive: true,
+          redirect: 'follow'
+        }).catch(function () {});
+        return Promise.resolve({ ok: true });
+      } catch (e) {
+        return request('POST', null, payload).catch(function () {
+          return { ok: false };
+        });
+      }
     }
   };
 })(window);

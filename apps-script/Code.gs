@@ -1,10 +1,11 @@
 /**
  * Backend: Google Apps Script + planilha do Artur 7 anos
- * Versao: v8.9-autosave-celular
+ * Versao: v8.10-missao-energetica
  *
  * - Varios celulares por familia (coluna celular: "fone1 | fone2")
  * - ultimo_acesso_em atualizado a cada busca/confirmacao
  * - Aba Acessos para grafico dia x acessos
+ * - Aba MissaoEnergetica: entrou / iniciou / finalizou / clicou_20
  * - outros adultos alem de pai/mae (coluna adultos)
  * - convite pode limpar pai OU mae (sempre resta 1 responsavel)
  * - celular_chave permite trocar o numero usado no acesso
@@ -12,9 +13,10 @@
 
 var ABA = 'Familias';
 var ABA_ACESSOS = 'Acessos';
+var ABA_MISSAO = 'MissaoEnergetica';
 var ADMIN_SENHA_FIXA = '19122019@';
 var SHEET_ID_FIXO = '1ZFZ_UjSaF4BXecf0TizKXLt8EeCpErpPwmqWQJBGyok';
-var VERSAO = 'v8.9-autosave-celular';
+var VERSAO = 'v8.10-missao-energetica';
 
 var CABECALHO = [
   'celular',
@@ -37,6 +39,16 @@ var CABECALHO_ACESSOS = [
   'celular_busca',
   'celulares_familia',
   'nome_familia'
+];
+
+var CABECALHO_MISSAO = [
+  'session_id',
+  'data_hora',
+  'entrou',
+  'iniciou',
+  'finalizou',
+  'clicou_20',
+  'atualizado_em'
 ];
 
 function doGet(e) {
@@ -128,6 +140,10 @@ function handlePost(body) {
     return excluirFamilia(body.celular);
   }
 
+  if (action === 'missao_evento') {
+    return registrarMissaoEvento(body);
+  }
+
   return { ok: false, erro: 'Ação POST desconhecida' };
 }
 
@@ -138,6 +154,8 @@ function respostaListar() {
     acessos: listarAcessos(),
     acessos_por_dia: agregarAcessosPorDia(),
     cadastros_por_dia: agregarCadastrosPorDia(),
+    missao_resumo: resumoMissao(),
+    missao_sessoes: listarMissaoSessoes(),
     versao: VERSAO
   };
 }
@@ -619,6 +637,138 @@ function agregarCadastrosPorDia() {
     map[dia] = (map[dia] || 0) + 1;
   }
   return map;
+}
+
+function getMissaoSheet() {
+  var id = PropertiesService.getScriptProperties().getProperty('SHEET_ID') || SHEET_ID_FIXO;
+  var ss = SpreadsheetApp.openById(id);
+  var sheet = ss.getSheetByName(ABA_MISSAO);
+  if (!sheet) {
+    sheet = ss.insertSheet(ABA_MISSAO);
+    sheet.appendRow(CABECALHO_MISSAO);
+    sheet.setFrozenRows(1);
+    return sheet;
+  }
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(CABECALHO_MISSAO);
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function colMissao(nome) {
+  var i = CABECALHO_MISSAO.indexOf(nome);
+  return i >= 0 ? i + 1 : -1;
+}
+
+function acharLinhaMissao(sheet, sessionId) {
+  var id = String(sessionId || '').trim();
+  if (!id) return -1;
+  var last = sheet.getLastRow();
+  if (last < 2) return -1;
+  var valores = sheet.getRange(2, 1, last, 1).getValues();
+  for (var i = 0; i < valores.length; i++) {
+    if (String(valores[i][0] || '').trim() === id) return i + 2;
+  }
+  return -1;
+}
+
+function registrarMissaoEvento(body) {
+  var evento = String((body && body.evento) || '').toLowerCase().trim();
+  var sessionId = String((body && body.session_id) || '').trim();
+  var eventosOk = { entrou: 1, iniciou: 1, finalizou: 1, clicou_20: 1 };
+  if (!eventosOk[evento]) {
+    return { ok: false, erro: 'Evento inválido' };
+  }
+  if (!sessionId || sessionId.length > 80) {
+    return { ok: false, erro: 'session_id inválido' };
+  }
+
+  var sheet = getMissaoSheet();
+  var agora = new Date().toISOString();
+  var rowIndex = acharLinhaMissao(sheet, sessionId);
+
+  if (rowIndex < 0) {
+    sheet.appendRow([
+      sessionId,
+      agora,
+      'Sim',
+      (evento === 'iniciou' || evento === 'finalizou' || evento === 'clicou_20') ? 'Sim' : '',
+      (evento === 'finalizou' || evento === 'clicou_20') ? 'Sim' : '',
+      evento === 'clicou_20' ? 'Sim' : '',
+      agora
+    ]);
+    return { ok: true, msg: 'sessão criada', session_id: sessionId, evento: evento, versao: VERSAO };
+  }
+
+  var colMap = {
+    entrou: colMissao('entrou'),
+    iniciou: colMissao('iniciou'),
+    finalizou: colMissao('finalizou'),
+    clicou_20: colMissao('clicou_20')
+  };
+  var colEvt = colMap[evento];
+  if (colEvt > 0) {
+    var atual = String(sheet.getRange(rowIndex, colEvt).getValue() || '').trim();
+    if (!atual || atual === 'Não' || atual === 'Nao') {
+      sheet.getRange(rowIndex, colEvt).setValue('Sim');
+    }
+  }
+  if (evento === 'iniciou' || evento === 'finalizou' || evento === 'clicou_20') {
+    sheet.getRange(rowIndex, colMissao('entrou')).setValue('Sim');
+  }
+  if (evento === 'finalizou' || evento === 'clicou_20') {
+    sheet.getRange(rowIndex, colMissao('iniciou')).setValue('Sim');
+  }
+  if (evento === 'clicou_20') {
+    sheet.getRange(rowIndex, colMissao('finalizou')).setValue('Sim');
+  }
+  sheet.getRange(rowIndex, colMissao('atualizado_em')).setValue(agora);
+  return { ok: true, msg: 'evento registrado', session_id: sessionId, evento: evento, versao: VERSAO };
+}
+
+function listarMissaoSessoes() {
+  var sheet = getMissaoSheet();
+  var last = sheet.getLastRow();
+  var out = [];
+  if (last < 2) return out;
+  var valores = sheet.getRange(2, 1, last, CABECALHO_MISSAO.length).getValues();
+  for (var i = 0; i < valores.length; i++) {
+    var row = valores[i];
+    var sid = String(row[0] || '').trim();
+    if (!sid) continue;
+    out.push({
+      session_id: sid,
+      data_hora: formatarDataCampo(row[1]),
+      entrou: marcarSim(row[2]),
+      iniciou: marcarSim(row[3]),
+      finalizou: marcarSim(row[4]),
+      clicou_20: marcarSim(row[5]),
+      atualizado_em: formatarDataCampo(row[6])
+    });
+  }
+  out.sort(function (a, b) {
+    return String(b.data_hora || '').localeCompare(String(a.data_hora || ''));
+  });
+  return out;
+}
+
+function marcarSim(v) {
+  var s = String(v || '').trim().toLowerCase();
+  return s === 'sim' || s === 's' || s === 'true' || s === '1' || s === 'yes';
+}
+
+function resumoMissao() {
+  var sessoes = listarMissaoSessoes();
+  var r = { acessos: 0, iniciou: 0, finalizou: 0, clicou_20: 0 };
+  for (var i = 0; i < sessoes.length; i++) {
+    var s = sessoes[i];
+    if (s.entrou) r.acessos += 1;
+    if (s.iniciou) r.iniciou += 1;
+    if (s.finalizou) r.finalizou += 1;
+    if (s.clicou_20) r.clicou_20 += 1;
+  }
+  return r;
 }
 
 function isoParaDia(v) {
