@@ -32,6 +32,13 @@
   const winStatsEl = document.getElementById("win-stats");
   const muteBtn = document.getElementById("btn-mute");
   const actBtn = document.getElementById("btn-action");
+  const actCapEl = document.getElementById("btn-action-cap");
+
+  function setActLabel(label) {
+    if (actCapEl) actCapEl.textContent = label;
+    else if (actBtn) actBtn.textContent = label;
+    if (actBtn) actBtn.setAttribute("aria-label", label);
+  }
   const btnPlay = document.getElementById("btn-play");
   const btnAgain = document.getElementById("btn-again");
   const btnRetry = document.getElementById("btn-retry");
@@ -730,10 +737,10 @@
       }
     }
 
-    if (actionMode === "break") actBtn.textContent = "Quebrar";
-    else if (actionMode === "build") actBtn.textContent = "Construir";
-    else if (actionMode === "open") actBtn.textContent = "Abrir";
-    else actBtn.textContent = "Ação";
+    if (actionMode === "break") setActLabel("Quebrar");
+    else if (actionMode === "build") setActLabel("Construir");
+    else if (actionMode === "open") setActLabel("Abrir");
+    else setActLabel("Ação");
   }
 
   function tryBreak() {
@@ -1216,35 +1223,74 @@
 
     const x = player.x - cameraX;
     const y = player.y;
-    const bob = player.onGround && !player.onSlide ? Math.sin(player.walkPhase) * 2 : 0;
-    const f = player.facing;
+    const bob = player.onGround && !player.onSlide ? Math.sin(player.walkPhase) * 1.5 : 0;
+    const f = player.facing >= 0 ? 1 : -1;
+    const walk = player.onGround && Math.abs(player.vx) > 20 ? Math.sin(player.walkPhase) : 0;
 
-    ctx.fillStyle = "rgba(0,0,0,0.18)";
-    ctx.fillRect(x + 4, y + PLAYER_H - 4, PLAYER_W - 8, 4);
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.fillRect(x + 5, y + PLAYER_H - 3, PLAYER_W - 10, 3);
 
-    ctx.fillStyle = "#3d5a80";
-    ctx.fillRect(x + 6, y + 28 + bob, 8, 16);
-    ctx.fillRect(x + 14, y + 28 + bob, 8, 16);
-
-    ctx.fillStyle = "#4cc9f0";
-    ctx.fillRect(x + 4, y + 14 + bob, 20, 18);
-
-    ctx.fillStyle = "#e0ac69";
-    ctx.fillRect(x + 5, y + bob, 18, 16);
-    ctx.fillStyle = "#2d6a4f";
-    ctx.fillRect(x + 5, y + bob, 18, 5);
-    ctx.fillStyle = "#1a1208";
-    ctx.fillRect(x + (f >= 0 ? 10 : 8), y + 7 + bob, 3, 3);
-    ctx.fillRect(x + (f >= 0 ? 15 : 13), y + 7 + bob, 3, 3);
-
-    const swing = player.swing > 0 ? -Math.sin((1 - player.swing / 0.25) * Math.PI) * 1.1 : 0;
     ctx.save();
-    ctx.translate(x + (f >= 0 ? 22 : 6), y + 20 + bob);
-    ctx.rotate(f * (0.35 + swing));
+    ctx.translate(x + PLAYER_W / 2, y + bob);
+    ctx.scale(f, 1);
+
+    // pernas (azul Steve) + sapatos
+    ctx.fillStyle = "#3c44aa";
+    ctx.fillRect(-10, 26, 8, 14 + walk * 2);
+    ctx.fillRect(2, 26, 8, 14 - walk * 2);
+    ctx.fillStyle = "#565656";
+    ctx.fillRect(-10, 38 + walk * 2, 8, 4);
+    ctx.fillRect(2, 38 - walk * 2, 8, 4);
+
+    // tronco ciano
+    ctx.fillStyle = "#00aaaa";
+    ctx.fillRect(-10, 14, 20, 14);
+    // detalhe peito
+    ctx.fillStyle = "#009999";
+    ctx.fillRect(-8, 16, 16, 3);
+
+    // braço atrás
+    ctx.fillStyle = "#00aaaa";
+    ctx.fillRect(-14, 14, 5, 12);
+    ctx.fillStyle = "#c68642";
+    ctx.fillRect(-14, 24, 5, 5);
+
+    // cabeça + cabelo
+    ctx.fillStyle = "#c68642";
+    ctx.fillRect(-9, 0, 18, 16);
+    ctx.fillStyle = "#3b2214";
+    ctx.fillRect(-9, 0, 18, 5);
+    ctx.fillRect(-9, 5, 3, 4);
+    ctx.fillRect(6, 5, 3, 4);
+
+    // olhos / nariz
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(-4, 7, 4, 3);
+    ctx.fillRect(2, 7, 4, 3);
+    ctx.fillStyle = "#2a2a8a";
+    ctx.fillRect(-2, 8, 2, 2);
+    ctx.fillRect(4, 8, 2, 2);
+    ctx.fillStyle = "#6b3a2a";
+    ctx.fillRect(0, 11, 2, 2);
+    ctx.fillRect(-1, 13, 4, 1);
+
+    // braço da frente + picareta
+    const swing = player.swing > 0 ? -Math.sin((1 - player.swing / 0.25) * Math.PI) * 1.15 : 0;
+    ctx.save();
+    ctx.translate(10, 16);
+    ctx.rotate(0.25 + swing + walk * 0.15);
+    ctx.fillStyle = "#00aaaa";
+    ctx.fillRect(0, 0, 5, 12);
+    ctx.fillStyle = "#c68642";
+    ctx.fillRect(0, 10, 5, 5);
+    // cabo + cabeça da picareta
     ctx.fillStyle = "#6b4226";
-    ctx.fillRect(0, -2, 18, 4);
-    ctx.fillStyle = "#9aa0a8";
-    ctx.fillRect(14, -8, 10, 10);
+    ctx.fillRect(3, -2, 3, 16);
+    ctx.fillStyle = "#8a9199";
+    ctx.fillRect(-2, -6, 14, 5);
+    ctx.fillRect(8, -4, 4, 7);
+    ctx.restore();
+
     ctx.restore();
   }
 

@@ -40,21 +40,35 @@
 
     <div id="touch" class="touch hidden" aria-hidden="true">
       <div class="touch-left">
-        <button type="button" class="touch-btn" id="btn-left" data-dir="left" aria-label="Esquerda">
-          <span class="touch-ico">◀</span>
-          <span class="touch-cap">Parar</span>
-        </button>
-        <button type="button" class="touch-btn" id="btn-right" data-dir="right" aria-label="Direita">
-          <span class="touch-ico">▶</span>
-          <span class="touch-cap">Andar</span>
-        </button>
+        <div class="mc-pad" aria-hidden="false">
+          <button type="button" class="touch-btn mc-ctrl" id="btn-left" data-dir="left" aria-label="Esquerda / Parar">
+            <svg class="mc-ico" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M15 5 L7 12 L15 19" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"/>
+            </svg>
+          </button>
+          <button type="button" class="touch-btn mc-ctrl" id="btn-right" data-dir="right" aria-label="Direita / Andar">
+            <svg class="mc-ico" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 5 L17 12 L9 19" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="touch-right">
-        <button type="button" class="touch-btn touch-jump" id="btn-jump" data-action="jump" aria-label="Pular">
-          <span class="touch-ico">⬆</span>
-          <span class="touch-cap">Pular</span>
+        <button type="button" class="touch-btn mc-ctrl touch-jump" id="btn-jump" data-action="jump" aria-label="Pular">
+          <svg class="mc-ico mc-ico-jump" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 18 H19" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M12 16 V7" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M7 11 L12 6 L17 11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="miter"/>
+          </svg>
         </button>
-        <button type="button" class="touch-btn touch-act" id="btn-action" data-action="act" aria-label="Ação">Quebrar</button>
+        <button type="button" class="touch-btn mc-ctrl touch-act" id="btn-action" data-action="act" aria-label="Ação">
+          <svg class="mc-ico mc-ico-act" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="14" y="2" width="4" height="10" transform="rotate(35 16 7)" fill="currentColor"/>
+            <rect x="3" y="14" width="10" height="4" transform="rotate(35 8 16)" fill="currentColor"/>
+            <rect x="11" y="9" width="4" height="6" transform="rotate(35 13 12)" fill="#8b5a2b"/>
+          </svg>
+          <span class="touch-cap" id="btn-action-cap">Ação</span>
+        </button>
       </div>
     </div>
 
