@@ -23,6 +23,9 @@ Copy-Item (Join-Path $root 'missao-sustentabilidade') (Join-Path $deploy 'missao
 if (Test-Path (Join-Path $root 'missao-energia')) {
   Copy-Item (Join-Path $root 'missao-energia') (Join-Path $deploy 'missao-energia') -Recurse
 }
+if (Test-Path (Join-Path $root 'termo')) {
+  Copy-Item (Join-Path $root 'termo') (Join-Path $deploy 'termo') -Recurse
+}
 if (Test-Path (Join-Path $root 'staticwebapp.config.json')) {
   Copy-Item (Join-Path $root 'staticwebapp.config.json') $deploy
 }

@@ -5,6 +5,10 @@
       "rewrite": "/admin.html"
     },
     {
+      "route": "/termo",
+      "rewrite": "/termo/index.html"
+    },
+    {
       "route": "/missao-energia",
       "redirect": "/missao-sustentabilidade/",
       "statusCode": 301
