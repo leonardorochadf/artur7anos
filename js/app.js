@@ -37,6 +37,8 @@
   var debounceTimer = null;
   var autoSaveTimer = null;
   var buscando = false;
+  var buscaGeracao = 0;
+  var ultimoCelularBuscado = '';
   var salvandoRsvp = false;
   var ignorarAutoSave = false;
   var modalProgresso = document.getElementById('modal-progresso');
@@ -708,9 +710,12 @@
     setTimeout(function () { ignorarAutoSave = false; }, 200);
   }
 
+  function celularCompleto(digitos) {
+    return digitos.length === 11;
+  }
+
   async function buscarPorTelefone(opts) {
     opts = opts || {};
-    if (buscando) return;
     if (!ArturApi.ready()) {
       setStatus('API ainda não configurada.', 'warn');
       return;
@@ -718,7 +723,7 @@
 
     aplicarCelularDigitado(celularInput.value);
     var celular = ArturApi.normalizarCelular(celularInput.value);
-    if (celular.length < 10) {
+    if (!celularCompleto(celular)) {
       if (!opts.silencioso) {
         await mostrarAviso('Digite o celular completo com DDD.', 'Atenção');
         setStatus('Digite o celular completo com DDD.', 'warn');
@@ -726,7 +731,10 @@
       blocoFamilia.classList.add('hidden');
       return;
     }
+    if (celular === ultimoCelularBuscado && formularioAberto()) return;
 
+    var geracao = ++buscaGeracao;
+    ultimoCelularBuscado = celular;
     buscando = true;
     if (btnBuscar) {
       btnBuscar.disabled = true;
@@ -739,12 +747,14 @@
     });
     try {
       var data = await ArturApi.buscar('', celular);
+      if (geracao !== buscaGeracao) return;
       var results = data.resultados || [];
       var exact = results.find(function (r) { return familiaTemCelular(r, celular); });
       // Busca por celular: se a API trouxe resultado, usa o primeiro
       if (!exact && celular && results.length === 1) exact = results[0];
 
       await fecharProgresso();
+      if (geracao !== buscaGeracao) return;
 
       if (exact) {
         abrirFormulario(exact, true);
@@ -755,13 +765,17 @@
         mostrarToastTemporario('Número novo! Faça o seu cadastro.', 3000);
       }
     } catch (err) {
-      await fecharProgresso();
-      setStatus(err.message || 'Erro ao buscar', 'err');
+      if (geracao === buscaGeracao) {
+        await fecharProgresso();
+        setStatus(err.message || 'Erro ao buscar', 'err');
+      }
     } finally {
-      buscando = false;
-      if (btnBuscar) {
-        btnBuscar.disabled = false;
-        btnBuscar.textContent = 'Buscar';
+      if (geracao === buscaGeracao) {
+        buscando = false;
+        if (btnBuscar) {
+          btnBuscar.disabled = false;
+          btnBuscar.textContent = 'Buscar';
+        }
       }
     }
   }
@@ -776,11 +790,22 @@
     clearTimeout(debounceTimer);
     var digitos = ArturApi.normalizarCelular(celularInput.value);
     if (digitos.length > 0) entrarModoRsvp();
-    if (digitos.length >= 10) {
+    if (celularCompleto(digitos)) {
       debounceTimer = setTimeout(function () {
         buscarPorTelefone({ silencioso: true });
-      }, typeof delayMs === 'number' ? delayMs : 350);
+      }, typeof delayMs === 'number' ? delayMs : 0);
     } else {
+      if (buscando) {
+        ultimoCelularBuscado = '';
+        buscaGeracao += 1;
+        buscando = false;
+        if (btnBuscar) {
+          btnBuscar.disabled = false;
+          btnBuscar.textContent = 'Buscar';
+        }
+        clearInterval(progressoTimer);
+        if (modalProgresso) modalProgresso.classList.add('hidden');
+      }
       blocoFamilia.classList.add('hidden');
       mostrarLookup();
     }
@@ -917,8 +942,8 @@
 
   celularInput.addEventListener('input', function () {
     if (painelRsvp && painelRsvp.classList.contains('rsvp-dados-abertos')) return;
-    aplicarCelularDigitado(celularInput.value);
-    agendarBuscaPorCelular(350);
+    var digitos = aplicarCelularDigitado(celularInput.value);
+    agendarBuscaPorCelular(celularCompleto(digitos) ? 0 : 200);
   });
 
   celularInput.addEventListener('change', function () {
@@ -947,8 +972,8 @@
     if (painelRsvp && painelRsvp.classList.contains('rsvp-dados-abertos')) return;
     aplicarCelularDigitado(celularInput.value);
     var digitos = ArturApi.normalizarCelular(celularInput.value);
-    if (digitos.length >= 10 && !familiaAtual) {
-      agendarBuscaPorCelular(50);
+    if (celularCompleto(digitos) && !familiaAtual) {
+      agendarBuscaPorCelular(0);
     }
   });
 
