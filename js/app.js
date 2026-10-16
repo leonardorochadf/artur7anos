@@ -445,10 +445,34 @@
     }
   }
 
+  function ehDiaDoEvento() {
+    var dataTxt = String((ev && ev.data) || '').trim();
+    var partes = dataTxt.split('/');
+    if (partes.length !== 3) return false;
+    var dia = parseInt(partes[0], 10);
+    var mes = parseInt(partes[1], 10);
+    var ano = parseInt(partes[2], 10);
+    if (!dia || !mes || !ano) return false;
+    var agora = new Date();
+    var fmt = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(agora);
+    var hoje = fmt.split('-');
+    return parseInt(hoje[2], 10) === dia &&
+      parseInt(hoje[1], 10) === mes &&
+      parseInt(hoje[0], 10) === ano;
+  }
+
   function ocultarLookup() {
     // Número vira só informação (chave). Sem editar e sem Buscar.
     if (painelRsvp) painelRsvp.classList.add('rsvp-dados-abertos');
-    if (rsvpTermo) rsvpTermo.classList.remove('hidden');
+    if (rsvpTermo) {
+      if (ehDiaDoEvento()) rsvpTermo.classList.remove('hidden');
+      else rsvpTermo.classList.add('hidden');
+    }
     if (rsvpLookupAtivo) rsvpLookupAtivo.classList.add('hidden');
     if (rsvpCelularFixo) rsvpCelularFixo.classList.remove('hidden');
     var cel = ArturApi.normalizarCelular(celularInput ? celularInput.value : '');
