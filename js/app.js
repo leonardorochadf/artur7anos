@@ -208,7 +208,7 @@
       return;
     }
     if (modalSalvandoTitulo) modalSalvandoTitulo.textContent = titulo || 'Salvando...';
-    if (modalSalvandoMsg) modalSalvandoMsg.textContent = mensagem || 'Steve está gravando seu cadastro';
+    if (modalSalvandoMsg) modalSalvandoMsg.textContent = mensagem || 'Artur está gravando seu cadastro';
     setSalvandoVisual(6);
     modalSalvando.classList.remove('hidden');
     clearInterval(salvandoProgressoTimer);
@@ -884,7 +884,7 @@
     formularioSujo = false;
     setStatus('Salvando alterações...', '');
     if (opts.comAnimacao) {
-      abrirSalvandoMc('Salvando...', 'Steve está martelando seu cadastro');
+      abrirSalvandoMc('Salvando...', 'Artur está martelando seu cadastro');
     }
     try {
       var data = await ArturApi.salvar(payload);
