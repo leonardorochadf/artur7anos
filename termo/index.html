@@ -31,12 +31,104 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=53" />
+  <link rel="stylesheet" href="/styles.css?v=54" />
   <style>
-    .termo-pagina h2 {
-      font-size: 0.5rem;
-      max-width: 100%;
-      overflow-wrap: anywhere;
+    .termo-pagina {
+      padding-bottom: 36px;
+    }
+    .termo-hero {
+      margin: 18px 16px 0;
+      padding: 16px 14px 14px;
+      text-align: center;
+      background: linear-gradient(180deg, #7ec8ff 0%, #b7e4ff 46%, #5a9c3a 46%, #3d7a28 100%);
+      border: 4px solid #1a1208;
+      box-shadow: 6px 6px 0 #1a1208;
+    }
+    .termo-marca {
+      display: inline-block;
+      margin: 0 0 10px;
+      padding: 6px 8px;
+      background: #111;
+      color: #f1c232;
+      font-family: var(--font-display);
+      font-size: 0.48rem;
+      line-height: 1.5;
+    }
+    .termo-hero h1 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 0.48rem;
+      line-height: 1.55;
+      color: #10240f;
+      text-shadow: 2px 2px 0 rgba(255,255,255,.55);
+    }
+    .termo-blocos {
+      display: grid;
+      gap: 10px;
+      margin: 14px 16px 0;
+    }
+    .termo-bloco {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 10px;
+      align-items: center;
+      min-height: 72px;
+      padding: 10px;
+      border: 4px solid #1a1208;
+      box-shadow: 4px 4px 0 #1a1208;
+      color: #10240f;
+    }
+    .termo-cubo {
+      width: 54px;
+      height: 54px;
+      border: 3px solid #1a1208;
+      box-shadow: inset -7px -7px 0 rgba(0,0,0,.28), inset 6px 6px 0 rgba(255,255,255,.35);
+    }
+    .termo-bloco strong {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 0.48rem;
+      margin-bottom: 4px;
+    }
+    .termo-bloco span {
+      display: block;
+      font-size: 1.25rem;
+      line-height: 1.15;
+    }
+    .termo-bloco-data { background: #c8e6ff; }
+    .termo-bloco-data .termo-cubo { background: #3d7ec4; }
+    .termo-bloco-hora { background: #ffe7a3; }
+    .termo-bloco-hora .termo-cubo { background: #f1c232; }
+    .termo-bloco-local { background: #c6f0b0; }
+    .termo-bloco-local .termo-cubo { background: #3d9b3d; }
+    .termo-pdf {
+      margin: 14px 16px 0;
+      padding: 14px;
+      background: #ffd0c8;
+      border: 4px solid #8a2a22;
+      box-shadow: 5px 5px 0 #1a1208;
+    }
+    .termo-pdf strong {
+      display: block;
+      margin-bottom: 8px;
+      font-family: var(--font-display);
+      font-size: 0.52rem;
+      line-height: 1.5;
+      color: #8a1f14;
+    }
+    .termo-pdf p,
+    .termo-texto {
+      margin: 0;
+      font-size: 1.2rem;
+      line-height: 1.3;
+    }
+    .termo-texto {
+      margin: 14px 16px 0;
+    }
+    .termo-acoes {
+      margin: 14px 16px 0;
+      display: grid;
+      gap: 10px;
     }
   </style>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4KXBY80XL"></script>
@@ -49,24 +141,48 @@
 </head>
 <body>
   <main class="app termo-pagina">
-    <section class="section" style="padding-top:28px">
-      <h2>Termo de<br>Responsabilidade<br>Jump</h2>
-      <div class="panel">
-        <p class="termo-intro">
-          Papai ou mamãe assinam o termo para a criança brincar no Jump no aniversário do Artur.
-        </p>
-        <ul class="meta-list">
-          <li><strong>Data</strong><span>25/11/2026</span></li>
-          <li><strong>Horário</strong><span>17h45 às 21h30</span></li>
-          <li><strong>Local</strong><span>Jump Trampolim Park</span></li>
-        </ul>
-        <p class="termo-intro" style="margin-top:14px">
-          A criança só pode brincar se o termo estiver assinado. Essa é a regra do Jump. Dá para assinar agora pelo botão ou, no dia, pelo QR Code no check-in.
-        </p>
-        <a class="btn btn-grass btn-block" href="https://app.zapsign.com.br/verificar/doc/e440701a-7736-4045-9634-9fd567c039fb" target="_blank" rel="noopener">Assinar agora</a>
-        <a class="btn btn-wood btn-block" href="/" style="margin-top:10px">Voltar ao convite</a>
-      </div>
+    <section class="termo-hero">
+      <p class="termo-marca">JUMP TRAMPOLIM PARK</p>
+      <h1>Termo de<br>responsabilidade</h1>
     </section>
+
+    <p class="termo-texto">Papai ou mamãe assinam o termo para a criança brincar no Jump no aniversário do Artur.</p>
+
+    <div class="termo-blocos">
+      <article class="termo-bloco termo-bloco-data">
+        <div class="termo-cubo" aria-hidden="true"></div>
+        <div>
+          <strong>Data</strong>
+          <span>25/11/2026</span>
+        </div>
+      </article>
+      <article class="termo-bloco termo-bloco-hora">
+        <div class="termo-cubo" aria-hidden="true"></div>
+        <div>
+          <strong>Horário</strong>
+          <span>17h45 às 21h30</span>
+        </div>
+      </article>
+      <article class="termo-bloco termo-bloco-local">
+        <div class="termo-cubo" aria-hidden="true"></div>
+        <div>
+          <strong>Local</strong>
+          <span>Jump Trampolim Park</span>
+        </div>
+      </article>
+    </div>
+
+    <aside class="termo-pdf">
+      <strong>No dia, mostre o PDF</strong>
+      <p>Depois de assinar, guarde o PDF. Na festa basta mostrar ele no celular. Não precisa imprimir.</p>
+    </aside>
+
+    <p class="termo-texto">A criança só pode brincar se o termo estiver assinado. Essa é a regra do Jump.</p>
+
+    <div class="termo-acoes">
+      <a class="btn btn-grass btn-block" href="https://app.zapsign.com.br/verificar/doc/e440701a-7736-4045-9634-9fd567c039fb" target="_blank" rel="noopener">Assinar agora</a>
+      <a class="btn btn-wood btn-block" href="/">Voltar ao convite</a>
+    </div>
   </main>
 </body>
 </html>
