@@ -34,7 +34,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=52" />
+  <link rel="stylesheet" href="styles.css?v=53" />
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4KXBY80XL"></script>
   <script>
@@ -120,7 +120,7 @@
         <div class="note-socks-mc" role="note">
           <p class="note-socks-mc-text">
             <span class="mc-emoji" aria-hidden="true">🧦</span>
-            Já tem meia do Jump? Traga a sua! Se não tiver, vamos disponibilizar na entrada.
+            Já tem meia antiderrapante? Traga a sua! Se não tiver, vamos disponibilizar na entrada.
             <span class="mc-emoji" aria-hidden="true">💚</span>
           </p>
         </div>
@@ -168,12 +168,23 @@
           <form id="form-rsvp">
             <div id="wrap-responsavel-unico">
               <label for="nome-responsavel">Nome do responsável</label>
+              <p class="rsvp-hint" style="margin:0 0 8px">Informe apenas 1 responsável.</p>
               <input id="nome-responsavel" name="nome_responsavel" placeholder="Digite o nome do responsável" maxlength="80" />
             </div>
 
             <div id="wrap-pais" class="hidden">
-              <label>Responsáveis</label>
-              <p class="rsvp-hint" style="margin:0 0 8px">Pode remover pai ou mãe, mas precisa ficar ao menos 1 responsável.</p>
+              <label>Escolha 1 responsável</label>
+              <p class="rsvp-hint" style="margin:0 0 8px">Só uma pessoa pode ser o responsável neste convite.</p>
+              <div id="escolha-responsavel" class="escolha-responsavel hidden">
+                <label class="escolha-resp">
+                  <input type="radio" name="resp-escolha" value="pai" />
+                  <span>Pai: <strong id="escolha-pai-txt"></strong></span>
+                </label>
+                <label class="escolha-resp">
+                  <input type="radio" name="resp-escolha" value="mae" />
+                  <span>Mãe: <strong id="escolha-mae-txt"></strong></span>
+                </label>
+              </div>
 
               <div id="row-pai" class="resp-row">
                 <span class="resp-tag">Pai</span>
@@ -314,6 +325,6 @@
   <div id="toast-temporario" class="toast-temporario hidden" role="status" aria-live="polite" aria-hidden="true"></div>
 
   <script src="js/api.js?v=7"></script>
-  <script src="js/app.js?v=33"></script>
+  <script src="js/app.js?v=34"></script>
 </body>
 </html>

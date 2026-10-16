@@ -977,6 +977,31 @@ input:focus, textarea:focus {
   box-shadow: none;
 }
 
+.escolha-responsavel {
+  display: grid;
+  gap: 8px;
+}
+
+.escolha-resp {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 12px;
+  border: 3px solid #1a1208;
+  background: #fffdf5;
+  box-shadow: 3px 3px 0 #1a1208;
+  font-family: var(--font-body);
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+
+.escolha-resp input {
+  width: 18px;
+  height: 18px;
+  accent-color: #3f8f22;
+}
+
 .resp-add-actions {
   display: grid;
   gap: 8px;

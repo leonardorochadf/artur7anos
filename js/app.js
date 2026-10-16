@@ -29,6 +29,10 @@
   var rsvpCelularFixo = document.getElementById('rsvp-celular-fix');
   var celularChaveTxt = document.getElementById('celular-chave-txt');
   var familiaAtual = null;
+  var slotUnico = 'pai';
+  var escolhaResponsavel = document.getElementById('escolha-responsavel');
+  var escolhaPaiTxt = document.getElementById('escolha-pai-txt');
+  var escolhaMaeTxt = document.getElementById('escolha-mae-txt');
   var celularChave = '';
   var debounceTimer = null;
   var autoSaveTimer = null;
@@ -548,14 +552,26 @@
     atualizarBotoesRsvp(encontrado ? f : null, !!encontrado);
   }
 
-  function modoFormulario(encontrado) {
-    if (encontrado) {
+  function modoFormulario(encontrado, f) {
+    var pai = String((f && f.nome_pai) || '').trim();
+    var mae = String((f && f.nome_mae) || '').trim();
+    var dois = !!(encontrado && pai && mae);
+    if (dois) {
       if (wrapUnico) wrapUnico.classList.add('hidden');
       if (wrapPais) wrapPais.classList.remove('hidden');
     } else {
       if (wrapUnico) wrapUnico.classList.remove('hidden');
       if (wrapPais) wrapPais.classList.add('hidden');
+      slotUnico = mae && !pai ? 'mae' : 'pai';
+      if (responsavelInput && encontrado) {
+        responsavelInput.value = pai || mae || responsavelInput.value || '';
+      }
     }
+  }
+
+  function escolhaSelecionada() {
+    var marcado = document.querySelector('input[name="resp-escolha"]:checked');
+    return marcado ? marcado.value : '';
   }
 
   function paiVisivel() {
@@ -583,8 +599,10 @@
         ? 'É preciso manter ao menos 1 responsável'
         : 'Remover mãe';
     }
-    if (btnAddPai) btnAddPai.classList.toggle('hidden', paiVisivel());
-    if (btnAddMae) btnAddMae.classList.toggle('hidden', maeVisivel());
+    if (btnAddPai) btnAddPai.classList.add('hidden');
+    if (btnAddMae) btnAddMae.classList.add('hidden');
+    if (btnRemoverPai) btnRemoverPai.classList.add('hidden');
+    if (btnRemoverMae) btnRemoverMae.classList.add('hidden');
   }
 
   function configurarResponsaveis(pai, mae) {
@@ -593,21 +611,21 @@
 
     if (paiInput) paiInput.value = nomePai;
     if (maeInput) maeInput.value = nomeMae;
+    if (escolhaPaiTxt) escolhaPaiTxt.textContent = nomePai;
+    if (escolhaMaeTxt) escolhaMaeTxt.textContent = nomeMae;
 
-    if (rowPai) {
-      // Se só tem mãe, esconde pai; se tem os dois ou só pai (ou nenhum), mostra pai para editar
-      if (!nomePai && nomeMae) rowPai.classList.add('hidden');
-      else rowPai.classList.remove('hidden');
-    }
-    if (rowMae) {
-      if (!nomeMae && nomePai) rowMae.classList.add('hidden');
-      else rowMae.classList.remove('hidden');
-    }
+    document.querySelectorAll('input[name="resp-escolha"]').forEach(function (el) {
+      el.checked = false;
+    });
 
-    // Sem nenhum nome ainda: mostra os dois campos
-    if (!nomePai && !nomeMae) {
-      if (rowPai) rowPai.classList.remove('hidden');
-      if (rowMae) rowMae.classList.remove('hidden');
+    if (nomePai && nomeMae) {
+      if (escolhaResponsavel) escolhaResponsavel.classList.remove('hidden');
+      if (rowPai) rowPai.classList.add('hidden');
+      if (rowMae) rowMae.classList.add('hidden');
+    } else {
+      if (escolhaResponsavel) escolhaResponsavel.classList.add('hidden');
+      if (rowPai) rowPai.classList.toggle('hidden', !nomePai);
+      if (rowMae) rowMae.classList.toggle('hidden', !nomeMae);
     }
 
     atualizarBotoesResponsaveis();
@@ -664,7 +682,7 @@
     blocoFamilia.classList.remove('hidden');
     ocultarLookup();
     entrarModoRsvp();
-    modoFormulario(!!encontrado);
+    modoFormulario(!!encontrado, f);
 
     var celAgora = ArturApi.normalizarCelular(celularInput.value);
     if (encontrado && f) {
@@ -779,14 +797,26 @@
       origem: 'convidado'
     };
 
-    if (editando || (wrapPais && !wrapPais.classList.contains('hidden'))) {
+    var escolhaAberta = escolhaResponsavel && !escolhaResponsavel.classList.contains('hidden');
+    if (escolhaAberta) {
+      var escolhido = escolhaSelecionada();
+      var nomePai = paiInput ? paiInput.value.trim() : '';
+      var nomeMae = maeInput ? maeInput.value.trim() : '';
+      payload.nome_pai = escolhido === 'pai' ? nomePai : '';
+      payload.nome_mae = escolhido === 'mae' ? nomeMae : '';
+    } else if (wrapPais && !wrapPais.classList.contains('hidden')) {
       payload.nome_pai = (paiVisivel() && paiInput) ? paiInput.value.trim() : '';
       payload.nome_mae = (maeVisivel() && maeInput) ? maeInput.value.trim() : '';
     } else {
       var resp = responsavelInput ? responsavelInput.value.trim() : '';
       payload.nome_responsavel = resp;
-      payload.nome_pai = resp;
-      payload.nome_mae = '';
+      if (slotUnico === 'mae') {
+        payload.nome_mae = resp;
+        payload.nome_pai = '';
+      } else {
+        payload.nome_pai = resp;
+        payload.nome_mae = '';
+      }
     }
     return payload;
   }
@@ -827,18 +857,15 @@
     }
     try {
       var data = await ArturApi.salvar(payload);
+      var eraEscolha = escolhaResponsavel && !escolhaResponsavel.classList.contains('hidden');
       familiaAtual = data.familia || familiaAtual;
       celularChave = ArturApi.normalizarCelular(celularInput.value) || celularChave;
-      if (data.familia) {
-        var eraNovo = wrapUnico && !wrapUnico.classList.contains('hidden');
-        if (eraNovo) {
-          ignorarAutoSave = true;
-          modoFormulario(true);
-          configurarResponsaveis(data.familia.nome_pai || '', data.familia.nome_mae || '');
-          setFilhos(data.familia.filhos || []);
-          setAdultos(data.familia.adultos || []);
-          setTimeout(function () { ignorarAutoSave = false; }, 200);
-        }
+      if (data.familia && eraEscolha) {
+        ignorarAutoSave = true;
+        modoFormulario(true, data.familia);
+        configurarResponsaveis(data.familia.nome_pai || '', data.familia.nome_mae || '');
+        setTimeout(function () { ignorarAutoSave = false; }, 200);
+      }
         montarBadgeStatus(data.familia, true);
       }
       setStatus('Salvo · ' + ArturApi.formatPhone(payload.celular), 'ok');
@@ -861,10 +888,16 @@
       setStatus('Celular incompleto.', 'err');
       return false;
     }
+    var escolhaAberta = escolhaResponsavel && !escolhaResponsavel.classList.contains('hidden');
+    if (escolhaAberta && !escolhaSelecionada()) {
+      await mostrarAviso('Escolha apenas 1 responsável: pai ou mãe.', 'Atenção');
+      setStatus('Escolha 1 responsável.', 'err');
+      return false;
+    }
     var temNome = !!(payload.nome_pai || payload.nome_mae || payload.nome_responsavel);
     if (!temNome) {
-      await mostrarAviso('É preciso manter ao menos 1 responsável (pai ou mãe).', 'Atenção');
-      setStatus('Informe ao menos 1 responsável.', 'err');
+      await mostrarAviso('Informe apenas 1 responsável.', 'Atenção');
+      setStatus('Informe 1 responsável.', 'err');
       return false;
     }
     return true;
