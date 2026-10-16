@@ -866,8 +866,7 @@
         configurarResponsaveis(data.familia.nome_pai || '', data.familia.nome_mae || '');
         setTimeout(function () { ignorarAutoSave = false; }, 200);
       }
-        montarBadgeStatus(data.familia, true);
-      }
+      montarBadgeStatus(data.familia, true);
       setStatus('Salvo · ' + ArturApi.formatPhone(payload.celular), 'ok');
       if (opts.comAnimacao) {
         if (modalSalvandoTitulo) modalSalvandoTitulo.textContent = 'Salvo!';
