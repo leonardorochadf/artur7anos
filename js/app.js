@@ -71,7 +71,7 @@
     modalConfirm.classList.add('hidden');
     modalConfirmModoAlerta = false;
     if (modalConfirmNao) modalConfirmNao.classList.remove('hidden');
-    if (modalConfirmBox) modalConfirmBox.classList.remove('modal-danger');
+    if (modalConfirmBox) modalConfirmBox.classList.remove('modal-danger', 'modal-alerta-vermelho');
     var resolve = modalConfirmResolver;
     modalConfirmResolver = null;
     if (resolve) resolve(!!resultado);
@@ -93,8 +93,9 @@
       modalConfirmNao.textContent = opts.textoNao || 'Cancelar';
       modalConfirmSim.className = 'btn ' + (opts.classeSim || 'btn-grass');
       if (modalConfirmBox) {
+        modalConfirmBox.classList.remove('modal-danger', 'modal-alerta-vermelho');
         if (opts.perigo) modalConfirmBox.classList.add('modal-danger');
-        else modalConfirmBox.classList.remove('modal-danger');
+        if (opts.vermelho) modalConfirmBox.classList.add('modal-alerta-vermelho');
       }
       if (opts.alerta) modalConfirmNao.classList.add('hidden');
       else modalConfirmNao.classList.remove('hidden');
@@ -103,13 +104,13 @@
     });
   }
 
-  function mostrarAviso(mensagem, titulo) {
-    return pedirConfirmacao(mensagem, {
+  function mostrarAviso(mensagem, titulo, optsExtra) {
+    return pedirConfirmacao(mensagem, Object.assign({
       titulo: titulo || 'Aviso',
       textoSim: 'OK',
       alerta: true,
       classeSim: 'btn-grass'
-    });
+    }, optsExtra || {}));
   }
 
   var toastTimer = null;
@@ -695,7 +696,7 @@
       setAdultos(f.adultos || []);
       if (String(f.nome_pai || '').trim() && String(f.nome_mae || '').trim()) {
         setTimeout(function () {
-          mostrarAviso('Escolha apenas 1 responsável: pai ou mãe.', 'Atenção');
+          mostrarAviso('Escolha apenas 1 responsável: pai ou mãe.', 'Atenção', { vermelho: true });
         }, 280);
       }
       if (blocoFamilia && blocoFamilia.scrollIntoView) {

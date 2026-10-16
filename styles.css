@@ -316,6 +316,15 @@ body::before {
   color: #7a1f14;
 }
 
+.modal-confirm-box.modal-alerta-vermelho {
+  background: #ffd0c8;
+  border-color: #8a2a22;
+}
+
+.modal-confirm-box.modal-alerta-vermelho h3 {
+  color: #8a1f14;
+}
+
 .modal-confirm-msg {
   margin: 0 0 16px;
   font-family: var(--font-body);
