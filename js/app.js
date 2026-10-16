@@ -693,6 +693,11 @@
       configurarResponsaveis(f.nome_pai || '', f.nome_mae || '');
       setFilhos(f.filhos || []);
       setAdultos(f.adultos || []);
+      if (String(f.nome_pai || '').trim() && String(f.nome_mae || '').trim()) {
+        setTimeout(function () {
+          mostrarAviso('Escolha apenas 1 responsável: pai ou mãe.', 'Atenção');
+        }, 280);
+      }
       if (blocoFamilia && blocoFamilia.scrollIntoView) {
         setTimeout(function () {
           blocoFamilia.scrollIntoView({ behavior: 'smooth', block: 'start' });
