@@ -38,29 +38,39 @@
     }
     .termo-hero {
       margin: 18px 16px 0;
-      padding: 16px 14px 14px;
+      padding: 16px 14px 16px;
       text-align: center;
-      background: linear-gradient(180deg, #7ec8ff 0%, #b7e4ff 46%, #5a9c3a 46%, #3d7a28 100%);
+      background: #10240f;
       border: 4px solid #1a1208;
       box-shadow: 6px 6px 0 #1a1208;
     }
     .termo-marca {
-      display: inline-block;
-      margin: 0 0 10px;
-      padding: 6px 8px;
-      background: #111;
-      color: #f1c232;
+      display: block;
+      margin: 0 0 12px;
+      padding: 10px 8px;
+      background: #f1c232;
+      color: #1a1208;
+      border: 3px solid #1a1208;
+      box-shadow: inset -4px -4px 0 #c9a227, inset 4px 4px 0 #ffe38a;
       font-family: var(--font-display);
-      font-size: 0.48rem;
-      line-height: 1.5;
+      font-size: 0.5rem;
+      line-height: 1.55;
     }
     .termo-hero h1 {
-      margin: 0;
+      margin: 0 0 14px;
       font-family: var(--font-display);
-      font-size: 0.48rem;
-      line-height: 1.55;
-      color: #10240f;
-      text-shadow: 2px 2px 0 rgba(255,255,255,.55);
+      font-size: 0.58rem;
+      line-height: 1.6;
+      color: #fff;
+      text-shadow:
+        2px 0 0 #000,
+        -2px 0 0 #000,
+        0 2px 0 #000,
+        0 -2px 0 #000,
+        3px 3px 0 #000;
+    }
+    .termo-hero .btn {
+      margin: 0;
     }
     .termo-blocos {
       display: grid;
@@ -142,8 +152,9 @@
 <body>
   <main class="app termo-pagina">
     <section class="termo-hero">
-      <p class="termo-marca">JUMP TRAMPOLIM PARK</p>
+      <p class="termo-marca">JUMP<br>TRAMPOLIM PARK</p>
       <h1>Termo de<br>responsabilidade</h1>
+      <a class="btn btn-grass btn-block" href="https://app.zapsign.com.br/verificar/doc/e440701a-7736-4045-9634-9fd567c039fb" target="_blank" rel="noopener">Assinar agora</a>
     </section>
 
     <p class="termo-texto">Papai ou mamãe assinam o termo para a criança brincar no Jump no aniversário do Artur.</p>
