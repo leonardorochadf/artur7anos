@@ -704,7 +704,7 @@
     worldTip = "";
     if (nearRect(chest, 22) && state.placed.every(Boolean)) {
       actionMode = "open";
-      worldTip = tip("Aperte E para abrir", "Toque em ABRIR");
+      worldTip = tip("Aperte E para abrir", "Toque 2× na tela");
     } else {
       let mode = "none";
       for (let i = 0; i < buildSlots.length; i++) {
@@ -712,7 +712,7 @@
         if (i > 0 && !state.placed[i - 1]) break;
         if (nearRect(buildSlots[i], 26) && state.inventory > 0) {
           mode = "build";
-          worldTip = tip("Aperte B para construir", "Toque em CONSTRUIR");
+          worldTip = tip("Aperte B para construir", "Toque 2× na tela");
           break;
         }
       }
@@ -720,7 +720,7 @@
         const nearBreak = breakables.some((b, i) => !state.broken[i] && nearRect(b, 20));
         if (nearBreak) {
           mode = "break";
-          worldTip = tip("Clique 2× ou aperte E", "Toque 2× ou QUEBRAR");
+          worldTip = tip("Clique 2× ou aperte E", "Toque 2× na tela");
         }
       }
       actionMode = mode;
@@ -804,10 +804,20 @@
     return true;
   }
 
-  function doAction() {
+  let toolLockUntil = 0;
+
+  function triggerToolAction() {
+    const now = performance.now();
+    if (now < toolLockUntil) return;
+    toolLockUntil = now + 280;
     if (actionMode === "break") tryBreak();
     else if (actionMode === "build") tryBuild();
     else if (actionMode === "open") tryOpenChest();
+    else if (!tryBreak() && !tryBuild()) tryOpenChest();
+  }
+
+  function doAction() {
+    triggerToolAction();
   }
 
   function spawnBurst(x, y, colors, n) {
@@ -1441,18 +1451,17 @@
     trackMissao("iniciou");
   }
 
-  function handleDoubleAction(clientX, clientY) {
-    if (!running) return;
+  function noteScreenDoubleTap(e) {
+    if (!running || !isTouch) return;
+    const t = e.target;
+    if (t && t.closest && (t.closest("#touch") || t.closest("button") || t.closest(".screen"))) return;
     const now = performance.now();
-    const isDouble = now - lastTap < 380;
+    const gap = now - lastTap;
     lastTap = now;
-    if (!isDouble) return;
-
-    // converter para mundo (opcional: só precisa estar perto)
-    if (actionMode === "break") tryBreak();
-    else if (actionMode === "open") tryOpenChest();
-    else if (actionMode === "build") tryBuild();
-    else tryBreak();
+    if (gap > 40 && gap < 520) {
+      lastTap = 0;
+      triggerToolAction();
+    }
   }
 
   window.addEventListener("keydown", (e) => {
@@ -1476,11 +1485,17 @@
     if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") keys.jump = false;
   });
 
-  canvas.addEventListener("pointerdown", (e) => {
+  canvas.addEventListener("touchend", noteScreenDoubleTap);
+  canvas.addEventListener("pointerup", (e) => {
+    if (e.pointerType === "touch") return;
     if (!running) return;
-    // evita conflito com botões touch
-    if (isTouch && e.target !== canvas) return;
-    handleDoubleAction(e.clientX, e.clientY);
+    const now = performance.now();
+    const gap = now - lastTap;
+    lastTap = now;
+    if (gap > 40 && gap < 420) {
+      lastTap = 0;
+      triggerToolAction();
+    }
   });
 
   function bindHold(el, on, off) {
@@ -1533,18 +1548,18 @@
     btnJump && btnJump.classList.toggle("is-flash", needJump);
   }
 
-  actBtn.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    doAction();
-  });
-
-  // toque duplo no botão de ação também conta
-  let lastActTap = 0;
-  actBtn.addEventListener("click", () => {
-    const now = performance.now();
-    if (now - lastActTap < 380 && actionMode === "break") tryBreak();
-    lastActTap = now;
-  });
+  if (actBtn) {
+    actBtn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      triggerToolAction();
+    });
+    actBtn.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      triggerToolAction();
+    });
+  }
 
   document.addEventListener(
     "touchmove",
