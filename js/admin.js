@@ -1530,6 +1530,49 @@
     return map.day + '_' + map.month + '_' + map.hour + 'h_' + map.minute + 'min';
   }
 
+  function alturaFolhaPx(orientation, larguraCss, margensMm) {
+    var paginaMm = orientation === 'landscape' ? 210 : 297;
+    var larguraMm = (orientation === 'landscape' ? 297 : 210) - margensMm[1] - margensMm[3];
+    var alturaMm = paginaMm - margensMm[0] - margensMm[2];
+    return alturaMm * larguraCss / larguraMm;
+  }
+
+  function manterRegistroNaMesmaFolha(el, orientation, larguraCss, margensMm) {
+    var pageH = alturaFolhaPx(orientation, larguraCss, margensMm);
+    var folga = 18;
+    var guard = 0;
+
+    while (guard < 500) {
+      guard += 1;
+      var rootTop = el.getBoundingClientRect().top;
+      var rows = el.querySelectorAll('.porta-row, .fam');
+      var moved = false;
+
+      for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var rect = row.getBoundingClientRect();
+        var top = rect.top - rootTop;
+        var h = rect.height;
+        if (h <= 0 || h >= pageH - folga) continue;
+
+        var posNaFolha = top - Math.floor(top / pageH) * pageH;
+        if (posNaFolha + h > pageH - folga) {
+          var spacer = document.createElement('div');
+          spacer.className = 'pdf-page-spacer';
+          spacer.setAttribute('aria-hidden', 'true');
+          spacer.style.cssText =
+            'display:block;width:100%;height:' + Math.ceil(pageH - posNaFolha) + 'px;' +
+            'margin:0;padding:0;border:0;background:#fff;grid-column:1 / -1;';
+          row.parentNode.insertBefore(spacer, row);
+          moved = true;
+          break;
+        }
+      }
+
+      if (!moved) break;
+    }
+  }
+
   function baixarPdf(conteudoHtml, cssExtra, opts) {
     opts = opts || {};
     if (gerandoPdf) return;
@@ -1590,11 +1633,13 @@
             setTimeout(resolve, 180);
           });
         }).then(function () {
+          var margensMm = [6, 10, 6, 6];
           var capturaW = Math.ceil(Math.max(el.scrollWidth, el.offsetWidth)) + 16;
+          manterRegistroNaMesmaFolha(el, orientation, capturaW, margensMm);
           var capturaH = Math.ceil(el.scrollHeight) + 8;
           return html2pdfFn()
             .set({
-              margin: [6, 10, 6, 6],
+              margin: margensMm,
               filename: filename,
               image: { type: 'jpeg', quality: 0.98 },
               html2canvas: {
@@ -1611,10 +1656,7 @@
                 y: 0
               },
               jsPDF: { unit: 'mm', format: 'a4', orientation: orientation },
-              pagebreak: {
-                mode: ['css', 'legacy'],
-                avoid: ['.fam', '.porta-row', 'tr.pdf-keep']
-              }
+              pagebreak: { mode: [] }
             })
             .from(el)
             .outputPdf('blob');
