@@ -791,7 +791,7 @@
       el.innerHTML = '<p class="chart-empty">Sem dados ainda.</p>';
       return;
     }
-    var maxBar = Math.max(tot.adultos, tot.criancas, 1);
+    var maxBar = Math.max(tot.adultos, tot.criancas, tot.naoContados || 0, 1);
     function linha(label, valor, cor, nota) {
       var h = Math.max(8, Math.round((valor / maxBar) * 100));
       return (
@@ -805,26 +805,86 @@
         '</div>'
       );
     }
+    var avisoNaoContados = '';
+    if (tot.naoContados) {
+      avisoNaoContados =
+        '<div class="totais-aviso">' +
+          '<strong>' + tot.naoContados + '</strong>' +
+          '<span>pai/mãe a mais no cadastro, fora do total esperado</span>' +
+          '<em>' + tot.famTravadasPaiMae + ' família' + (tot.famTravadasPaiMae === 1 ? '' : 's') +
+            ' com pai e mãe, sem liberar o 2º adulto</em>' +
+        '</div>';
+    }
     el.innerHTML =
       '<div class="totais-resumo">' +
         '<div><span>Total esperado</span><strong>' + pessoas + '</strong></div>' +
         '<div><span>Adultos</span><strong>' + tot.adultos + '</strong></div>' +
         '<div><span>Crianças</span><strong>' + tot.criancas + '</strong></div>' +
       '</div>' +
-      linha('Responsáveis (pai/mãe)', tot.responsaveis, '#1f5c2e',
-        [
-          tot.famLiberadasPaiMae
-            ? (tot.famLiberadasPaiMae + ' liberada' + (tot.famLiberadasPaiMae === 1 ? '' : 's') + ' · pai e mãe contam')
-            : '',
-          tot.famTravadasPaiMae
-            ? (tot.famTravadasPaiMae + ' sem liberar · conta 1 (−' + tot.naoContados + ')')
-            : '',
-          tot.famPend
-            ? (tot.famPend + ' ainda não confirmou' + (tot.famPend === 1 ? '' : 'ram') + ' · entram no total')
-            : ''
-        ].filter(Boolean).join(' · ') || 'Conforme o flag de cada família') +
+      avisoNaoContados +
+      linha('Responsáveis no total', tot.responsaveis, '#1f5c2e',
+        tot.famLiberadasPaiMae
+          ? (tot.famLiberadasPaiMae + ' família' + (tot.famLiberadasPaiMae === 1 ? '' : 's') +
+            ' liberada' + (tot.famLiberadasPaiMae === 1 ? '' : 's') + ': pai e mãe entram no total')
+          : 'No convite, 1 responsável por família') +
       linha('Outros adultos', tot.extras, '#0b4a7a', tot.extras ? 'Acompanhantes no cadastro' : 'Nenhum acompanhante extra') +
-      linha('Crianças / meias', tot.criancas, '#b45309', '');
+      linha('Crianças / meias', tot.criancas, '#b45309', '') +
+      (tot.naoContados
+        ? linha('Pai/mãe não contabilizados', tot.naoContados, '#8a1f1f',
+          'Cadastrados na planilha, mas não entram no total (só 1 responsável sem liberar)')
+        : '');
+  }
+
+  function renderAjustePaiMae(opts) {
+    var box = document.getElementById('dash-ajuste-pais');
+    var elTitulo = document.getElementById('dash-ajuste-titulo');
+    var elTexto = document.getElementById('dash-ajuste-texto');
+    var elLista = document.getElementById('dash-ajuste-lista');
+    if (!box || !elTitulo || !elTexto || !elLista) return;
+
+    var liberadas = opts.famLiberadasPaiMae || 0;
+    var travadas = opts.famTravadasPaiMae || 0;
+    var fora = opts.naoContados || 0;
+    var lista = opts.listaFora || [];
+
+    if (!liberadas && !travadas) {
+      box.classList.add('hidden');
+      elTitulo.textContent = '';
+      elTexto.textContent = '';
+      elLista.innerHTML = '';
+      return;
+    }
+
+    box.classList.remove('hidden');
+    elTitulo.textContent = fora
+      ? (fora + ' pai/mãe a mais no cadastro · fora do total')
+      : 'Pai e mãe liberados · os 2 entram no total';
+
+    var partes = [];
+    if (liberadas) {
+      partes.push(
+        liberadas + ' família' + (liberadas === 1 ? '' : 's') +
+        ' liberada' + (liberadas === 1 ? '' : 's') +
+        ': pai e mãe contam no total'
+      );
+    }
+    if (travadas) {
+      partes.push(
+        travadas + ' família' + (travadas === 1 ? '' : 's') +
+        ' com pai e mãe cadastrados, sem liberar o 2º adulto: conta só 1 responsável' +
+        (fora ? (' · ' + fora + ' nome' + (fora === 1 ? '' : 's') + ' de pai/mãe não contabilizado' + (fora === 1 ? '' : 's')) : '')
+      );
+    }
+    elTexto.textContent = partes.join('. ') + '.';
+
+    elLista.innerHTML = lista.map(function (item) {
+      return (
+        '<li>' +
+          '<strong>' + esc(item.nome) + '</strong>' +
+          '<span>pai: ' + esc(item.pai) + ' · mãe: ' + esc(item.mae) + ' · no total: 1 responsável</span>' +
+        '</li>'
+      );
+    }).join('');
   }
 
   function atualizarDashboard(familias) {
@@ -851,6 +911,7 @@
     var naoContados = 0;
     var responsaveis = 0;
     var extras = 0;
+    var listaFora = [];
 
     lista.forEach(function (f) {
       var cont = contarAdultosFamilia(f);
@@ -867,7 +928,14 @@
         extras += cont.extras;
         if (cont.temPaiEMae) famPaiMae += 1;
         if (cont.liberadoPaiMae) famLiberadasPaiMae += 1;
-        if (cont.temPaiEMae && !cont.liberadoPaiMae) famTravadasPaiMae += 1;
+        if (cont.temPaiEMae && !cont.liberadoPaiMae) {
+          famTravadasPaiMae += 1;
+          listaFora.push({
+            nome: nomeFamilia(f) || ('Família ' + (f.celular || '')),
+            pai: f.nome_pai || '—',
+            mae: f.nome_mae || '—'
+          });
+        }
         naoContados += cont.naoContados;
       }
       marcados += contarChecksFamilia(f);
@@ -914,15 +982,20 @@
     if (elAduPct) elAduPct.textContent = cadastrados ? ' ' + pct(adultos, cadastrados) : '';
     if (elCriPct) elCriPct.textContent = cadastrados ? ' ' + pct(criancas, cadastrados) : '';
     if (elAduDet) {
-      if (famLiberadasPaiMae || famTravadasPaiMae) {
-        elAduDet.textContent =
-          (famLiberadasPaiMae ? famLiberadasPaiMae + ' liberada' + (famLiberadasPaiMae === 1 ? '' : 's') + ' (2)' : '') +
-          (famLiberadasPaiMae && famTravadasPaiMae ? ' · ' : '') +
-          (famTravadasPaiMae ? famTravadasPaiMae + ' sem liberar (−' + naoContados + ')' : '');
+      if (naoContados) {
+        elAduDet.textContent = naoContados + ' pai/mãe fora do total';
+      } else if (famLiberadasPaiMae) {
+        elAduDet.textContent = famLiberadasPaiMae + ' c/ pai e mãe no total';
       } else {
-        elAduDet.textContent = responsaveis + ' resp. · ' + extras + ' extra' + (extras === 1 ? '' : 's');
+        elAduDet.textContent = responsaveis + ' responsáveis · ' + extras + ' extra' + (extras === 1 ? '' : 's');
       }
     }
+    renderAjustePaiMae({
+      famLiberadasPaiMae: famLiberadasPaiMae,
+      famTravadasPaiMae: famTravadasPaiMae,
+      naoContados: naoContados,
+      listaFora: listaFora
+    });
     if (elCon) elCon.textContent = String(famConf);
     if (elNao) elNao.textContent = String(famPend);
     if (elNaoVao) elNaoVao.textContent = String(famNao);
@@ -933,8 +1006,7 @@
         ? (famConf + ' de ' + qtdFamilias + ' famílias confirmaram' +
           (famPend ? (' · ' + famPend + ' pendente' + (famPend === 1 ? '' : 's') + ' no total') : '') +
           (famNao ? (' · ' + famNao + ' não vão (fora do esperado)') : '') +
-          (famLiberadasPaiMae ? (' · ' + famLiberadasPaiMae + ' pai+mãe liberados') : '') +
-          (famTravadasPaiMae ? (' · ' + famTravadasPaiMae + ' pai+mãe contam 1') : ''))
+          (naoContados ? (' · ' + naoContados + ' pai/mãe cadastrados a mais (fora do total)') : ''))
         : 'Nenhuma família cadastrada ainda.';
     }
     if (elConDet) {
@@ -966,7 +1038,8 @@
       famLiberadasPaiMae: famLiberadasPaiMae,
       famTravadasPaiMae: famTravadasPaiMae,
       famPend: famPend,
-      naoContados: naoContados
+      naoContados: naoContados,
+      listaFora: listaFora
     });
     renderMissaoDash();
     renderTabelasLogs();
@@ -1851,10 +1924,10 @@
           'Adultos: ' + tot.adultos + ' <span class="pct">(' + pct(tot.adultos, tot.pessoas) + ')</span><br>' +
           'Crianças: ' + tot.criancas + ' <span class="pct">(' + pct(tot.criancas, tot.pessoas) + ')</span>' +
           (tot.famLiberadasPaiMae
-            ? ('<br><span class="pct">' + tot.famLiberadasPaiMae + ' liberada' + (tot.famLiberadasPaiMae === 1 ? '' : 's') + ' · pai e mãe contam</span>')
+            ? ('<br><span class="pct">' + tot.famLiberadasPaiMae + ' família' + (tot.famLiberadasPaiMae === 1 ? '' : 's') + ' liberada' + (tot.famLiberadasPaiMae === 1 ? '' : 's') + ': pai e mãe no total</span>')
             : '') +
-          (tot.famTravadasPaiMae
-            ? ('<br><span class="pct">' + tot.famTravadasPaiMae + ' sem liberar · −' + tot.naoContados + '</span>')
+          (tot.naoContados
+            ? ('<br><span class="pct">' + tot.naoContados + ' pai/mãe a mais no cadastro (fora do total)</span>')
             : '') +
         '</div>' +
         '<div class="box">' +

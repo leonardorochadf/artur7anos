@@ -2374,6 +2374,90 @@ button.dash-click:active {
   color: #444;
 }
 
+.totais-aviso {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  align-items: center;
+  border: 2px solid #8a1f1f;
+  background: #fff1f1;
+  padding: 8px 10px;
+  font-family: var(--font-body);
+}
+
+.totais-aviso strong {
+  grid-row: span 2;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: #8a1f1f;
+}
+
+.totais-aviso span,
+.totais-aviso em {
+  font-style: normal;
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.totais-aviso em {
+  opacity: 0.85;
+  font-size: 0.78rem;
+}
+
+.dash-ajuste-pais {
+  margin-top: 10px;
+  border: 3px solid #000;
+  background: #fff8e8;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.dash-ajuste-titulo {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.dash-ajuste-texto {
+  margin: 0 0 8px;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.dash-ajuste-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.dash-ajuste-lista li {
+  border: 2px solid #000;
+  background: #fff;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dash-ajuste-lista strong {
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.dash-ajuste-lista span {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  line-height: 1.3;
+  color: #444;
+}
+
 .chart-title {
   margin: 0 0 8px;
   font-family: var(--font-display);
