@@ -403,18 +403,18 @@
     if (aviso) aviso.classList.toggle('hidden', !liberado);
     if (hintUnico) {
       hintUnico.textContent = liberado
-        ? 'Informe o responsável. Abaixo você pode incluir 1 outro adulto.'
-        : 'Informe apenas 1 responsável.';
+        ? 'Digite o nome do responsável. Se quiser, inclua mais 1 adulto abaixo.'
+        : 'Digite o nome de quem é o responsável.';
     }
     if (labelPais) {
       labelPais.textContent = liberado
-        ? 'Escolha o responsável principal'
-        : 'Escolha 1 responsável';
+        ? 'Quem é o responsável principal?'
+        : 'Quem é o responsável?';
     }
     if (hintPais) {
       hintPais.textContent = liberado
-        ? 'Quem não for o responsável principal vai como adulto acompanhante.'
-        : 'Só uma pessoa pode ser o responsável neste convite.';
+        ? 'Toque em pai ou mãe. A outra pessoa pode ir junto como adulto.'
+        : 'Toque em pai ou mãe para confirmar.';
     }
   }
 
@@ -765,11 +765,11 @@
         setTimeout(function () {
           if (acompanhantesLiberados()) {
             mostrarAviso(
-              'Escolha o responsável principal (pai ou mãe). O outro fica como adulto acompanhante.',
-              'Responsável principal'
+              'Quem é o responsável principal: pai ou mãe? A outra pessoa pode ir junto como adulto.',
+              'Quase lá!'
             );
           } else {
-            mostrarAviso('Escolha apenas 1 responsável: pai ou mãe.', 'Atenção', { vermelho: true });
+            mostrarAviso('Quem é o responsável desta família: pai ou mãe?', 'Quase lá!');
           }
         }, 280);
       }
@@ -1010,23 +1010,22 @@
     if (escolhaAberta && !escolhaSelecionada()) {
       await mostrarAviso(
         acompanhantesLiberados()
-          ? 'Escolha o responsável principal (pai ou mãe). O outro fica como adulto acompanhante.'
-          : 'Escolha apenas 1 responsável: pai ou mãe.',
-        'Atenção',
-        acompanhantesLiberados() ? {} : { vermelho: true }
+          ? 'Quem é o responsável principal: pai ou mãe? A outra pessoa pode ir junto como adulto.'
+          : 'Quem é o responsável desta família: pai ou mãe?',
+        'Quase lá!'
       );
-      setStatus('Escolha o responsável principal.', 'err');
+      setStatus('Escolha pai ou mãe para continuar.', 'err');
       return false;
     }
     var temNome = !!(payload.nome_pai || payload.nome_mae || payload.nome_responsavel);
     if (!temNome) {
       await mostrarAviso(
         acompanhantesLiberados()
-          ? 'Informe o responsável. Depois você pode incluir 1 outro adulto.'
-          : 'Informe apenas 1 responsável.',
-        'Atenção'
+          ? 'Digite o nome do responsável. Se quiser, inclua mais 1 adulto abaixo.'
+          : 'Digite o nome de quem é o responsável.',
+        'Quase lá!'
       );
-      setStatus('Informe o responsável.', 'err');
+      setStatus('Informe o responsável para continuar.', 'err');
       return false;
     }
     return true;
