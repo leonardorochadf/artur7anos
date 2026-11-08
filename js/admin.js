@@ -9,6 +9,8 @@
   var addKidBtn = document.getElementById('add-kid');
   var adultsBox = document.getElementById('adults');
   var addAdultBtn = document.getElementById('add-adult');
+  var checkLiberarGeral = document.getElementById('check-liberar-geral');
+  var checkLiberarFamilia = document.getElementById('check-liberar-familia');
   var statusEl = document.getElementById('status');
   var formStatusEl = document.getElementById('form-status');
   var loginStatusEl = document.getElementById('login-status');
@@ -179,6 +181,7 @@
   function toggleCadastro() {
     if (secaoCadastro.classList.contains('hidden')) {
       editandoCelularKey = null;
+      if (checkLiberarFamilia) checkLiberarFamilia.checked = false;
       abrirCadastro();
     } else fecharCadastro();
   }
@@ -599,7 +602,8 @@
         nome_pai: pai,
         nome_mae: mae,
         filhos: filhos,
-        adultos: adultos
+        adultos: adultos,
+        liberar_acompanhantes: !!(checkLiberarFamilia && checkLiberarFamilia.checked)
       });
       await fecharProgresso();
       var msg = (data && data.msg) || (editando ? 'Cadastro atualizado.' : 'Pré-cadastro criado.');
@@ -621,6 +625,7 @@
       var checkMae = document.getElementById('check-mae');
       if (checkPai) checkPai.checked = false;
       if (checkMae) checkMae.checked = false;
+      if (checkLiberarFamilia) checkLiberarFamilia.checked = false;
       setFilhos(['']);
       setAdultos(['']);
       fecharCadastro();
@@ -2167,6 +2172,9 @@
               ? '<button type="button" class="btn btn-wood" data-act="nao-vai" data-cel="' + esc(celKey) + '">Não vão</button>'
               : '') +
             '<button type="button" class="btn btn-wood" data-act="editar" data-cel="' + esc(celKey) + '">Editar</button>' +
+            (f.liberar_acompanhantes
+              ? '<button type="button" class="btn btn-grass" data-act="liberar-adultos" data-cel="' + esc(celKey) + '" data-on="0">Travar outro adulto</button>'
+              : '<button type="button" class="btn btn-secondary" data-act="liberar-adultos" data-cel="' + esc(celKey) + '" data-on="1">Liberar outro adulto</button>') +
             '<button type="button" class="btn btn-danger" data-act="excluir" data-cel="' + esc(celKey) + '">Excluir</button>' +
           '</div>' +
         '</article>'
@@ -2221,9 +2229,22 @@
             maeInput.value = familia.nome_mae || '';
             setFilhos(familia.filhos, getChecksLocais(), chaveFamilia(familia));
             setAdultos(familia.adultos, getChecksLocais(), chaveFamilia(familia));
+            if (checkLiberarFamilia) checkLiberarFamilia.checked = !!familia.liberar_acompanhantes;
             syncChecksFormulario(familia);
             abrirCadastro();
             setStatus('Cadastro carregado. Use os checks para confirmar quem vai.', 'warn');
+            return;
+          }
+          if (act === 'liberar-adultos') {
+            var ligar = btn.getAttribute('data-on') === '1';
+            await ArturApi.liberarAcompanhantes(senha(), cel, ligar);
+            setStatus(
+              ligar
+                ? 'Convite liberado: esta família pode incluir outro adulto.'
+                : 'Convite travado: só 1 responsável neste cadastro.',
+              ligar ? 'ok' : 'warn'
+            );
+            await refresh(false);
             return;
           }
           if (act === 'excluir') {
@@ -2288,10 +2309,14 @@
         setProgressoVisual(92);
       }
       mostrarApp();
+      window.__configConvite = data.config || window.__configConvite || {};
+      if (checkLiberarGeral) {
+        checkLiberarGeral.checked = !!(window.__configConvite.liberar_acompanhantes_geral);
+      }
       renderLista(window.__familias);
       var apiVer = data.versao || '';
       window.__apiVersao = apiVer;
-      if (apiVer && !/v8\.(9|10)|v8\.1[0-9]|missao-energetica|filhos-opcional|check-confirma|celular-55/.test(apiVer)) {
+      if (apiVer && !/v8\.(9|10|11)|v8\.1[0-9]|missao-energetica|liberar-acompanhantes|filhos-opcional|check-confirma|celular-55/.test(apiVer)) {
         var avisoApi = 'API desatualizada (' + apiVer + '). Abra o site com Ctrl+F5 e republiche o Apps Script.';
         setStatus(avisoApi, 'err');
         if (fromLogin) setLoginStatus(avisoApi, 'err');
@@ -2361,6 +2386,26 @@
   function agendarFiltro() {
     clearTimeout(buscaTimer);
     buscaTimer = setTimeout(filtrarAgora, 80);
+  }
+
+  if (checkLiberarGeral) {
+    checkLiberarGeral.addEventListener('change', async function () {
+      if (!logado) return;
+      var ligar = !!checkLiberarGeral.checked;
+      try {
+        var data = await ArturApi.salvarConfig(senha(), { liberar_acompanhantes_geral: ligar });
+        window.__configConvite = (data && data.config) || { liberar_acompanhantes_geral: ligar };
+        setStatus(
+          ligar
+            ? 'Flag geral ligado: no convite todos podem incluir 1 outro adulto.'
+            : 'Flag geral desligado: só famílias liberadas individualmente.',
+          ligar ? 'ok' : 'warn'
+        );
+      } catch (err) {
+        checkLiberarGeral.checked = !ligar;
+        setStatus(err.message || 'Erro ao salvar configuração', 'err');
+      }
+    });
   }
 
   btnEntrar.addEventListener('click', entrar);

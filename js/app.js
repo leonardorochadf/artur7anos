@@ -19,6 +19,8 @@
   var addKidBtn = document.getElementById('add-kid');
   var adultsBox = document.getElementById('adults');
   var addAdultBtn = document.getElementById('add-adult');
+  var configConvite = { liberar_acompanhantes_geral: false };
+  var MAX_ACOMPANHANTES = 1;
   var btnBuscar = document.getElementById('btn-buscar');
   var btnConfirmar = document.getElementById('btn-confirmar');
   var btnNaoVai = document.getElementById('btn-nao-vai');
@@ -354,9 +356,12 @@
       row.remove();
       atualizarVisibilidadeListas();
       marcarFormularioSujo();
-      salvarAoSairDoCampo();
+      if (acompanhantesLiberados()) salvarAoSairDoCampo();
     });
     input.addEventListener('input', marcarFormularioSujo);
+    input.addEventListener('blur', function () {
+      if (acompanhantesLiberados() && formularioSujo) salvarAoSairDoCampo();
+    });
     return row;
   }
 
@@ -383,17 +388,34 @@
     return out;
   }
 
+  function acompanhantesLiberados() {
+    if (configConvite && configConvite.liberar_acompanhantes_geral) return true;
+    return !!(familiaAtual && familiaAtual.liberar_acompanhantes);
+  }
+
   function atualizarVisibilidadeListas() {
     var linhasFilhos = kidsBox ? kidsBox.querySelectorAll('.kid-row').length : 0;
     var linhasAdultos = adultsBox ? adultsBox.querySelectorAll('.kid-row').length : 0;
     var temFilhos = linhasFilhos > 0;
     var temAdultos = linhasAdultos > 0;
+    var liberado = acompanhantesLiberados();
 
     if (wrapFilhos) wrapFilhos.classList.toggle('hidden', !temFilhos);
-    if (wrapAdultos) wrapAdultos.classList.toggle('hidden', !temAdultos);
+    if (wrapAdultos) wrapAdultos.classList.toggle('hidden', !(temAdultos || liberado));
 
     // Sempre pode incluir filho (novo cadastro ou família sem filhos ainda)
     if (addKidBtn) addKidBtn.classList.remove('hidden');
+    if (addAdultBtn) {
+      addAdultBtn.classList.toggle('hidden', !liberado || linhasAdultos >= MAX_ACOMPANHANTES);
+    }
+  }
+
+  function aplicarConfigConvite(cfg) {
+    if (!cfg || typeof cfg !== 'object') return;
+    configConvite = {
+      liberar_acompanhantes_geral: !!cfg.liberar_acompanhantes_geral
+    };
+    atualizarVisibilidadeListas();
   }
 
   function setAdultos(list) {
@@ -754,6 +776,7 @@
     try {
       var data = await ArturApi.buscar('', celular);
       if (geracao !== buscaGeracao) return;
+      aplicarConfigConvite(data.config);
       var results = data.resultados || [];
       var exact = results.find(function (r) { return familiaTemCelular(r, celular); });
       // Busca por celular: se a API trouxe resultado, usa o primeiro
@@ -819,12 +842,13 @@
 
   function payloadBase() {
     var cel = ArturApi.normalizarCelular(celularInput.value);
-    var editando = !!familiaAtual;
+    var liberado = acompanhantesLiberados();
+    var adultos = liberado ? getAdultos().slice(0, MAX_ACOMPANHANTES) : [];
     var payload = {
       celular: cel,
       celular_chave: celularChave || (familiaAtual && familiaAtual.celular) || cel,
       filhos: getFilhos(),
-      adultos: editando ? getAdultos() : [],
+      adultos: adultos,
       origem: 'convidado'
     };
 
@@ -1022,6 +1046,17 @@
     marcarFormularioSujo();
   });
 
+  if (addAdultBtn && adultsBox) {
+    addAdultBtn.addEventListener('click', function () {
+      if (!acompanhantesLiberados()) return;
+      var qtd = adultsBox.querySelectorAll('.kid-row').length;
+      if (qtd >= MAX_ACOMPANHANTES) return;
+      adultsBox.appendChild(adultInput(''));
+      atualizarVisibilidadeListas();
+      marcarFormularioSujo();
+    });
+  }
+
   if (btnRemoverPai) {
     btnRemoverPai.addEventListener('click', function () { removerResponsavel('pai'); });
   }
@@ -1162,5 +1197,9 @@
 
   if (!ArturApi.ready()) {
     setStatus('Modo visual ativo. Configure o Google Sheets para gravar.', 'warn');
+  } else if (ArturApi.ping) {
+    ArturApi.ping().then(function (data) {
+      aplicarConfigConvite(data && data.config);
+    }).catch(function () {});
   }
 })();

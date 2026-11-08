@@ -106,6 +106,20 @@
     excluir: function (senha, celular) {
       return request('POST', null, { action: 'excluir', senha: senha, celular: celular });
     },
+    salvarConfig: function (senha, config) {
+      return request('POST', null, Object.assign({ action: 'salvar_config', senha: senha }, config || {}));
+    },
+    liberarAcompanhantes: function (senha, celular, liberar) {
+      return request('POST', null, {
+        action: 'liberar_acompanhantes',
+        senha: senha,
+        celular: celular,
+        liberar: !!liberar
+      });
+    },
+    ping: function () {
+      return request('GET', { action: 'ping' });
+    },
     missaoEvento: function (sessionId, evento) {
       if (!ready()) return Promise.resolve({ ok: false });
       var url = apiUrl();

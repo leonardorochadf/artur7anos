@@ -9,6 +9,7 @@
  * - outros adultos alem de pai/mae (coluna adultos)
  * - convite pode limpar pai OU mae (sempre resta 1 responsavel)
  * - celular_chave permite trocar o numero usado no acesso
+ * - liberar_acompanhantes (por familia) + flag geral: convite pode incluir outro adulto
  */
 
 var ABA = 'Familias';
@@ -16,7 +17,9 @@ var ABA_ACESSOS = 'Acessos';
 var ABA_MISSAO = 'MissaoEnergetica';
 var ADMIN_SENHA_FIXA = '19122019@';
 var SHEET_ID_FIXO = '1ZFZ_UjSaF4BXecf0TizKXLt8EeCpErpPwmqWQJBGyok';
-var VERSAO = 'v8.10-missao-energetica';
+var VERSAO = 'v8.11-liberar-acompanhantes';
+var PROP_LIBERAR_ACOMPANHANTES = 'liberar_acompanhantes_geral';
+var MAX_ACOMPANHANTES_CONVITE = 1;
 
 var CABECALHO = [
   'celular',
@@ -31,7 +34,8 @@ var CABECALHO = [
   'atualizado_em',
   'observacao',
   'ultimo_acesso_em',
-  'adultos'
+  'adultos',
+  'liberar_acompanhantes'
 ];
 
 var CABECALHO_ACESSOS = [
@@ -71,7 +75,7 @@ function handleGet(params) {
   var action = (params.action || '').toLowerCase();
 
   if (action === 'ping') {
-    return { ok: true, msg: 'api online', versao: VERSAO };
+    return { ok: true, msg: 'api online', versao: VERSAO, config: getConfigConvite() };
   }
 
   if (action === 'buscar') {
@@ -144,7 +148,69 @@ function handlePost(body) {
     return registrarMissaoEvento(body);
   }
 
+  if (action === 'salvar_config') {
+    if (!senhaOk(body.senha)) {
+      return { ok: false, erro: 'Senha admin inválida' };
+    }
+    return salvarConfigConvite(body);
+  }
+
+  if (action === 'liberar_acompanhantes') {
+    if (!senhaOk(body.senha)) {
+      return { ok: false, erro: 'Senha admin inválida' };
+    }
+    return setLiberarAcompanhantesFamilia(body.celular, body.liberar);
+  }
+
   return { ok: false, erro: 'Ação POST desconhecida' };
+}
+
+function flagSim(v) {
+  var s = String(v == null ? '' : v).trim().toLowerCase();
+  return s === 'sim' || s === 's' || s === 'true' || s === '1' || s === 'yes' || v === true;
+}
+
+function getConfigConvite() {
+  var props = PropertiesService.getScriptProperties();
+  return {
+    liberar_acompanhantes_geral: flagSim(props.getProperty(PROP_LIBERAR_ACOMPANHANTES))
+  };
+}
+
+function salvarConfigConvite(body) {
+  var props = PropertiesService.getScriptProperties();
+  if (Object.prototype.hasOwnProperty.call(body, 'liberar_acompanhantes_geral')) {
+    props.setProperty(
+      PROP_LIBERAR_ACOMPANHANTES,
+      flagSim(body.liberar_acompanhantes_geral) ? 'Sim' : 'Não'
+    );
+  }
+  return {
+    ok: true,
+    msg: 'Configuração salva.',
+    config: getConfigConvite(),
+    versao: VERSAO
+  };
+}
+
+function setLiberarAcompanhantesFamilia(celular, liberar) {
+  var sheet = getSheet();
+  var rowIndex = acharLinhaPorCelular(sheet, celular);
+  if (rowIndex < 0) {
+    return { ok: false, erro: 'Cadastro não encontrado.' };
+  }
+  garantirColunaLiberarAcompanhantes(sheet);
+  sheet.getRange(rowIndex, col('liberar_acompanhantes')).setValue(flagSim(liberar) ? 'Sim' : 'Não');
+  sheet.getRange(rowIndex, col('atualizado_em')).setValue(new Date().toISOString());
+  return {
+    ok: true,
+    msg: flagSim(liberar)
+      ? 'Convite liberado para incluir outro adulto.'
+      : 'Convite limitado a 1 responsável.',
+    familia: lerLinha(sheet, rowIndex),
+    config: getConfigConvite(),
+    versao: VERSAO
+  };
 }
 
 function respostaListar() {
@@ -156,6 +222,7 @@ function respostaListar() {
     cadastros_por_dia: agregarCadastrosPorDia(),
     missao_resumo: resumoMissao(),
     missao_sessoes: listarMissaoSessoes(),
+    config: getConfigConvite(),
     versao: VERSAO
   };
 }
@@ -290,6 +357,22 @@ function salvarFamilia(body, isPre) {
   var filhos = normalizarListaNomes(body.filhos);
   var adultos = normalizarListaNomes(body.adultos);
   var pediuNaoVai = String(body.status || '').toLowerCase() === 'nao_vai';
+  var liberarAcomp = false;
+  if (atual) liberarAcomp = !!atual.liberar_acompanhantes;
+  if (isPre && Object.prototype.hasOwnProperty.call(body, 'liberar_acompanhantes')) {
+    liberarAcomp = flagSim(body.liberar_acompanhantes);
+  }
+  var podeAcompanhantes = getConfigConvite().liberar_acompanhantes_geral || liberarAcomp;
+
+  if (!isPre) {
+    if (podeAcompanhantes) {
+      adultos = adultos.slice(0, MAX_ACOMPANHANTES_CONVITE);
+    } else if (atual && atual.adultos && atual.adultos.length) {
+      adultos = atual.adultos;
+    } else {
+      adultos = [];
+    }
+  }
 
   if (!isPre && !nomes.pai && !nomes.mae) {
     return { ok: false, erro: 'Mantenha ao menos um responsável (pai ou mãe).' };
@@ -336,6 +419,9 @@ function salvarFamilia(body, isPre) {
         adultos = atual.adultos;
       }
       qtdMeias = pediuNaoVai ? 0 : filhos.length;
+      if (!podeAcompanhantes && atual.adultos && atual.adultos.length) {
+        adultos = atual.adultos;
+      }
     }
 
     sheet.getRange(rowIndex, 1, 1, CABECALHO.length).setValues([[
@@ -351,7 +437,8 @@ function salvarFamilia(body, isPre) {
       agora,
       observacao || atual.observacao || '',
       ultimoAcesso,
-      adultos.join(' | ')
+      adultos.join(' | '),
+      liberarAcomp ? 'Sim' : 'Não'
     ]]);
     gravarCelularNaLinha(sheet, rowIndex, celularGravar);
 
@@ -363,7 +450,8 @@ function salvarFamilia(body, isPre) {
       msg: isPre
         ? 'Pré-cadastro atualizado.'
         : (pediuNaoVai ? 'Registramos que não poderão ir.' : 'Presença confirmada!'),
-      familia: familiaUp
+      familia: familiaUp,
+      config: getConfigConvite()
     };
   }
 
@@ -380,7 +468,8 @@ function salvarFamilia(body, isPre) {
     agora,
     observacao,
     isPre ? '' : agora,
-    adultos.join(' | ')
+    adultos.join(' | '),
+    liberarAcomp ? 'Sim' : 'Não'
   ]);
   var novaLinha = sheet.getLastRow();
   gravarCelularNaLinha(sheet, novaLinha, celularGravar);
@@ -393,11 +482,12 @@ function salvarFamilia(body, isPre) {
     msg: isPre
       ? 'Pré-cadastro criado.'
       : (pediuNaoVai ? 'Registramos que não poderão ir.' : 'Presença confirmada!'),
-    familia: familiaNova
+    familia: familiaNova,
+    config: getConfigConvite()
   };
 }
 
-function familiaObj(celularRaw, pai, mae, filhos, status, origem, qtdMeias, presente, criado, atualizado, obs, ultimoAcesso, adultos) {
+function familiaObj(celularRaw, pai, mae, filhos, status, origem, qtdMeias, presente, criado, atualizado, obs, ultimoAcesso, adultos, liberarAcomp) {
   var celulares = listaCelulares(celularRaw);
   return {
     celular: celulares[0] || '',
@@ -408,6 +498,7 @@ function familiaObj(celularRaw, pai, mae, filhos, status, origem, qtdMeias, pres
     nome_responsavel: nomeExibicao(pai, mae),
     filhos: filhos || [],
     adultos: adultos || [],
+    liberar_acompanhantes: !!liberarAcomp,
     status: status,
     origem: origem,
     qtd_meias: qtdMeias,
@@ -545,7 +636,12 @@ function buscar(q, celularRaw) {
   }
 
   resultados = resultados.slice(0, 8);
-  return { ok: true, resultados: resultados, versao: VERSAO };
+  return {
+    ok: true,
+    resultados: resultados,
+    config: getConfigConvite(),
+    versao: VERSAO
+  };
 }
 
 function listarTodas() {
@@ -804,6 +900,7 @@ function getSheet() {
   migrarCabecalhoSePreciso(sheet);
   garantirColunaUltimoAcesso(sheet);
   garantirColunaAdultos(sheet);
+  garantirColunaLiberarAcompanhantes(sheet);
   return sheet;
 }
 
@@ -823,6 +920,15 @@ function garantirColunaAdultos(sheet) {
   });
   if (header.indexOf('adultos') >= 0) return;
   sheet.getRange(1, header.length + 1).setValue('adultos');
+}
+
+function garantirColunaLiberarAcompanhantes(sheet) {
+  var lastCol = Math.max(sheet.getLastColumn(), 1);
+  var header = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) {
+    return String(h || '').trim();
+  });
+  if (header.indexOf('liberar_acompanhantes') >= 0) return;
+  sheet.getRange(1, header.length + 1).setValue('liberar_acompanhantes');
 }
 
 function migrarCabecalhoSePreciso(sheet) {
@@ -915,7 +1021,8 @@ function mapRow(row) {
       formatarDataCampo(row[9]),
       String(row[10] || ''),
       formatarDataCampo(row[11]),
-      String(row[12] || '').split('|').map(function (s) { return s.trim(); }).filter(Boolean)
+      String(row[12] || '').split('|').map(function (s) { return s.trim(); }).filter(Boolean),
+      flagSim(row[13])
     );
   }
 
@@ -934,7 +1041,8 @@ function mapRow(row) {
     formatarDataCampo(row[8]),
     String(row[9] || ''),
     '',
-    []
+    [],
+    false
   );
 }
 

@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=44" />
+  <link rel="stylesheet" href="styles.css?v=55" />
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4KXBY80XL"></script>
   <script>
@@ -102,6 +102,14 @@
             <button type="button" class="btn btn-wood btn-block" id="btn-toggle-tabela">Tabela</button>
           </div>
 
+          <div class="admin-config-convite" id="admin-config-convite">
+            <label class="admin-config-check">
+              <input type="checkbox" id="check-liberar-geral" />
+              <span>Geral: no convite, todos podem incluir <strong>1 outro adulto</strong> + crianças</span>
+            </label>
+            <p class="rsvp-hint" style="margin:8px 0 0">Sem o flag geral, libere família por família na lista (botão “Liberar outro adulto”).</p>
+          </div>
+
           <label for="busca-lista">Telefone / nome / filho</label>
           <input id="busca-lista" type="search" placeholder="Digite para filtrar automaticamente" autocomplete="off" />
           <p id="busca-resultado" class="busca-resultado">A lista filtra enquanto você digita.</p>
@@ -138,6 +146,11 @@
             <p class="rsvp-hint" style="margin-top:4px">Ex.: avós, tios, babá — além de pai e mãe.</p>
             <div id="adults" class="kids"></div>
             <button type="button" class="btn btn-wood" id="add-adult" style="margin-top:10px">+ Adulto</button>
+
+            <label class="admin-config-check" style="margin-top:14px">
+              <input type="checkbox" id="check-liberar-familia" />
+              <span>Liberar neste cadastro: no convite a pessoa pode incluir outro adulto</span>
+            </label>
 
             <button type="submit" class="btn btn-grass btn-block" style="margin-top:14px">Salvar pré-cadastro</button>
             <button type="button" class="btn btn-wood btn-block" id="btn-fechar-cadastro" style="margin-top:8px">Fechar</button>
@@ -331,7 +344,7 @@
     <button type="button" class="admin-scroll-btn" id="btn-scroll-bottom" title="Ir para o final" aria-label="Ir para o final">▼</button>
   </div>
 
-  <script src="js/api.js?v=7"></script>
-  <script src="js/admin.js?v=45"></script>
+  <script src="js/api.js?v=8"></script>
+  <script src="js/admin.js?v=46"></script>
 </body>
 </html>

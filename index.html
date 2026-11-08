@@ -34,7 +34,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=54" />
+  <link rel="stylesheet" href="styles.css?v=55" />
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4KXBY80XL"></script>
   <script>
@@ -211,9 +211,11 @@
             <button type="button" class="btn btn-wood btn-block" id="add-kid" style="margin-top:10px">+ Incluir filho(a)</button>
 
             <div id="wrap-adultos" class="hidden" style="margin-top:14px">
-              <label>Outros adultos</label>
+              <label>Outro adulto</label>
+              <p class="rsvp-hint" style="margin:0 0 8px">Além do responsável, você pode incluir 1 adulto.</p>
               <div id="adults" class="kids"></div>
             </div>
+            <button type="button" class="btn btn-wood btn-block hidden" id="add-adult" style="margin-top:10px">+ Incluir outro adulto</button>
 
             <div class="rsvp-actions">
               <button type="submit" class="btn btn-grass btn-block" id="btn-confirmar">Confirmar presença</button>
@@ -324,7 +326,7 @@
 
   <div id="toast-temporario" class="toast-temporario hidden" role="status" aria-live="polite" aria-hidden="true"></div>
 
-  <script src="js/api.js?v=7"></script>
-  <script src="js/app.js?v=39"></script>
+  <script src="js/api.js?v=8"></script>
+  <script src="js/app.js?v=40"></script>
 </body>
 </html>
