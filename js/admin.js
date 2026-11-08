@@ -742,6 +742,23 @@
     return f && (f.status === 'confirmado' || f.status === 'presente');
   }
 
+  // Pai+mãe pré-cadastrados: no convite só 1 é escolhido → conta 1 responsável + outros adultos.
+  function contarAdultosFamilia(f) {
+    var temPai = !!(f && f.nome_pai);
+    var temMae = !!(f && f.nome_mae);
+    var paisCadastrados = (temPai ? 1 : 0) + (temMae ? 1 : 0);
+    var responsaveis = paisCadastrados > 0 ? 1 : 0;
+    var extras = (f && f.adultos && f.adultos.length) ? f.adultos.length : 0;
+    return {
+      adultos: responsaveis + extras,
+      responsaveis: responsaveis,
+      extras: extras,
+      paisCadastrados: paisCadastrados,
+      naoContados: Math.max(0, paisCadastrados - responsaveis),
+      temPaiEMae: paisCadastrados === 2
+    };
+  }
+
   function contarChecksFamilia(f) {
     var checks = getChecksLocais();
     var n = 0;
@@ -749,6 +766,43 @@
       if (checks[p.key]) n += 1;
     });
     return n;
+  }
+
+  function renderTotaisEsperados(tot) {
+    var el = document.getElementById('chart-totais');
+    if (!el) return;
+    var pessoas = tot.pessoas || 0;
+    if (!pessoas) {
+      el.innerHTML = '<p class="chart-empty">Sem dados ainda.</p>';
+      return;
+    }
+    var maxBar = Math.max(tot.adultos, tot.criancas, 1);
+    function linha(label, valor, cor, nota) {
+      var h = Math.max(8, Math.round((valor / maxBar) * 100));
+      return (
+        '<div class="totais-linha" title="' + esc(label) + ': ' + valor + '">' +
+          '<div class="totais-meta">' +
+            '<span class="totais-label">' + esc(label) + '</span>' +
+            '<strong class="totais-n">' + valor + '</strong>' +
+          '</div>' +
+          '<div class="totais-track"><div class="totais-fill" style="width:' + h + '%;background:' + cor + '"></div></div>' +
+          (nota ? '<p class="totais-nota">' + esc(nota) + '</p>' : '') +
+        '</div>'
+      );
+    }
+    el.innerHTML =
+      '<div class="totais-resumo">' +
+        '<div><span>Total esperado</span><strong>' + pessoas + '</strong></div>' +
+        '<div><span>Adultos</span><strong>' + tot.adultos + '</strong></div>' +
+        '<div><span>Crianças</span><strong>' + tot.criancas + '</strong></div>' +
+      '</div>' +
+      linha('Responsáveis (pai ou mãe)', tot.responsaveis, '#1f5c2e',
+        tot.famPaiMae
+          ? (tot.famPaiMae + ' família' + (tot.famPaiMae === 1 ? '' : 's') +
+            ' com pai e mãe pré-cadastrados · conta só 1 (−' + tot.naoContados + ')')
+          : '1 responsável por família no convite') +
+      linha('Outros adultos', tot.extras, '#0b4a7a', tot.extras ? 'Acompanhantes liberados no cadastro' : 'Nenhum acompanhante extra') +
+      linha('Crianças / meias', tot.criancas, '#b45309', '');
   }
 
   function atualizarDashboard(familias) {
@@ -769,18 +823,24 @@
     var famNao = 0;
     var famPres = 0;
     var marcados = 0;
+    var famPaiMae = 0;
+    var naoContados = 0;
+    var responsaveis = 0;
+    var extras = 0;
 
     lista.forEach(function (f) {
-      var nAdultos = 0;
-      if (f.nome_pai) nAdultos += 1;
-      if (f.nome_mae) nAdultos += 1;
-      nAdultos += (f.adultos && f.adultos.length) ? f.adultos.length : 0;
+      var cont = contarAdultosFamilia(f);
+      var nAdultos = cont.adultos;
       var nCriancas = (f.filhos && f.filhos.length) ? f.filhos.length : 0;
       var totalPessoas = nAdultos + nCriancas;
 
       adultos += nAdultos;
       criancas += nCriancas;
       cadastrados += totalPessoas;
+      responsaveis += cont.responsaveis;
+      extras += cont.extras;
+      if (cont.temPaiEMae) famPaiMae += 1;
+      naoContados += cont.naoContados;
       marcados += contarChecksFamilia(f);
 
       if (f.status === 'nao_vai') {
@@ -806,6 +866,7 @@
     var elCri = document.getElementById('dash-criancas');
     var elAduPct = document.getElementById('dash-adultos-pct');
     var elCriPct = document.getElementById('dash-criancas-pct');
+    var elAduDet = document.getElementById('dash-adultos-detalhe');
     var elCon = document.getElementById('dash-confirmados');
     var elNao = document.getElementById('dash-nao-confirmados');
     var elNaoVao = document.getElementById('dash-nao-vao');
@@ -823,6 +884,11 @@
     if (elCri) elCri.textContent = String(criancas);
     if (elAduPct) elAduPct.textContent = cadastrados ? ' ' + pct(adultos, cadastrados) : '';
     if (elCriPct) elCriPct.textContent = cadastrados ? ' ' + pct(criancas, cadastrados) : '';
+    if (elAduDet) {
+      elAduDet.textContent = famPaiMae
+        ? (famPaiMae + ' c/ pai+mãe · −' + naoContados + ' no total')
+        : (responsaveis + ' resp. · ' + extras + ' extra' + (extras === 1 ? '' : 's'));
+    }
     if (elCon) elCon.textContent = String(famConf);
     if (elNao) elNao.textContent = String(famPend);
     if (elNaoVao) elNaoVao.textContent = String(famNao);
@@ -832,7 +898,8 @@
       elResumo.textContent = qtdFamilias
         ? (famConf + ' de ' + qtdFamilias + ' famílias confirmaram' +
           (famPend ? (' · ' + famPend + ' pendente' + (famPend === 1 ? '' : 's')) : '') +
-          (famNao ? (' · ' + famNao + ' não vão') : ''))
+          (famNao ? (' · ' + famNao + ' não vão') : '') +
+          (famPaiMae ? (' · ' + famPaiMae + ' com pai+mãe (conta 1 resp.)') : ''))
         : 'Nenhuma família cadastrada ainda.';
     }
     if (elConDet) {
@@ -854,6 +921,15 @@
 
     renderGraficoBarras(document.getElementById('chart-cadastros'), window.__cadastrosPorDia || {}, '#1f5c2e');
     renderGraficoBarras(document.getElementById('chart-acessos'), window.__acessosPorDia || {}, '#0b4a7a');
+    renderTotaisEsperados({
+      pessoas: cadastrados,
+      adultos: adultos,
+      criancas: criancas,
+      responsaveis: responsaveis,
+      extras: extras,
+      famPaiMae: famPaiMae,
+      naoContados: naoContados
+    });
     renderMissaoDash();
     renderTabelasLogs();
   }
@@ -1269,7 +1345,7 @@
       var adultos = pessoasDoTelefone(f).filter(function (p) { return p.tipo !== 'crianca'; });
       var criancas = pessoasDoTelefone(f).filter(function (p) { return p.tipo === 'crianca'; });
       var titulo = nomeFamilia(f) || ('Família ' + (i + 1));
-      var qtd = adultos.length + criancas.length;
+      var qtd = contarAdultosFamilia(f).adultos + criancas.length;
 
       function linhaPessoa(p) {
         return (
@@ -1311,7 +1387,9 @@
       '</header>' +
       '<div class="resumo">' +
         '<div class="card"><strong>Famílias</strong><span>' + familias.length + '</span></div>' +
-        '<div class="card"><strong>Pessoas</strong><span>' + tot.pessoas + ' · ' + tot.adultos + ' adultos · ' + tot.criancas + ' crianças</span></div>' +
+        '<div class="card"><strong>Pessoas esperadas</strong><span>' + tot.pessoas + ' · ' + tot.adultos + ' adultos · ' + tot.criancas + ' crianças' +
+          (tot.famPaiMae ? (' · ' + tot.famPaiMae + ' c/ pai+mãe (−' + tot.naoContados + ')') : '') +
+        '</span></div>' +
         '<div class="card"><strong>Confirmados</strong><span>' + tot.confTotal + ' (' + pct(tot.confTotal, tot.pessoas) + ')</span></div>' +
         '<div class="card card-warn"><strong>Não confirmaram</strong><span>' + tot.naoConfTotal + ' (' + pct(tot.naoConfTotal, tot.pessoas) + ')</span></div>' +
       '</div>' +
@@ -1362,17 +1440,23 @@
     var naoConfCriancas = 0;
     var naoVaiAdultos = 0;
     var naoVaiCriancas = 0;
+    var famPaiMae = 0;
+    var naoContados = 0;
+    var responsaveis = 0;
+    var extras = 0;
 
     (familias || []).forEach(function (f) {
-      var nA = 0;
-      if (f.nome_pai) nA += 1;
-      if (f.nome_mae) nA += 1;
-      nA += (f.adultos && f.adultos.length) ? f.adultos.length : 0;
+      var cont = contarAdultosFamilia(f);
+      var nA = cont.adultos;
       var nC = (f.filhos || []).length;
       var total = nA + nC;
       adultos += nA;
       criancas += nC;
       pessoas += total;
+      responsaveis += cont.responsaveis;
+      extras += cont.extras;
+      if (cont.temPaiEMae) famPaiMae += 1;
+      naoContados += cont.naoContados;
       if (f.status === 'confirmado' || f.status === 'presente') {
         confAdultos += nA;
         confCriancas += nC;
@@ -1389,6 +1473,10 @@
       pessoas: pessoas,
       adultos: adultos,
       criancas: criancas,
+      responsaveis: responsaveis,
+      extras: extras,
+      famPaiMae: famPaiMae,
+      naoContados: naoContados,
       confAdultos: confAdultos,
       confCriancas: confCriancas,
       confTotal: confAdultos + confCriancas,
@@ -1710,10 +1798,13 @@
     if (tabelaResumoEl) {
       tabelaResumoEl.innerHTML =
         '<div class="box">' +
-          '<strong>Totais</strong>' +
+          '<strong>Totais esperados</strong>' +
           'Pessoas: ' + tot.pessoas + '<br>' +
           'Adultos: ' + tot.adultos + ' <span class="pct">(' + pct(tot.adultos, tot.pessoas) + ')</span><br>' +
           'Crianças: ' + tot.criancas + ' <span class="pct">(' + pct(tot.criancas, tot.pessoas) + ')</span>' +
+          (tot.famPaiMae
+            ? ('<br><span class="pct">' + tot.famPaiMae + ' c/ pai+mãe · −' + tot.naoContados + ' no total</span>')
+            : '') +
         '</div>' +
         '<div class="box">' +
           '<strong>Confirmados</strong>' +
@@ -1748,7 +1839,7 @@
     }
 
     var linhasHtml = ordenadas.map(function (f, i) {
-      var nA = (f.nome_pai ? 1 : 0) + (f.nome_mae ? 1 : 0) + ((f.adultos || []).length);
+      var nA = contarAdultosFamilia(f).adultos;
       var nC = (f.filhos || []).length;
       var qtd = nA + nC;
       var kids = f.filhos || [];
@@ -1865,7 +1956,7 @@
     }
 
     var body = ordenadas.map(function (f, i) {
-      var nA = (f.nome_pai ? 1 : 0) + (f.nome_mae ? 1 : 0) + ((f.adultos || []).length);
+      var nA = contarAdultosFamilia(f).adultos;
       var kids = f.filhos || [];
       var nC = kids.length;
       var pessoasHtml =
@@ -1911,7 +2002,9 @@
         '<p class="meta">Gerado em ' + agora + '</p>' +
       '</header>' +
       '<div class="resumo">' +
-        '<div class="card"><strong>Totais</strong><span>' + tot.pessoas + ' pessoas · ' + tot.adultos + ' adultos · ' + tot.criancas + ' crianças</span></div>' +
+        '<div class="card"><strong>Totais esperados</strong><span>' + tot.pessoas + ' pessoas · ' + tot.adultos + ' adultos · ' + tot.criancas + ' crianças' +
+          (tot.famPaiMae ? (' · ' + tot.famPaiMae + ' c/ pai+mãe (−' + tot.naoContados + ')') : '') +
+        '</span></div>' +
         '<div class="card"><strong>Confirmados</strong><span>' + tot.confTotal + ' (' + pct(tot.confTotal, tot.pessoas) + ')</span></div>' +
         '<div class="card card-warn"><strong>Não confirmaram</strong><span>' + tot.naoConfTotal + ' (' + pct(tot.naoConfTotal, tot.pessoas) + ')</span></div>' +
         '<div class="card"><strong>Não vão</strong><span>' + tot.naoVaiTotal + ' (' + pct(tot.naoVaiTotal, tot.pessoas) + ')</span></div>' +
