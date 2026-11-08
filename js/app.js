@@ -393,6 +393,49 @@
     return !!(familiaAtual && familiaAtual.liberar_acompanhantes);
   }
 
+  function atualizarTextosAcompanhantes() {
+    var liberado = acompanhantesLiberados();
+    var aviso = document.getElementById('aviso-acompanhante');
+    var hintUnico = document.getElementById('hint-responsavel-unico');
+    var labelPais = document.getElementById('label-escolha-pais');
+    var hintPais = document.getElementById('hint-escolha-pais');
+
+    if (aviso) aviso.classList.toggle('hidden', !liberado);
+    if (hintUnico) {
+      hintUnico.textContent = liberado
+        ? 'Informe o responsável. Abaixo você pode incluir 1 outro adulto.'
+        : 'Informe apenas 1 responsável.';
+    }
+    if (labelPais) {
+      labelPais.textContent = liberado
+        ? 'Escolha o responsável principal'
+        : 'Escolha 1 responsável';
+    }
+    if (hintPais) {
+      hintPais.textContent = liberado
+        ? 'Quem não for o responsável principal vai como adulto acompanhante.'
+        : 'Só uma pessoa pode ser o responsável neste convite.';
+    }
+  }
+
+  function syncAdultoFromEscolha() {
+    if (!acompanhantesLiberados()) return;
+    var escolhido = escolhaSelecionada();
+    if (!escolhido) return;
+    var nomePai = paiInput ? paiInput.value.trim() : '';
+    var nomeMae = maeInput ? maeInput.value.trim() : '';
+    var outro = escolhido === 'pai' ? nomeMae : nomePai;
+    var extras = getAdultos().filter(function (nome) {
+      return nome && nome !== nomePai && nome !== nomeMae;
+    });
+    var lista = [];
+    if (outro) lista.push(outro);
+    extras.forEach(function (nome) {
+      if (lista.indexOf(nome) < 0) lista.push(nome);
+    });
+    setAdultos(lista.slice(0, MAX_ACOMPANHANTES));
+  }
+
   function atualizarVisibilidadeListas() {
     var linhasFilhos = kidsBox ? kidsBox.querySelectorAll('.kid-row').length : 0;
     var linhasAdultos = adultsBox ? adultsBox.querySelectorAll('.kid-row').length : 0;
@@ -408,6 +451,7 @@
     if (addAdultBtn) {
       addAdultBtn.classList.toggle('hidden', !liberado || linhasAdultos >= MAX_ACOMPANHANTES);
     }
+    atualizarTextosAcompanhantes();
   }
 
   function aplicarConfigConvite(cfg) {
@@ -716,9 +760,17 @@
       configurarResponsaveis(f.nome_pai || '', f.nome_mae || '');
       setFilhos(f.filhos || []);
       setAdultos(f.adultos || []);
+      atualizarVisibilidadeListas();
       if (String(f.nome_pai || '').trim() && String(f.nome_mae || '').trim()) {
         setTimeout(function () {
-          mostrarAviso('Escolha apenas 1 responsável: pai ou mãe.', 'Atenção', { vermelho: true });
+          if (acompanhantesLiberados()) {
+            mostrarAviso(
+              'Escolha o responsável principal (pai ou mãe). O outro fica como adulto acompanhante.',
+              'Responsável principal'
+            );
+          } else {
+            mostrarAviso('Escolha apenas 1 responsável: pai ou mãe.', 'Atenção', { vermelho: true });
+          }
         }, 280);
       }
       if (blocoFamilia && blocoFamilia.scrollIntoView) {
@@ -859,6 +911,18 @@
       var nomeMae = maeInput ? maeInput.value.trim() : '';
       payload.nome_pai = escolhido === 'pai' ? nomePai : '';
       payload.nome_mae = escolhido === 'mae' ? nomeMae : '';
+      if (liberado) {
+        var outroNome = escolhido === 'pai' ? nomeMae : nomePai;
+        var extras = adultos.filter(function (nome) {
+          return nome && nome !== nomePai && nome !== nomeMae;
+        });
+        var listaAdultos = [];
+        if (outroNome) listaAdultos.push(outroNome);
+        extras.forEach(function (nome) {
+          if (listaAdultos.indexOf(nome) < 0) listaAdultos.push(nome);
+        });
+        payload.adultos = listaAdultos.slice(0, MAX_ACOMPANHANTES);
+      }
     } else if (wrapPais && !wrapPais.classList.contains('hidden')) {
       payload.nome_pai = (paiVisivel() && paiInput) ? paiInput.value.trim() : '';
       payload.nome_mae = (maeVisivel() && maeInput) ? maeInput.value.trim() : '';
@@ -944,14 +1008,25 @@
     }
     var escolhaAberta = escolhaResponsavel && !escolhaResponsavel.classList.contains('hidden');
     if (escolhaAberta && !escolhaSelecionada()) {
-      await mostrarAviso('Escolha apenas 1 responsável: pai ou mãe.', 'Atenção');
-      setStatus('Escolha 1 responsável.', 'err');
+      await mostrarAviso(
+        acompanhantesLiberados()
+          ? 'Escolha o responsável principal (pai ou mãe). O outro fica como adulto acompanhante.'
+          : 'Escolha apenas 1 responsável: pai ou mãe.',
+        'Atenção',
+        acompanhantesLiberados() ? {} : { vermelho: true }
+      );
+      setStatus('Escolha o responsável principal.', 'err');
       return false;
     }
     var temNome = !!(payload.nome_pai || payload.nome_mae || payload.nome_responsavel);
     if (!temNome) {
-      await mostrarAviso('Informe apenas 1 responsável.', 'Atenção');
-      setStatus('Informe 1 responsável.', 'err');
+      await mostrarAviso(
+        acompanhantesLiberados()
+          ? 'Informe o responsável. Depois você pode incluir 1 outro adulto.'
+          : 'Informe apenas 1 responsável.',
+        'Atenção'
+      );
+      setStatus('Informe o responsável.', 'err');
       return false;
     }
     return true;
@@ -1056,6 +1131,14 @@
       marcarFormularioSujo();
     });
   }
+
+  document.querySelectorAll('input[name="resp-escolha"]').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      syncAdultoFromEscolha();
+      marcarFormularioSujo();
+      if (acompanhantesLiberados()) salvarAoSairDoCampo();
+    });
+  });
 
   if (btnRemoverPai) {
     btnRemoverPai.addEventListener('click', function () { removerResponsavel('pai'); });

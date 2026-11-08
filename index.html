@@ -34,7 +34,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=55" />
+  <link rel="stylesheet" href="styles.css?v=56" />
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4KXBY80XL"></script>
   <script>
@@ -166,15 +166,19 @@
           <div id="badge-cadastro" class="found-badge hidden" role="status" aria-hidden="true"></div>
 
           <form id="form-rsvp">
+            <div id="aviso-acompanhante" class="aviso-acompanhante hidden" role="status">
+              Neste convite você pode confirmar o responsável e incluir <strong>1 outro adulto</strong>.
+            </div>
+
             <div id="wrap-responsavel-unico">
               <label for="nome-responsavel">Nome do responsável</label>
-              <p class="rsvp-hint" style="margin:0 0 8px">Informe apenas 1 responsável.</p>
+              <p class="rsvp-hint" id="hint-responsavel-unico" style="margin:0 0 8px">Informe apenas 1 responsável.</p>
               <input id="nome-responsavel" name="nome_responsavel" placeholder="Digite o nome do responsável" maxlength="80" />
             </div>
 
             <div id="wrap-pais" class="hidden">
-              <label>Escolha 1 responsável</label>
-              <p class="rsvp-hint" style="margin:0 0 8px">Só uma pessoa pode ser o responsável neste convite.</p>
+              <label id="label-escolha-pais">Escolha 1 responsável</label>
+              <p class="rsvp-hint" id="hint-escolha-pais" style="margin:0 0 8px">Só uma pessoa pode ser o responsável neste convite.</p>
               <div id="escolha-responsavel" class="escolha-responsavel hidden">
                 <label class="escolha-resp">
                   <input type="radio" name="resp-escolha" value="pai" />
@@ -327,6 +331,6 @@
   <div id="toast-temporario" class="toast-temporario hidden" role="status" aria-live="polite" aria-hidden="true"></div>
 
   <script src="js/api.js?v=8"></script>
-  <script src="js/app.js?v=40"></script>
+  <script src="js/app.js?v=41"></script>
 </body>
 </html>
