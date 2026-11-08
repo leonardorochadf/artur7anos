@@ -742,21 +742,36 @@
     return f && (f.status === 'confirmado' || f.status === 'presente');
   }
 
-  // Pai+mãe pré-cadastrados: no convite só 1 é escolhido → conta 1 responsável + outros adultos.
+  function familiaAcompanhantesLiberados(f) {
+    var cfg = window.__configConvite || {};
+    return !!(cfg.liberar_acompanhantes_geral || (f && f.liberar_acompanhantes));
+  }
+
+  // Pai+mãe pré-cadastrados:
+  // - liberado (flag): conta os 2
+  // - sem liberar: conta 1 (no convite só 1 é escolhido)
+  // Pendentes entram no total esperado; "não vão" ficam fora do esperado.
   function contarAdultosFamilia(f) {
     var temPai = !!(f && f.nome_pai);
     var temMae = !!(f && f.nome_mae);
     var paisCadastrados = (temPai ? 1 : 0) + (temMae ? 1 : 0);
-    var responsaveis = paisCadastrados > 0 ? 1 : 0;
     var extras = (f && f.adultos && f.adultos.length) ? f.adultos.length : 0;
+    var liberado = familiaAcompanhantesLiberados(f);
+    var temPaiEMae = paisCadastrados === 2;
+    var nPais = temPaiEMae ? (liberado ? 2 : 1) : paisCadastrados;
     return {
-      adultos: responsaveis + extras,
-      responsaveis: responsaveis,
+      adultos: nPais + extras,
+      responsaveis: nPais,
       extras: extras,
       paisCadastrados: paisCadastrados,
-      naoContados: Math.max(0, paisCadastrados - responsaveis),
-      temPaiEMae: paisCadastrados === 2
+      naoContados: Math.max(0, paisCadastrados - nPais),
+      temPaiEMae: temPaiEMae,
+      liberadoPaiMae: temPaiEMae && liberado
     };
+  }
+
+  function familiaEntraNoEsperado(f) {
+    return !!(f && f.status !== 'nao_vai');
   }
 
   function contarChecksFamilia(f) {
@@ -796,12 +811,19 @@
         '<div><span>Adultos</span><strong>' + tot.adultos + '</strong></div>' +
         '<div><span>Crianças</span><strong>' + tot.criancas + '</strong></div>' +
       '</div>' +
-      linha('Responsáveis (pai ou mãe)', tot.responsaveis, '#1f5c2e',
-        tot.famPaiMae
-          ? (tot.famPaiMae + ' família' + (tot.famPaiMae === 1 ? '' : 's') +
-            ' com pai e mãe pré-cadastrados · conta só 1 (−' + tot.naoContados + ')')
-          : '1 responsável por família no convite') +
-      linha('Outros adultos', tot.extras, '#0b4a7a', tot.extras ? 'Acompanhantes liberados no cadastro' : 'Nenhum acompanhante extra') +
+      linha('Responsáveis (pai/mãe)', tot.responsaveis, '#1f5c2e',
+        [
+          tot.famLiberadasPaiMae
+            ? (tot.famLiberadasPaiMae + ' liberada' + (tot.famLiberadasPaiMae === 1 ? '' : 's') + ' · pai e mãe contam')
+            : '',
+          tot.famTravadasPaiMae
+            ? (tot.famTravadasPaiMae + ' sem liberar · conta 1 (−' + tot.naoContados + ')')
+            : '',
+          tot.famPend
+            ? (tot.famPend + ' ainda não confirmou' + (tot.famPend === 1 ? '' : 'ram') + ' · entram no total')
+            : ''
+        ].filter(Boolean).join(' · ') || 'Conforme o flag de cada família') +
+      linha('Outros adultos', tot.extras, '#0b4a7a', tot.extras ? 'Acompanhantes no cadastro' : 'Nenhum acompanhante extra') +
       linha('Crianças / meias', tot.criancas, '#b45309', '');
   }
 
@@ -824,6 +846,8 @@
     var famPres = 0;
     var marcados = 0;
     var famPaiMae = 0;
+    var famLiberadasPaiMae = 0;
+    var famTravadasPaiMae = 0;
     var naoContados = 0;
     var responsaveis = 0;
     var extras = 0;
@@ -833,14 +857,19 @@
       var nAdultos = cont.adultos;
       var nCriancas = (f.filhos && f.filhos.length) ? f.filhos.length : 0;
       var totalPessoas = nAdultos + nCriancas;
+      var noEsperado = familiaEntraNoEsperado(f);
 
-      adultos += nAdultos;
-      criancas += nCriancas;
-      cadastrados += totalPessoas;
-      responsaveis += cont.responsaveis;
-      extras += cont.extras;
-      if (cont.temPaiEMae) famPaiMae += 1;
-      naoContados += cont.naoContados;
+      if (noEsperado) {
+        adultos += nAdultos;
+        criancas += nCriancas;
+        cadastrados += totalPessoas;
+        responsaveis += cont.responsaveis;
+        extras += cont.extras;
+        if (cont.temPaiEMae) famPaiMae += 1;
+        if (cont.liberadoPaiMae) famLiberadasPaiMae += 1;
+        if (cont.temPaiEMae && !cont.liberadoPaiMae) famTravadasPaiMae += 1;
+        naoContados += cont.naoContados;
+      }
       marcados += contarChecksFamilia(f);
 
       if (f.status === 'nao_vai') {
@@ -885,9 +914,14 @@
     if (elAduPct) elAduPct.textContent = cadastrados ? ' ' + pct(adultos, cadastrados) : '';
     if (elCriPct) elCriPct.textContent = cadastrados ? ' ' + pct(criancas, cadastrados) : '';
     if (elAduDet) {
-      elAduDet.textContent = famPaiMae
-        ? (famPaiMae + ' c/ pai+mãe · −' + naoContados + ' no total')
-        : (responsaveis + ' resp. · ' + extras + ' extra' + (extras === 1 ? '' : 's'));
+      if (famLiberadasPaiMae || famTravadasPaiMae) {
+        elAduDet.textContent =
+          (famLiberadasPaiMae ? famLiberadasPaiMae + ' liberada' + (famLiberadasPaiMae === 1 ? '' : 's') + ' (2)' : '') +
+          (famLiberadasPaiMae && famTravadasPaiMae ? ' · ' : '') +
+          (famTravadasPaiMae ? famTravadasPaiMae + ' sem liberar (−' + naoContados + ')' : '');
+      } else {
+        elAduDet.textContent = responsaveis + ' resp. · ' + extras + ' extra' + (extras === 1 ? '' : 's');
+      }
     }
     if (elCon) elCon.textContent = String(famConf);
     if (elNao) elNao.textContent = String(famPend);
@@ -897,9 +931,10 @@
     if (elResumo) {
       elResumo.textContent = qtdFamilias
         ? (famConf + ' de ' + qtdFamilias + ' famílias confirmaram' +
-          (famPend ? (' · ' + famPend + ' pendente' + (famPend === 1 ? '' : 's')) : '') +
-          (famNao ? (' · ' + famNao + ' não vão') : '') +
-          (famPaiMae ? (' · ' + famPaiMae + ' com pai+mãe (conta 1 resp.)') : ''))
+          (famPend ? (' · ' + famPend + ' pendente' + (famPend === 1 ? '' : 's') + ' no total') : '') +
+          (famNao ? (' · ' + famNao + ' não vão (fora do esperado)') : '') +
+          (famLiberadasPaiMae ? (' · ' + famLiberadasPaiMae + ' pai+mãe liberados') : '') +
+          (famTravadasPaiMae ? (' · ' + famTravadasPaiMae + ' pai+mãe contam 1') : ''))
         : 'Nenhuma família cadastrada ainda.';
     }
     if (elConDet) {
@@ -928,6 +963,9 @@
       responsaveis: responsaveis,
       extras: extras,
       famPaiMae: famPaiMae,
+      famLiberadasPaiMae: famLiberadasPaiMae,
+      famTravadasPaiMae: famTravadasPaiMae,
+      famPend: famPend,
       naoContados: naoContados
     });
     renderMissaoDash();
@@ -1388,7 +1426,8 @@
       '<div class="resumo">' +
         '<div class="card"><strong>Famílias</strong><span>' + familias.length + '</span></div>' +
         '<div class="card"><strong>Pessoas esperadas</strong><span>' + tot.pessoas + ' · ' + tot.adultos + ' adultos · ' + tot.criancas + ' crianças' +
-          (tot.famPaiMae ? (' · ' + tot.famPaiMae + ' c/ pai+mãe (−' + tot.naoContados + ')') : '') +
+          (tot.famLiberadasPaiMae ? (' · ' + tot.famLiberadasPaiMae + ' pai+mãe liberados') : '') +
+          (tot.famTravadasPaiMae ? (' · ' + tot.famTravadasPaiMae + ' contam 1 (−' + tot.naoContados + ')') : '') +
         '</span></div>' +
         '<div class="card"><strong>Confirmados</strong><span>' + tot.confTotal + ' (' + pct(tot.confTotal, tot.pessoas) + ')</span></div>' +
         '<div class="card card-warn"><strong>Não confirmaram</strong><span>' + tot.naoConfTotal + ' (' + pct(tot.naoConfTotal, tot.pessoas) + ')</span></div>' +
@@ -1445,24 +1484,31 @@
     var responsaveis = 0;
     var extras = 0;
 
+    var famLiberadasPaiMae = 0;
+    var famTravadasPaiMae = 0;
+
     (familias || []).forEach(function (f) {
       var cont = contarAdultosFamilia(f);
       var nA = cont.adultos;
       var nC = (f.filhos || []).length;
       var total = nA + nC;
+      if (f.status === 'nao_vai') {
+        naoVaiAdultos += nA;
+        naoVaiCriancas += nC;
+        return;
+      }
       adultos += nA;
       criancas += nC;
       pessoas += total;
       responsaveis += cont.responsaveis;
       extras += cont.extras;
       if (cont.temPaiEMae) famPaiMae += 1;
+      if (cont.liberadoPaiMae) famLiberadasPaiMae += 1;
+      if (cont.temPaiEMae && !cont.liberadoPaiMae) famTravadasPaiMae += 1;
       naoContados += cont.naoContados;
       if (f.status === 'confirmado' || f.status === 'presente') {
         confAdultos += nA;
         confCriancas += nC;
-      } else if (f.status === 'nao_vai') {
-        naoVaiAdultos += nA;
-        naoVaiCriancas += nC;
       } else {
         naoConfAdultos += nA;
         naoConfCriancas += nC;
@@ -1476,6 +1522,8 @@
       responsaveis: responsaveis,
       extras: extras,
       famPaiMae: famPaiMae,
+      famLiberadasPaiMae: famLiberadasPaiMae,
+      famTravadasPaiMae: famTravadasPaiMae,
       naoContados: naoContados,
       confAdultos: confAdultos,
       confCriancas: confCriancas,
@@ -1802,8 +1850,11 @@
           'Pessoas: ' + tot.pessoas + '<br>' +
           'Adultos: ' + tot.adultos + ' <span class="pct">(' + pct(tot.adultos, tot.pessoas) + ')</span><br>' +
           'Crianças: ' + tot.criancas + ' <span class="pct">(' + pct(tot.criancas, tot.pessoas) + ')</span>' +
-          (tot.famPaiMae
-            ? ('<br><span class="pct">' + tot.famPaiMae + ' c/ pai+mãe · −' + tot.naoContados + ' no total</span>')
+          (tot.famLiberadasPaiMae
+            ? ('<br><span class="pct">' + tot.famLiberadasPaiMae + ' liberada' + (tot.famLiberadasPaiMae === 1 ? '' : 's') + ' · pai e mãe contam</span>')
+            : '') +
+          (tot.famTravadasPaiMae
+            ? ('<br><span class="pct">' + tot.famTravadasPaiMae + ' sem liberar · −' + tot.naoContados + '</span>')
             : '') +
         '</div>' +
         '<div class="box">' +
@@ -2003,7 +2054,8 @@
       '</header>' +
       '<div class="resumo">' +
         '<div class="card"><strong>Totais esperados</strong><span>' + tot.pessoas + ' pessoas · ' + tot.adultos + ' adultos · ' + tot.criancas + ' crianças' +
-          (tot.famPaiMae ? (' · ' + tot.famPaiMae + ' c/ pai+mãe (−' + tot.naoContados + ')') : '') +
+          (tot.famLiberadasPaiMae ? (' · ' + tot.famLiberadasPaiMae + ' pai+mãe liberados') : '') +
+          (tot.famTravadasPaiMae ? (' · ' + tot.famTravadasPaiMae + ' contam 1 (−' + tot.naoContados + ')') : '') +
         '</span></div>' +
         '<div class="card"><strong>Confirmados</strong><span>' + tot.confTotal + ' (' + pct(tot.confTotal, tot.pessoas) + ')</span></div>' +
         '<div class="card card-warn"><strong>Não confirmaram</strong><span>' + tot.naoConfTotal + ' (' + pct(tot.naoConfTotal, tot.pessoas) + ')</span></div>' +
@@ -2488,6 +2540,10 @@
       try {
         var data = await ArturApi.salvarConfig(senha(), { liberar_acompanhantes_geral: ligar });
         window.__configConvite = (data && data.config) || { liberar_acompanhantes_geral: ligar };
+        atualizarDashboard(window.__familias || []);
+        if (secaoTabela && !secaoTabela.classList.contains('hidden')) {
+          renderTabelaDados(window.__familias || []);
+        }
         setStatus(
           ligar
             ? 'Flag geral ligado: no convite todos podem incluir 1 outro adulto.'
