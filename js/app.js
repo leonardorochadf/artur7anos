@@ -407,14 +407,12 @@
         : 'Digite o nome de quem é o responsável.';
     }
     if (labelPais) {
-      labelPais.textContent = liberado
-        ? 'Quem é o responsável principal?'
-        : 'Quem é o responsável?';
+      labelPais.textContent = 'Quem é o responsável que vai acompanhar?';
     }
     if (hintPais) {
       hintPais.textContent = liberado
         ? 'Toque em pai ou mãe. A outra pessoa pode ir junto como adulto.'
-        : 'Toque em pai ou mãe para confirmar.';
+        : 'Toque em pai ou mãe.';
     }
   }
 
@@ -765,11 +763,11 @@
         setTimeout(function () {
           if (acompanhantesLiberados()) {
             mostrarAviso(
-              'Quem é o responsável principal: pai ou mãe? A outra pessoa pode ir junto como adulto.',
+              'Quem é o responsável que vai acompanhar: pai ou mãe? A outra pessoa pode ir junto como adulto.',
               'Quase lá!'
             );
           } else {
-            mostrarAviso('Quem é o responsável desta família: pai ou mãe?', 'Quase lá!');
+            mostrarAviso('Quem é o responsável que vai acompanhar: pai ou mãe?', 'Quase lá!');
           }
         }, 280);
       }
@@ -1010,11 +1008,11 @@
     if (escolhaAberta && !escolhaSelecionada()) {
       await mostrarAviso(
         acompanhantesLiberados()
-          ? 'Quem é o responsável principal: pai ou mãe? A outra pessoa pode ir junto como adulto.'
-          : 'Quem é o responsável desta família: pai ou mãe?',
+          ? 'Quem é o responsável que vai acompanhar: pai ou mãe? A outra pessoa pode ir junto como adulto.'
+          : 'Quem é o responsável que vai acompanhar: pai ou mãe?',
         'Quase lá!'
       );
-      setStatus('Escolha pai ou mãe para continuar.', 'err');
+      setStatus('Escolha quem vai acompanhar: pai ou mãe.', 'err');
       return false;
     }
     var temNome = !!(payload.nome_pai || payload.nome_mae || payload.nome_responsavel);
