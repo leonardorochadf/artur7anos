@@ -407,7 +407,7 @@
         : 'Digite o nome de quem é o responsável.';
     }
     if (labelPais) {
-      labelPais.textContent = 'Quem é o responsável que vai acompanhar?';
+      labelPais.textContent = 'Qual será o responsável acompanhante da criança?';
     }
     if (hintPais) {
       hintPais.textContent = liberado
@@ -763,11 +763,11 @@
         setTimeout(function () {
           if (acompanhantesLiberados()) {
             mostrarAviso(
-              'Quem é o responsável que vai acompanhar: pai ou mãe? A outra pessoa pode ir junto como adulto.',
+              'Qual será o responsável acompanhante da criança: pai ou mãe? A outra pessoa pode ir junto como adulto.',
               'Quase lá!'
             );
           } else {
-            mostrarAviso('Quem é o responsável que vai acompanhar: pai ou mãe?', 'Quase lá!');
+            mostrarAviso('Qual será o responsável acompanhante da criança: pai ou mãe?', 'Quase lá!');
           }
         }, 280);
       }
@@ -1008,11 +1008,11 @@
     if (escolhaAberta && !escolhaSelecionada()) {
       await mostrarAviso(
         acompanhantesLiberados()
-          ? 'Quem é o responsável que vai acompanhar: pai ou mãe? A outra pessoa pode ir junto como adulto.'
-          : 'Quem é o responsável que vai acompanhar: pai ou mãe?',
+          ? 'Qual será o responsável acompanhante da criança: pai ou mãe? A outra pessoa pode ir junto como adulto.'
+          : 'Qual será o responsável acompanhante da criança: pai ou mãe?',
         'Quase lá!'
       );
-      setStatus('Escolha quem vai acompanhar: pai ou mãe.', 'err');
+      setStatus('Escolha o responsável acompanhante: pai ou mãe.', 'err');
       return false;
     }
     var temNome = !!(payload.nome_pai || payload.nome_mae || payload.nome_responsavel);
