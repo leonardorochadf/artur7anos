@@ -1691,15 +1691,20 @@
     var temMae = !!(f && String(f.nome_mae || '').trim());
     var pessoas = [];
 
+    // Família confirmou, mas ainda tem pai+mãe sem liberar = responsável NÃO está definido
+    var respIndefinido = !!(confirmada && temPai && temMae && !liberado);
+
     if (confirmada) {
-      if (temPai && temMae && !liberado) {
+      if (respIndefinido) {
         pessoas.push({
           papel: '',
           tipo: 'resp-pendente',
-          nome: 'Pai / mãe: escolher 1 na porta',
-          detalhe: String(f.nome_pai).trim() + ' / ' + String(f.nome_mae).trim() + ' · conta 1 adulto',
-          confirmado: true,
-          ck: '[x]'
+          nome: 'Responsável ainda não definido',
+          detalhe: 'Família confirmou · escolher 1: ' +
+            String(f.nome_pai).trim() + ' (pai) / ' + String(f.nome_mae).trim() +
+            ' (mãe) · conta 1 adulto',
+          confirmado: false,
+          ck: '[ ]'
         });
       } else {
         if (temPai) {
@@ -1794,7 +1799,8 @@
       pessoasTotal: cont.adultos + (f.filhos || []).length,
       liberado: liberado,
       confirmada: confirmada,
-      pendente: pendente
+      pendente: pendente,
+      respIndefinido: !!respIndefinido
     };
   }
 
@@ -1867,12 +1873,13 @@
     return (
       '<div class="legenda-pdf">' +
         '<strong>Legenda</strong><br>' +
-        '<strong>[x]</strong> = já confirmou no convite<br>' +
-        '<strong>[ ]</strong> = ainda não confirmou (marcar na porta)<br>' +
+        '<strong>[x]</strong> = pessoa já definida/confirmada no convite<br>' +
+        '<strong>[ ]</strong> = ainda não definido (marcar/escolher na porta)<br>' +
         '<strong>Pend.</strong> = família ainda não confirmou presença<br>' +
-        '<strong>OK</strong> = família confirmada<br>' +
+        '<strong>OK</strong> = família confirmada e responsável definido<br>' +
+        '<strong>Conf.*</strong> = família confirmou, mas pai e mãe ainda estão os 2 no cadastro sem liberar → <strong>escolher 1 responsável</strong> (conta 1 adulto)<br>' +
         'Pai + mãe sem liberar: só <strong>1 responsável</strong> no total<br>' +
-        'Pendente com pai e mãe: aparece <strong>"Pai / mãe ainda não confirmado (conta 1 adulto)"</strong><br>' +
+        'Pendente com pai e mãe: <strong>"Pai / mãe ainda não confirmado (conta 1 adulto)"</strong><br>' +
         '<strong>Pulante - Criança</strong> = criança que pula (cliente do contrato)' +
       '</div>'
     );
@@ -1995,9 +2002,17 @@
     var blocos = familias.map(function (f, i) {
       var esp = pessoasEsperadasPdf(f);
       var titulo = nomeFamilia(f) || ('Família ' + (i + 1));
-      var statusTxt = familiaConfirmou(f)
-        ? ('Confirmou · ' + esp.adultos + ' adulto' + (esp.adultos === 1 ? '' : 's') + ' · ' + esp.criancas + ' pulante' + (esp.criancas === 1 ? '' : 's'))
-        : ('Ainda não confirmou · ' + esp.adultos + ' adulto' + (esp.adultos === 1 ? '' : 's') + ' · ' + esp.criancas + ' pulante' + (esp.criancas === 1 ? '' : 's'));
+      var statusTxt;
+      if (esp.respIndefinido) {
+        statusTxt = 'Família confirmou · responsável ainda não definido (1 adulto) · ' +
+          esp.criancas + ' pulante' + (esp.criancas === 1 ? '' : 's');
+      } else if (familiaConfirmou(f)) {
+        statusTxt = 'Confirmou · ' + esp.adultos + ' adulto' + (esp.adultos === 1 ? '' : 's') +
+          ' · ' + esp.criancas + ' pulante' + (esp.criancas === 1 ? '' : 's');
+      } else {
+        statusTxt = 'Ainda não confirmou · ' + esp.adultos + ' adulto' + (esp.adultos === 1 ? '' : 's') +
+          ' · ' + esp.criancas + ' pulante' + (esp.criancas === 1 ? '' : 's');
+      }
 
       return (
         '<article class="fam' + (esp.pendente ? ' pendente' : ' ok') + '">' +
@@ -2613,12 +2628,18 @@
 
     var body = ordenadas.map(function (f, i) {
       var esp = pessoasEsperadasPdf(f);
-      var badge = familiaConfirmou(f)
-        ? ('<strong>OK</strong><em>' + esp.adultos + ' ad.<br>' + esp.criancas + ' pul.</em>')
-        : ('<strong>Pend.</strong><em>1 adulto</em>');
+      var badge;
+      var rowClass = esp.pendente ? ' pendente' : (esp.respIndefinido ? ' parcial' : ' ok');
+      if (esp.respIndefinido) {
+        badge = '<strong>Conf.*</strong><em>escolher 1<br>responsável</em>';
+      } else if (familiaConfirmou(f)) {
+        badge = '<strong>OK</strong><em>' + esp.adultos + ' ad.<br>' + esp.criancas + ' pul.</em>';
+      } else {
+        badge = '<strong>Pend.</strong><em>1 adulto</em>';
+      }
 
       return (
-        '<div class="porta-row st-' + esc(f.status || '') + (esp.pendente ? ' pendente' : ' ok') + '">' +
+        '<div class="porta-row st-' + esc(f.status || '') + rowClass + '">' +
           '<div class="c num">' + (i + 1) + '</div>' +
           '<div class="c qtd">' +
             '<b>' + esp.pessoasTotal + '</b>' +
@@ -2699,6 +2720,8 @@
       '.pdf-badge strong{display:block;font-size:8pt}' +
       '.pdf-badge em{display:block;font-style:normal;font-size:7pt;font-weight:600;opacity:.95;margin-top:1px}' +
       '.porta-row.st-confirmado .pdf-badge,.porta-row.ok .pdf-badge{background:#d7f0d8;color:#145214}' +
+      '.porta-row.parcial .pdf-badge{background:#ffe2b8;color:#7a3e00}' +
+      '.porta-row.parcial{background:#fff7eb}' +
       '.porta-row.st-presente .pdf-badge{background:#cfe8ff;color:#0b4a7a}' +
       '.porta-row.st-pre_cadastro .pdf-badge,.porta-row.pendente .pdf-badge{background:#fff3cd;color:#7a5b00}' +
       '.porta-row.st-nao_vai .pdf-badge{background:#f8d7da;color:#842029}' +
