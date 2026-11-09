@@ -2567,6 +2567,26 @@ button.dash-click:active {
   color: #0b4a7a;
 }
 
+.dash-contrato-barra {
+  margin-top: 6px;
+  height: 10px;
+  border: 2px solid #000;
+  background: #e8eef5;
+  overflow: hidden;
+}
+
+.dash-contrato-barra span {
+  display: block;
+  height: 100%;
+  background: #0b4a7a;
+  min-width: 0;
+}
+
+.dash-item-contrato .dash-sub {
+  white-space: normal;
+  line-height: 1.25;
+}
+
 .dash-contrato-legenda {
   margin: 8px 0 0;
   font-family: var(--font-body);

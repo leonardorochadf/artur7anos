@@ -728,8 +728,20 @@
   function textoSaldoContrato(atual, meta, rotulo) {
     var diff = Number(atual || 0) - Number(meta || 0);
     if (diff === 0) return rotulo + ' no contrato';
-    if (diff < 0) return 'faltam ' + Math.abs(diff) + ' para o contrato';
+    if (diff < 0) return 'restam ' + Math.abs(diff);
     return Math.abs(diff) + ' acima do contrato';
+  }
+
+  function pctContrato(atual, meta) {
+    var m = Number(meta) || 0;
+    if (!m) return '0%';
+    return Math.min(999, Math.round((Number(atual || 0) / m) * 100)) + '%';
+  }
+
+  function barraContratoPct(atual, meta) {
+    var m = Number(meta) || 0;
+    if (!m) return 0;
+    return Math.max(0, Math.min(100, Math.round((Number(atual || 0) / m) * 100)));
   }
 
   function htmlCardsContrato(tot) {
@@ -941,18 +953,37 @@
 
   function renderContratoDash(pessoas, pulantes) {
     var c = contratoFesta();
+    var pctPes = pctContrato(pessoas, c.pessoas);
+    var pctPul = pctContrato(pulantes, c.pulantes);
     var elPessoas = document.getElementById('dash-contrato-pessoas');
     var elPulantes = document.getElementById('dash-contrato-pulantes');
     var elPessoasNota = document.getElementById('dash-contrato-pessoas-nota');
     var elPulantesNota = document.getElementById('dash-contrato-pulantes-nota');
     var elPessoasSub = document.getElementById('dash-pessoas-contrato');
     var elPulantesSub = document.getElementById('dash-pulantes-contrato');
+    var elPessoasPct = document.getElementById('dash-pessoas-pct');
+    var elPulantesPct = document.getElementById('dash-criancas-pct');
+    var elBarPes = document.getElementById('dash-contrato-pessoas-bar');
+    var elBarPul = document.getElementById('dash-contrato-pulantes-bar');
+
     if (elPessoas) elPessoas.textContent = pessoas + ' / ' + c.pessoas;
     if (elPulantes) elPulantes.textContent = pulantes + ' / ' + c.pulantes;
-    if (elPessoasNota) elPessoasNota.textContent = textoSaldoContrato(pessoas, c.pessoas, 'pessoas');
-    if (elPulantesNota) elPulantesNota.textContent = textoSaldoContrato(pulantes, c.pulantes, 'pulantes');
-    if (elPessoasSub) elPessoasSub.textContent = pessoas + ' de ' + c.pessoas + ' · ' + textoSaldoContrato(pessoas, c.pessoas, 'pessoas');
-    if (elPulantesSub) elPulantesSub.textContent = pulantes + ' de ' + c.pulantes + ' · ' + textoSaldoContrato(pulantes, c.pulantes, 'pulantes');
+    if (elPessoasNota) {
+      elPessoasNota.textContent = pctPes + ' do contrato · ' + textoSaldoContrato(pessoas, c.pessoas, 'pessoas');
+    }
+    if (elPulantesNota) {
+      elPulantesNota.textContent = pctPul + ' do contrato · ' + textoSaldoContrato(pulantes, c.pulantes, 'pulantes');
+    }
+    if (elPessoasSub) {
+      elPessoasSub.textContent = pctPes + ' de ' + c.pessoas + ' · ' + textoSaldoContrato(pessoas, c.pessoas, 'pessoas');
+    }
+    if (elPulantesSub) {
+      elPulantesSub.textContent = pctPul + ' de ' + c.pulantes + ' · ' + textoSaldoContrato(pulantes, c.pulantes, 'pulantes');
+    }
+    if (elPessoasPct) elPessoasPct.textContent = ' ' + pctPes;
+    if (elPulantesPct) elPulantesPct.textContent = ' ' + pctPul;
+    if (elBarPes) elBarPes.style.width = barraContratoPct(pessoas, c.pessoas) + '%';
+    if (elBarPul) elBarPul.style.width = barraContratoPct(pulantes, c.pulantes) + '%';
   }
 
   function renderTotaisEsperados(tot) {
@@ -1270,7 +1301,6 @@
     if (elAdu) elAdu.textContent = String(adultos);
     if (elCri) elCri.textContent = String(criancas);
     if (elAduPct) elAduPct.textContent = cadastrados ? ' ' + pct(adultos, cadastrados) : '';
-    if (elCriPct) elCriPct.textContent = cadastrados ? ' ' + pct(criancas, cadastrados) : '';
     renderContratoDash(cadastrados, criancas);
     if (elAduDet) {
       if (naoContados) {
