@@ -1694,9 +1694,9 @@
     if (confirmada) {
       if (temPai && temMae && !liberado) {
         pessoas.push({
-          papel: 'Responsável',
-          tipo: 'resp',
-          nome: 'Pai/mãe: escolher 1 na porta',
+          papel: '',
+          tipo: 'resp-pendente',
+          nome: 'Pai / mãe: escolher 1 na porta',
           detalhe: String(f.nome_pai).trim() + ' / ' + String(f.nome_mae).trim() + ' · conta 1 adulto',
           confirmado: true,
           ck: '☑'
@@ -1733,7 +1733,7 @@
     } else if (pendente) {
       if (temPai && temMae) {
         pessoas.push({
-          papel: 'Responsável',
+          papel: '',
           tipo: 'resp-pendente',
           nome: 'Pai / mãe ainda não confirmado',
           detalhe: String(f.nome_pai).trim() + ' / ' + String(f.nome_mae).trim() + ' · conta 1 adulto',
@@ -1744,7 +1744,8 @@
         pessoas.push({
           papel: 'Pai',
           tipo: 'resp',
-          nome: String(f.nome_pai).trim() + ' · ainda não confirmou',
+          nome: String(f.nome_pai).trim(),
+          detalhe: 'Ainda não confirmou · conta 1 adulto',
           confirmado: false,
           ck: '☐'
         });
@@ -1752,7 +1753,8 @@
         pessoas.push({
           papel: 'Mãe',
           tipo: 'resp',
-          nome: String(f.nome_mae).trim() + ' · ainda não confirmou',
+          nome: String(f.nome_mae).trim(),
+          detalhe: 'Ainda não confirmou · conta 1 adulto',
           confirmado: false,
           ck: '☐'
         });
@@ -1797,12 +1799,20 @@
   }
 
   function htmlLinhaPessoaPdf(p) {
+    var classes = 'p-linha' +
+      (p.tipo === 'crianca' ? ' kid' : '') +
+      (p.tipo === 'resp-pendente' ? ' pend' : '') +
+      (p.confirmado ? ' ok' : '');
+    var titulo = p.papel
+      ? ('<span class="papel">' + esc(p.papel) + '</span><span class="nm">' + esc(p.nome || '') + '</span>')
+      : ('<span class="nm nm-full">' + esc(p.nome || '') + '</span>');
     return (
-      '<div class="p-linha' + (p.tipo === 'crianca' ? ' kid' : '') + (p.tipo === 'resp-pendente' ? ' pend' : '') + (p.confirmado ? ' ok' : '') + '">' +
+      '<div class="' + classes + '">' +
         '<span class="ck">' + (p.ck || '☐') + '</span>' +
-        '<span class="papel">' + esc(p.papel || '') + '</span>' +
-        '<span class="nm">' + esc(p.nome || '') + '</span>' +
-        (p.detalhe ? ('<span class="det">' + esc(p.detalhe) + '</span>') : '') +
+        '<div class="p-body">' +
+          '<div class="p-topo">' + titulo + '</div>' +
+          (p.detalhe ? ('<div class="det">' + esc(p.detalhe) + '</div>') : '') +
+        '</div>' +
       '</div>'
     );
   }
@@ -1828,14 +1838,17 @@
       '.coroa-item span{display:block;font-size:8.5pt;text-transform:uppercase;letter-spacing:.04em;color:#1f5c2e;font-weight:700}' +
       '.coroa-item strong{display:block;margin-top:2px;font-size:16pt;line-height:1.1}' +
       '.coroa-item em{display:block;margin-top:2px;font-style:normal;font-size:8.5pt;color:#444}' +
-      '.p-linha{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 8px;padding:4px 0;border-bottom:1px dotted #d0d8cc}' +
+      '.p-linha{display:table;width:100%;table-layout:fixed;padding:5px 4px;border-bottom:1px dotted #d0d8cc;box-sizing:border-box}' +
       '.p-linha:last-child{border-bottom:0}' +
-      '.p-linha .ck{font-size:13pt;line-height:1;color:#1f5c2e;width:18px;flex-shrink:0}' +
+      '.p-linha .ck{display:table-cell;width:22px;vertical-align:top;font-size:13pt;line-height:1.2;color:#1f5c2e}' +
+      '.p-linha .p-body{display:table-cell;vertical-align:top;padding-left:6px}' +
+      '.p-linha .p-topo{display:block;line-height:1.25}' +
       '.p-linha.ok .ck{color:#0b6b2a}' +
-      '.p-linha.pend{background:#fff8e1;margin:2px -4px;padding:4px}' +
-      '.p-linha .papel{font-size:8.5pt;text-transform:uppercase;letter-spacing:.03em;color:#666;min-width:72px}' +
-      '.p-linha .nm{font-size:11pt;font-weight:600;color:#111}' +
-      '.p-linha .det{flex:1 1 100%;font-size:8.5pt;color:#666;padding-left:26px}' +
+      '.p-linha.pend{background:#fff8e1;border:1px solid #e0c36a;margin:3px 0;padding:6px 4px}' +
+      '.p-linha .papel{display:inline-block;font-size:8.5pt;text-transform:uppercase;letter-spacing:.03em;color:#666;margin-right:8px;min-width:52px}' +
+      '.p-linha .nm{display:inline;font-size:11pt;font-weight:600;color:#111}' +
+      '.p-linha .nm-full{display:block;font-size:11pt;font-weight:700;color:#111}' +
+      '.p-linha .det{display:block;margin-top:2px;font-size:8.5pt;color:#555;line-height:1.3}' +
       '.legenda-pdf{margin:10px 0 0;font-size:9pt;color:#555}' +
       '.fam.pendente header,.porta-row.st-pre_cadastro{background:#fffaf0}'
     );
