@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=59" />
+  <link rel="stylesheet" href="styles.css?v=60" />
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4KXBY80XL"></script>
   <script>
@@ -96,6 +96,17 @@
               <strong class="dash-value" id="dash-presentes-fam">0</strong>
               <span class="dash-sub" id="dash-presentes-detalhe"></span>
             </div>
+          </div>
+
+          <div class="dash-status-wa" id="dash-status-wa">
+            <h3 class="dash-status-titulo">Status para WhatsApp</h3>
+            <p class="dash-status-hint">Mensagem pronta com totais, o que falta e ajustes. Copie ou abra no WhatsApp.</p>
+            <textarea id="dash-status-texto" class="dash-status-texto" rows="14" readonly></textarea>
+            <div class="dash-status-acoes">
+              <button type="button" class="btn btn-grass" id="btn-copiar-status-wa">Copiar mensagem</button>
+              <a class="btn btn-secondary" id="btn-abrir-status-wa" href="#" target="_blank" rel="noopener">Abrir no WhatsApp</a>
+            </div>
+            <p class="dash-status-feedback" id="dash-status-feedback" role="status"></p>
           </div>
         </div>
       </section>
@@ -356,6 +367,6 @@
   </div>
 
   <script src="js/api.js?v=8"></script>
-  <script src="js/admin.js?v=50"></script>
+  <script src="js/admin.js?v=51"></script>
 </body>
 </html>

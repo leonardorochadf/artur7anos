@@ -710,6 +710,116 @@
     return url;
   }
 
+  function whatsappUrlSomenteTexto(texto) {
+    if (!texto) return '#';
+    return 'https://api.whatsapp.com/send?text=' + encodeURIComponent(texto);
+  }
+
+  function montarMensagemStatusWhatsapp(s) {
+    // ASCII + *negrito* (melhor no WhatsApp)
+    var linhas = [
+      '*STATUS - Aniversario Artur 7 anos*',
+      '*Data:* 25/11 · Jump Trampolim Park · 17h45-21h30',
+      '',
+      '*Total esperado:* ' + s.pessoas + ' pessoas',
+      '- Adultos: ' + s.adultos,
+      '- Criancas / meias: ' + s.criancas,
+      '',
+      '*Familias:* ' + s.familias,
+      '- Confirmaram (vao): ' + s.famConf + ' · ' + s.confPessoas + ' pessoas',
+      '  Adultos ' + s.confAdultos + ' · Criancas ' + s.confCriancas,
+      '- Ainda nao confirmaram: ' + s.famPend + ' · ' + s.pendPessoas + ' pessoas',
+      '  Adultos ' + s.pendAdultos + ' · Criancas ' + s.pendCriancas,
+      '- Nao vao: ' + s.famNao + ' · ' + s.naoVaoPessoas + ' pessoas (fora do esperado)'
+    ];
+
+    if (s.famPend > 0) {
+      linhas.push('');
+      linhas.push('*O que falta:*');
+      linhas.push(
+        '- Confirmar ' + s.famPend + ' familia' + (s.famPend === 1 ? '' : 's') +
+          ' (' + s.pendPessoas + ' pessoa' + (s.pendPessoas === 1 ? '' : 's') + ')'
+      );
+      if (s.pctConf != null) {
+        linhas.push('- Progresso: ' + s.pctConf + ' das familias ja confirmaram');
+      }
+    } else {
+      linhas.push('');
+      linhas.push('*O que falta:* nenhuma familia pendente');
+    }
+
+    if (s.naoContados > 0 || s.famLiberadasPaiMae > 0) {
+      linhas.push('');
+      linhas.push('*Ajuste pai/mae:*');
+      if (s.famLiberadasPaiMae > 0) {
+        linhas.push(
+          '- ' + s.famLiberadasPaiMae + ' familia' + (s.famLiberadasPaiMae === 1 ? '' : 's') +
+            ' liberada' + (s.famLiberadasPaiMae === 1 ? '' : 's') + ': pai e mae no total'
+        );
+      }
+      if (s.naoContados > 0) {
+        linhas.push(
+          '- ' + s.naoContados + ' pai/mae a mais no cadastro, fora do total' +
+            ' (' + s.famTravadasPaiMae + ' familia' + (s.famTravadasPaiMae === 1 ? '' : 's') + ' sem liberar)'
+        );
+      }
+    }
+
+    if (s.famPres > 0) {
+      linhas.push('');
+      linhas.push('*No local agora:* ' + s.famPres + ' familia' + (s.famPres === 1 ? '' : 's'));
+    }
+
+    linhas.push('');
+    linhas.push('Atualizado em ' + s.atualizadoEm);
+    return linhas.join('\n');
+  }
+
+  function renderStatusWhatsapp(msg) {
+    var ta = document.getElementById('dash-status-texto');
+    var link = document.getElementById('btn-abrir-status-wa');
+    var feedback = document.getElementById('dash-status-feedback');
+    window.__statusWhatsappMsg = msg || '';
+    if (ta) ta.value = msg || '';
+    if (link) {
+      link.href = whatsappUrlSomenteTexto(msg);
+      link.setAttribute('aria-disabled', msg ? 'false' : 'true');
+    }
+    if (feedback && feedback.getAttribute('data-temp') !== '1') {
+      feedback.textContent = msg ? 'Mensagem atualizada com o dashboard.' : '';
+    }
+  }
+
+  async function copiarStatusWhatsapp() {
+    var msg = window.__statusWhatsappMsg || (document.getElementById('dash-status-texto') || {}).value || '';
+    var feedback = document.getElementById('dash-status-feedback');
+    if (!msg) {
+      if (feedback) feedback.textContent = 'Nada para copiar ainda.';
+      return;
+    }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(msg);
+      } else {
+        var ta = document.getElementById('dash-status-texto');
+        if (!ta) throw new Error('Campo nao encontrado');
+        ta.focus();
+        ta.select();
+        document.execCommand('copy');
+      }
+      if (feedback) {
+        feedback.setAttribute('data-temp', '1');
+        feedback.textContent = 'Mensagem copiada! Cole no WhatsApp.';
+        setTimeout(function () {
+          feedback.removeAttribute('data-temp');
+          feedback.textContent = 'Mensagem atualizada com o dashboard.';
+        }, 2500);
+      }
+    } catch (err) {
+      if (feedback) feedback.textContent = 'Nao deu para copiar. Selecione o texto e copie manualmente.';
+    }
+  }
+
   function filtroWhatsappPorStatus(f) {
     if (!f) return 'pendentes';
     if (f.status === 'nao_vai') return 'nao_vao';
@@ -1153,6 +1263,28 @@
       naoContados: naoContados,
       listaPaiMae: listaPaiMae
     });
+    renderStatusWhatsapp(montarMensagemStatusWhatsapp({
+      pessoas: cadastrados,
+      adultos: adultos,
+      criancas: criancas,
+      familias: qtdFamilias,
+      famConf: famConf,
+      famPend: famPend,
+      famNao: famNao,
+      famPres: famPres,
+      confPessoas: confirmados,
+      confAdultos: confAdultos,
+      confCriancas: confCriancas,
+      pendPessoas: naoConfirmados,
+      pendAdultos: naoAdultos,
+      pendCriancas: naoCriancas,
+      naoVaoPessoas: naoVaoPessoas,
+      famLiberadasPaiMae: famLiberadasPaiMae,
+      famTravadasPaiMae: famTravadasPaiMae,
+      naoContados: naoContados,
+      pctConf: qtdFamilias ? pct(famConf, qtdFamilias) : null,
+      atualizadoEm: new Date().toLocaleString('pt-BR')
+    }));
     renderMissaoDash();
     renderTabelasLogs();
   }
@@ -2732,6 +2864,13 @@
         checkLiberarGeral.checked = !ligar;
         setStatus(err.message || 'Erro ao salvar configuração', 'err');
       }
+    });
+  }
+
+  var btnCopiarStatusWa = document.getElementById('btn-copiar-status-wa');
+  if (btnCopiarStatusWa) {
+    btnCopiarStatusWa.addEventListener('click', function () {
+      copiarStatusWhatsapp();
     });
   }
 
