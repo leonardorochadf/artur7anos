@@ -835,56 +835,161 @@
         : '');
   }
 
+  function renderAposLiberar() {
+    atualizarDashboard(window.__familias || []);
+    renderLista(window.__familias || []);
+    if (secaoTabela && !secaoTabela.classList.contains('hidden')) {
+      renderTabelaDados(window.__familias || []);
+    }
+  }
+
+  async function aplicarLiberarAcompanhantes(cel, ligar, opts) {
+    opts = opts || {};
+    var familia = familiaPorCelular(cel);
+    if (!familia) throw new Error('Família não encontrada.');
+    await ArturApi.liberarAcompanhantes(senha(), cel, ligar);
+    familia.liberar_acompanhantes = !!ligar;
+    if (!opts.silencioso) {
+      setStatus(
+        ligar
+          ? 'Liberado: pai e mãe entram no total e no convite.'
+          : 'Travado: só 1 responsável no total e no convite.',
+        ligar ? 'ok' : 'warn'
+      );
+    }
+    if (!opts.semRender) renderAposLiberar();
+  }
+
+  function bindAjustePaiMaeChecks() {
+    var elLista = document.getElementById('dash-ajuste-lista');
+    var elAcoes = document.getElementById('dash-ajuste-acoes');
+    if (!elLista) return;
+
+    elLista.querySelectorAll('.ajuste-liberar-check').forEach(function (box) {
+      box.addEventListener('change', async function () {
+        var cel = box.getAttribute('data-cel');
+        var ligar = !!box.checked;
+        box.disabled = true;
+        try {
+          await aplicarLiberarAcompanhantes(cel, ligar);
+        } catch (err) {
+          box.checked = !ligar;
+          setStatus(err.message || 'Erro ao liberar família', 'err');
+        } finally {
+          box.disabled = false;
+        }
+      });
+    });
+
+    if (!elAcoes) return;
+    var btnTodos = elAcoes.querySelector('[data-act="liberar-todos-ajuste"]');
+    if (btnTodos) {
+      btnTodos.addEventListener('click', async function () {
+        var pendentes = Array.prototype.slice.call(
+          elLista.querySelectorAll('.ajuste-liberar-check:not(:checked)')
+        );
+        if (!pendentes.length) {
+          setStatus('Todas essas famílias já estão liberadas.', 'ok');
+          return;
+        }
+        var ok = await pedirConfirmacao(
+          'Liberar pai e mãe no total para ' + pendentes.length + ' família' +
+            (pendentes.length === 1 ? '' : 's') + '?',
+          {
+            titulo: 'Liberar no cálculo',
+            textoSim: 'Sim, liberar',
+            textoNao: 'Cancelar'
+          }
+        );
+        if (!ok) return;
+        btnTodos.disabled = true;
+        var okCount = 0;
+        try {
+          for (var i = 0; i < pendentes.length; i++) {
+            var box = pendentes[i];
+            var cel = box.getAttribute('data-cel');
+            await aplicarLiberarAcompanhantes(cel, true, { silencioso: true, semRender: true });
+            okCount += 1;
+          }
+          renderAposLiberar();
+          setStatus(
+            okCount + ' família' + (okCount === 1 ? '' : 's') +
+              ' liberada' + (okCount === 1 ? '' : 's') +
+              ': pai e mãe no total e na lista.',
+            'ok'
+          );
+        } catch (err) {
+          renderAposLiberar();
+          setStatus(
+            (err.message || 'Erro ao liberar') +
+              (okCount ? (' · ' + okCount + ' já liberada' + (okCount === 1 ? '' : 's')) : ''),
+            'err'
+          );
+        } finally {
+          btnTodos.disabled = false;
+        }
+      });
+    }
+  }
+
   function renderAjustePaiMae(opts) {
     var box = document.getElementById('dash-ajuste-pais');
     var elTitulo = document.getElementById('dash-ajuste-titulo');
     var elTexto = document.getElementById('dash-ajuste-texto');
+    var elAcoes = document.getElementById('dash-ajuste-acoes');
     var elLista = document.getElementById('dash-ajuste-lista');
     if (!box || !elTitulo || !elTexto || !elLista) return;
 
     var liberadas = opts.famLiberadasPaiMae || 0;
     var travadas = opts.famTravadasPaiMae || 0;
     var fora = opts.naoContados || 0;
-    var lista = opts.listaFora || [];
+    var lista = opts.listaPaiMae || [];
 
-    if (!liberadas && !travadas) {
+    if (!lista.length) {
       box.classList.add('hidden');
       elTitulo.textContent = '';
       elTexto.textContent = '';
+      if (elAcoes) elAcoes.innerHTML = '';
       elLista.innerHTML = '';
       return;
     }
 
     box.classList.remove('hidden');
-    elTitulo.textContent = fora
-      ? (fora + ' pai/mãe a mais no cadastro · fora do total')
-      : 'Pai e mãe liberados · os 2 entram no total';
+    elTitulo.textContent = 'Revisão do cálculo · famílias com pai e mãe';
+    elTexto.textContent = fora
+      ? ('Marque para liberar e já contar os 2 no total. Agora: ' +
+        fora + ' pai/mãe a mais fora do total' +
+        (liberadas ? (' · ' + liberadas + ' já liberada' + (liberadas === 1 ? '' : 's')) : '') + '.')
+      : ('Todas liberadas: pai e mãe entram no total' +
+        (travadas ? '' : '') + '.');
 
-    var partes = [];
-    if (liberadas) {
-      partes.push(
-        liberadas + ' família' + (liberadas === 1 ? '' : 's') +
-        ' liberada' + (liberadas === 1 ? '' : 's') +
-        ': pai e mãe contam no total'
-      );
+    if (elAcoes) {
+      elAcoes.innerHTML = travadas
+        ? '<button type="button" class="btn btn-grass" data-act="liberar-todos-ajuste">Liberar todas desta revisão</button>'
+        : '<span class="dash-ajuste-ok">Tudo liberado nesta revisão</span>';
     }
-    if (travadas) {
-      partes.push(
-        travadas + ' família' + (travadas === 1 ? '' : 's') +
-        ' com pai e mãe cadastrados, sem liberar o 2º adulto: conta só 1 responsável' +
-        (fora ? (' · ' + fora + ' nome' + (fora === 1 ? '' : 's') + ' de pai/mãe não contabilizado' + (fora === 1 ? '' : 's')) : '')
-      );
-    }
-    elTexto.textContent = partes.join('. ') + '.';
 
     elLista.innerHTML = lista.map(function (item) {
       return (
-        '<li>' +
-          '<strong>' + esc(item.nome) + '</strong>' +
-          '<span>pai: ' + esc(item.pai) + ' · mãe: ' + esc(item.mae) + ' · no total: 1 responsável</span>' +
+        '<li class="' + (item.liberado ? 'ajuste-ok' : 'ajuste-pendente') + '">' +
+          '<label class="ajuste-check-linha">' +
+            '<input type="checkbox" class="ajuste-liberar-check" data-cel="' + esc(item.cel) + '"' +
+              (item.liberado ? ' checked' : '') + ' />' +
+            '<span class="ajuste-check-corpo">' +
+              '<strong>' + esc(item.nome) + '</strong>' +
+              '<span>pai: ' + esc(item.pai) + ' · mãe: ' + esc(item.mae) + '</span>' +
+              '<em>' +
+                (item.liberado
+                  ? 'Liberado · os 2 entram no total e no convite'
+                  : 'Sem liberar · conta 1 · marque para liberar agora') +
+              '</em>' +
+            '</span>' +
+          '</label>' +
         '</li>'
       );
     }).join('');
+
+    bindAjustePaiMaeChecks();
   }
 
   function atualizarDashboard(familias) {
@@ -911,7 +1016,7 @@
     var naoContados = 0;
     var responsaveis = 0;
     var extras = 0;
-    var listaFora = [];
+    var listaPaiMae = [];
 
     lista.forEach(function (f) {
       var cont = contarAdultosFamilia(f);
@@ -926,16 +1031,18 @@
         cadastrados += totalPessoas;
         responsaveis += cont.responsaveis;
         extras += cont.extras;
-        if (cont.temPaiEMae) famPaiMae += 1;
-        if (cont.liberadoPaiMae) famLiberadasPaiMae += 1;
-        if (cont.temPaiEMae && !cont.liberadoPaiMae) {
-          famTravadasPaiMae += 1;
-          listaFora.push({
+        if (cont.temPaiEMae) {
+          famPaiMae += 1;
+          listaPaiMae.push({
+            cel: chaveFamilia(f) || f.celular || '',
             nome: nomeFamilia(f) || ('Família ' + (f.celular || '')),
             pai: f.nome_pai || '—',
-            mae: f.nome_mae || '—'
+            mae: f.nome_mae || '—',
+            liberado: !!cont.liberadoPaiMae
           });
         }
+        if (cont.liberadoPaiMae) famLiberadasPaiMae += 1;
+        if (cont.temPaiEMae && !cont.liberadoPaiMae) famTravadasPaiMae += 1;
         naoContados += cont.naoContados;
       }
       marcados += contarChecksFamilia(f);
@@ -955,6 +1062,11 @@
         naoAdultos += nAdultos;
         naoCriancas += nCriancas;
       }
+    });
+
+    listaPaiMae.sort(function (a, b) {
+      if (a.liberado === b.liberado) return String(a.nome).localeCompare(String(b.nome), 'pt-BR');
+      return a.liberado ? 1 : -1;
     });
 
     var elFam = document.getElementById('dash-familias');
@@ -994,7 +1106,7 @@
       famLiberadasPaiMae: famLiberadasPaiMae,
       famTravadasPaiMae: famTravadasPaiMae,
       naoContados: naoContados,
-      listaFora: listaFora
+      listaPaiMae: listaPaiMae
     });
     if (elCon) elCon.textContent = String(famConf);
     if (elNao) elNao.textContent = String(famPend);
@@ -1039,7 +1151,7 @@
       famTravadasPaiMae: famTravadasPaiMae,
       famPend: famPend,
       naoContados: naoContados,
-      listaFora: listaFora
+      listaPaiMae: listaPaiMae
     });
     renderMissaoDash();
     renderTabelasLogs();
@@ -2455,14 +2567,7 @@
           }
           if (act === 'liberar-adultos') {
             var ligar = btn.getAttribute('data-on') === '1';
-            await ArturApi.liberarAcompanhantes(senha(), cel, ligar);
-            setStatus(
-              ligar
-                ? 'Convite liberado: esta família pode incluir outro adulto.'
-                : 'Convite travado: só 1 responsável neste cadastro.',
-              ligar ? 'ok' : 'warn'
-            );
-            await refresh(false);
+            await aplicarLiberarAcompanhantes(cel, ligar);
             return;
           }
           if (act === 'excluir') {

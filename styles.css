@@ -2426,6 +2426,19 @@ button.dash-click:active {
   line-height: 1.35;
 }
 
+.dash-ajuste-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.dash-ajuste-ok {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: #1f5c2e;
+}
+
 .dash-ajuste-lista {
   margin: 0;
   padding: 0;
@@ -2433,14 +2446,42 @@ button.dash-click:active {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: 180px;
+  max-height: 260px;
   overflow: auto;
 }
 
 .dash-ajuste-lista li {
   border: 2px solid #000;
   background: #fff;
-  padding: 6px 8px;
+  padding: 0;
+}
+
+.dash-ajuste-lista li.ajuste-ok {
+  background: #e8ffe0;
+}
+
+.dash-ajuste-lista li.ajuste-pendente {
+  background: #fff8e8;
+}
+
+.ajuste-check-linha {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.ajuste-check-linha input {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.ajuste-check-corpo {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -2451,11 +2492,21 @@ button.dash-click:active {
   line-height: 1.25;
 }
 
-.dash-ajuste-lista span {
+.dash-ajuste-lista span,
+.dash-ajuste-lista em {
   font-family: var(--font-body);
   font-size: 0.8rem;
   line-height: 1.3;
   color: #444;
+  font-style: normal;
+}
+
+.dash-ajuste-lista em {
+  color: #1f5c2e;
+}
+
+.dash-ajuste-lista li.ajuste-pendente em {
+  color: #8a1f1f;
 }
 
 .chart-title {
