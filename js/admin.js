@@ -2590,8 +2590,8 @@
     var body = ordenadas.map(function (f, i) {
       var esp = pessoasEsperadasPdf(f);
       var badge = familiaConfirmou(f)
-        ? ('OK · ' + esp.adultos + 'A · ' + esp.criancas + 'P')
-        : ('Pend. · 1A até confirmar');
+        ? ('<strong>OK</strong><em>' + esp.adultos + 'A · ' + esp.criancas + 'P</em>')
+        : ('<strong>Pend.</strong><em>1 adulto</em>');
 
       return (
         '<div class="porta-row st-' + esc(f.status || '') + (esp.pendente ? ' pendente' : ' ok') + '">' +
@@ -2599,7 +2599,7 @@
           '<div class="c qtd">' + esp.pessoasTotal +
             '<small>' + esp.adultos + 'A · ' + esp.criancas + 'P</small></div>' +
           '<div class="pessoas">' + esp.pessoas.map(htmlLinhaPessoaPdf).join('') + '</div>' +
-          '<div class="col-status"><span class="pdf-badge">' + esc(badge) + '</span></div>' +
+          '<div class="col-status"><span class="pdf-badge">' + badge + '</span></div>' +
         '</div>'
       );
     }).join('');
@@ -2653,29 +2653,26 @@
       '.porta-row.pendente{background:#fffaf0}' +
       '.porta-row .qtd small{display:block;font-size:8pt;font-weight:600;color:#555;margin-top:2px}' +
       '.porta-wrap{border:2px solid #2d4a2a;background:#fff;overflow:visible;box-sizing:border-box;margin:0 2px 0 0}' +
-      '.porta-head,.porta-row{display:grid;grid-template-columns:52px 52px 1fr 90px;align-items:stretch}' +
+      '.porta-head,.porta-row{display:grid;grid-template-columns:44px 48px 1fr 72px;align-items:stretch}' +
       '.porta-head{background:#1f5c2e;color:#fff;font-size:10pt;font-weight:700}' +
-      '.porta-head > div{padding:8px 10px;border-right:1px solid #2d4a2a;border-bottom:1px solid #2d4a2a}' +
-      '.porta-head > div:last-child{border-right:none;text-align:center;padding:8px 6px;font-size:9pt}' +
+      '.porta-head > div{padding:8px 8px;border-right:1px solid #2d4a2a;border-bottom:1px solid #2d4a2a}' +
+      '.porta-head > div:last-child{border-right:none;text-align:center;padding:8px 4px;font-size:8.5pt}' +
       '.porta-head .c{text-align:center}' +
       '.porta-row{page-break-inside:avoid;break-inside:avoid;-webkit-column-break-inside:avoid;border-bottom:1px solid #2d4a2a}' +
       '.porta-row:last-child{border-bottom:none}' +
-      '.porta-row > div{padding:8px 10px;border-right:1px solid #2d4a2a;vertical-align:top}' +
+      '.porta-row > div{padding:8px 8px;border-right:1px solid #2d4a2a;vertical-align:top;overflow:hidden}' +
       '.porta-row > div:last-child{border-right:none}' +
-      '.porta-row .c{text-align:center;display:flex;align-items:center;justify-content:center}' +
+      '.porta-row .c{text-align:center}' +
       '.porta-row .num{font-weight:700;background:#eef5eb;font-size:12pt}' +
       '.porta-row .qtd{font-weight:700;font-size:12pt}' +
-      '.porta-row .pessoas{width:auto}' +
-      '.porta-row .col-status{width:90px;max-width:90px;text-align:center;display:flex;align-items:center;justify-content:center;background:#fff !important;padding:6px 6px}' +
-      '.p-linha{display:flex;align-items:center;gap:8px;padding:3px 0}' +
-      '.p-linha .ck{font-size:14pt;color:#1f5c2e;width:20px;flex:0 0 20px;line-height:1}' +
-      '.p-linha .papel{flex:0 0 58px;font-size:9pt;text-transform:uppercase;letter-spacing:.03em;color:#666}' +
-      '.p-linha .nm{flex:1;font-size:12pt;font-weight:700;color:#111;white-space:normal;word-break:normal}' +
-      '.p-linha .nm.linha-vazia{border-bottom:1px solid #bbb;min-height:16px;display:block}' +
-      '.pdf-badge{display:inline-block;padding:3px 5px;border-radius:8px;font-size:8pt;font-weight:700;background:#e8eee6;color:#234;white-space:nowrap}' +
-      '.porta-row.st-confirmado .pdf-badge{background:#d7f0d8;color:#145214}' +
+      '.porta-row .pessoas{width:auto;min-width:0}' +
+      '.porta-row .col-status{text-align:center;background:#fff !important;padding:6px 3px;overflow:hidden}' +
+      '.pdf-badge{display:block;padding:4px 3px;border-radius:6px;font-size:8pt;font-weight:700;background:#e8eee6;color:#234;line-height:1.2;white-space:normal;word-break:break-word;max-width:100%;box-sizing:border-box}' +
+      '.pdf-badge strong{display:block;font-size:8.5pt}' +
+      '.pdf-badge em{display:block;font-style:normal;font-size:7.5pt;font-weight:600;opacity:.9;margin-top:1px}' +
+      '.porta-row.st-confirmado .pdf-badge,.porta-row.ok .pdf-badge{background:#d7f0d8;color:#145214}' +
       '.porta-row.st-presente .pdf-badge{background:#cfe8ff;color:#0b4a7a}' +
-      '.porta-row.st-pre_cadastro .pdf-badge{background:#fff3cd;color:#7a5b00}' +
+      '.porta-row.st-pre_cadastro .pdf-badge,.porta-row.pendente .pdf-badge{background:#fff3cd;color:#7a5b00}' +
       '.porta-row.st-nao_vai .pdf-badge{background:#f8d7da;color:#842029}' +
       '.porta-row:nth-child(even):not(.extra) .pessoas,.porta-row:nth-child(even):not(.extra) .qtd{background:#f7faf6}' +
       '.porta-row.extra > div{background:#fff}' +
