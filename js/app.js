@@ -749,16 +749,17 @@
     blocoFamilia.classList.remove('hidden');
     ocultarLookup();
     entrarModoRsvp();
-    modoFormulario(!!encontrado, f);
 
     var celAgora = ArturApi.normalizarCelular(celularInput.value);
     if (encontrado && f) {
       celularChave = celAgora || f.celular || (f.celulares && f.celulares[0]) || '';
-      if (responsavelInput) responsavelInput.value = '';
+      // Preenche pai/mãe primeiro; depois modoFormulario copia para o campo único
+      // (só pai ou só mãe). Limpar o único antes disso escondia o cadastro.
       configurarResponsaveis(f.nome_pai || '', f.nome_mae || '');
       setFilhos(f.filhos || []);
       setAdultos(f.adultos || []);
       atualizarVisibilidadeListas();
+      modoFormulario(true, f);
       if (String(f.nome_pai || '').trim() && String(f.nome_mae || '').trim()) {
         setTimeout(function () {
           if (acompanhantesLiberados()) {
@@ -770,6 +771,13 @@
             mostrarAviso('Qual será o responsável acompanhante da criança: pai ou mãe?', 'Quase lá!');
           }
         }, 280);
+      } else {
+        var nomeUnico = String(f.nome_pai || f.nome_mae || '').trim();
+        if (nomeUnico) {
+          setTimeout(function () {
+            mostrarAviso('Cadastro encontrado: ' + nomeUnico, 'Pronto!');
+          }, 280);
+        }
       }
       if (blocoFamilia && blocoFamilia.scrollIntoView) {
         setTimeout(function () {
@@ -782,6 +790,7 @@
       configurarResponsaveis('', '');
       setFilhos([]);
       setAdultos([]);
+      modoFormulario(false, null);
     }
     montarBadgeStatus(f, encontrado);
     formularioSujo = false;
