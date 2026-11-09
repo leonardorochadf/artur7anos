@@ -12,6 +12,11 @@ window.ARTUR_CONFIG = {
     cep: '29055-650',
     mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Jump+Trampolim+Park+Rômulo+Samorini+46+Vitória'
   },
+  // Contrato Jump: pessoas = adultos + crianças; pulantes = crianças
+  contrato: {
+    pessoas: 85,
+    pulantes: 50
+  },
   termo: {
     url: 'https://app.zapsign.com.br/verificar/doc/e440701a-7736-4045-9634-9fd567c039fb',
     titulo: 'Termo de responsabilidade'

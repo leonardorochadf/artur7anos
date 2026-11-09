@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=60" />
+  <link rel="stylesheet" href="styles.css?v=61" />
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4KXBY80XL"></script>
   <script>
@@ -20,7 +20,7 @@
     gtag('js', new Date());
     gtag('config', 'G-Y4KXBY80XL');
   </script>
-  <script src="config.js?v=10"></script>
+  <script src="config.js?v=11"></script>
   <script src="js/analytics.js?v=2"></script>
 </head>
 <body>
@@ -45,8 +45,9 @@
               <strong class="dash-value" id="dash-familias">0</strong>
             </div>
             <div class="dash-item">
-              <span class="dash-label">Cadastrados</span>
+              <span class="dash-label">Pessoas (contrato 85)</span>
               <strong class="dash-value" id="dash-cadastrados">0</strong>
+              <span class="dash-sub" id="dash-pessoas-contrato">0 de 85</span>
             </div>
             <div class="dash-item">
               <span class="dash-label">Adultos</span>
@@ -54,9 +55,26 @@
               <span class="dash-sub" id="dash-adultos-detalhe">1 responsável por família</span>
             </div>
             <div class="dash-item">
-              <span class="dash-label">Crianças / meias</span>
+              <span class="dash-label">Pulantes / crianças (50)</span>
               <strong class="dash-value"><span id="dash-criancas">0</span><span class="dash-pct" id="dash-criancas-pct"></span></strong>
+              <span class="dash-sub" id="dash-pulantes-contrato">0 de 50</span>
             </div>
+          </div>
+          <div class="dash-contrato" id="dash-contrato" aria-live="polite">
+            <p class="dash-contrato-titulo">Contrato Jump</p>
+            <div class="dash-contrato-grid">
+              <div class="dash-contrato-item">
+                <span>Quantidade de pessoas</span>
+                <strong id="dash-contrato-pessoas">0 / 85</strong>
+                <em id="dash-contrato-pessoas-nota"></em>
+              </div>
+              <div class="dash-contrato-item">
+                <span>Número de pulantes</span>
+                <strong id="dash-contrato-pulantes">0 / 50</strong>
+                <em id="dash-contrato-pulantes-nota"></em>
+              </div>
+            </div>
+            <p class="dash-contrato-legenda">Pulantes = crianças. Pessoas = adultos + crianças.</p>
           </div>
           <div class="dash-ajuste-pais hidden" id="dash-ajuste-pais" aria-live="polite">
             <p class="dash-ajuste-titulo" id="dash-ajuste-titulo"></p>
@@ -367,6 +385,6 @@
   </div>
 
   <script src="js/api.js?v=8"></script>
-  <script src="js/admin.js?v=51"></script>
+  <script src="js/admin.js?v=52"></script>
 </body>
 </html>

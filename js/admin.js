@@ -715,37 +715,83 @@
     return 'https://api.whatsapp.com/send?text=' + encodeURIComponent(texto);
   }
 
+  function contratoFesta() {
+    var cfg = (window.ARTUR_CONFIG && window.ARTUR_CONFIG.contrato) || {};
+    var pessoas = Number(cfg.pessoas);
+    var pulantes = Number(cfg.pulantes);
+    return {
+      pessoas: pessoas > 0 ? pessoas : 85,
+      pulantes: pulantes > 0 ? pulantes : 50
+    };
+  }
+
+  function textoSaldoContrato(atual, meta, rotulo) {
+    var diff = Number(atual || 0) - Number(meta || 0);
+    if (diff === 0) return rotulo + ' no contrato';
+    if (diff < 0) return 'faltam ' + Math.abs(diff) + ' para o contrato';
+    return Math.abs(diff) + ' acima do contrato';
+  }
+
+  function htmlCardsContrato(tot) {
+    var c = contratoFesta();
+    var pessoas = tot && tot.pessoas != null ? tot.pessoas : 0;
+    var pulantes = tot && tot.criancas != null ? tot.criancas : 0;
+    return (
+      '<div class="card"><strong>Contrato · pessoas</strong><span>' +
+        pessoas + ' / ' + c.pessoas + ' · ' + textoSaldoContrato(pessoas, c.pessoas, 'pessoas') +
+      '</span></div>' +
+      '<div class="card"><strong>Contrato · pulantes</strong><span>' +
+        pulantes + ' / ' + c.pulantes + ' · ' + textoSaldoContrato(pulantes, c.pulantes, 'pulantes') +
+        ' (crianças)' +
+      '</span></div>'
+    );
+  }
+
   function montarMensagemStatusWhatsapp(s) {
+    var c = contratoFesta();
     // ASCII + *negrito* (melhor no WhatsApp)
     var linhas = [
       '*STATUS - Aniversario Artur 7 anos*',
       '*Data:* 25/11 · Jump Trampolim Park · 17h45-21h30',
       '',
-      '*Total esperado:* ' + s.pessoas + ' pessoas',
+      '*Contrato Jump*',
+      '- Quantidade de pessoas: *' + c.pessoas + '* (adultos + criancas)',
+      '- Numero de pulantes: *' + c.pulantes + '* (criancas)',
+      '',
+      '*Agora no cadastro (esperado)*',
+      '- Pessoas: *' + s.pessoas + '* de ' + c.pessoas + ' · ' + textoSaldoContrato(s.pessoas, c.pessoas, 'pessoas'),
+      '- Pulantes/criancas: *' + s.criancas + '* de ' + c.pulantes + ' · ' + textoSaldoContrato(s.criancas, c.pulantes, 'pulantes'),
       '- Adultos: ' + s.adultos,
-      '- Criancas / meias: ' + s.criancas,
       '',
       '*Familias:* ' + s.familias,
       '- Confirmaram (vao): ' + s.famConf + ' · ' + s.confPessoas + ' pessoas',
-      '  Adultos ' + s.confAdultos + ' · Criancas ' + s.confCriancas,
+      '  Adultos ' + s.confAdultos + ' · Pulantes ' + s.confCriancas,
       '- Ainda nao confirmaram: ' + s.famPend + ' · ' + s.pendPessoas + ' pessoas',
-      '  Adultos ' + s.pendAdultos + ' · Criancas ' + s.pendCriancas,
+      '  Adultos ' + s.pendAdultos + ' · Pulantes ' + s.pendCriancas,
       '- Nao vao: ' + s.famNao + ' · ' + s.naoVaoPessoas + ' pessoas (fora do esperado)'
     ];
 
-    if (s.famPend > 0) {
+    if (s.famPend > 0 || s.pessoas < c.pessoas || s.criancas < c.pulantes) {
       linhas.push('');
       linhas.push('*O que falta:*');
-      linhas.push(
-        '- Confirmar ' + s.famPend + ' familia' + (s.famPend === 1 ? '' : 's') +
-          ' (' + s.pendPessoas + ' pessoa' + (s.pendPessoas === 1 ? '' : 's') + ')'
-      );
+      if (s.famPend > 0) {
+        linhas.push(
+          '- Confirmar ' + s.famPend + ' familia' + (s.famPend === 1 ? '' : 's') +
+            ' (' + s.pendPessoas + ' pessoa' + (s.pendPessoas === 1 ? '' : 's') + ')'
+        );
+      }
+      if (s.pessoas < c.pessoas) {
+        linhas.push('- Completar ' + (c.pessoas - s.pessoas) + ' pessoa' + ((c.pessoas - s.pessoas) === 1 ? '' : 's') + ' no contrato');
+      }
+      if (s.criancas < c.pulantes) {
+        linhas.push('- Completar ' + (c.pulantes - s.criancas) + ' pulante' + ((c.pulantes - s.criancas) === 1 ? '' : 's') + ' (criancas)');
+      }
       if (s.pctConf != null) {
         linhas.push('- Progresso: ' + s.pctConf + ' das familias ja confirmaram');
       }
     } else {
       linhas.push('');
-      linhas.push('*O que falta:* nenhuma familia pendente');
+      linhas.push('*O que falta:* nenhuma familia pendente · contrato coberto no cadastro');
     }
 
     if (s.naoContados > 0 || s.famLiberadasPaiMae > 0) {
@@ -893,15 +939,32 @@
     return n;
   }
 
+  function renderContratoDash(pessoas, pulantes) {
+    var c = contratoFesta();
+    var elPessoas = document.getElementById('dash-contrato-pessoas');
+    var elPulantes = document.getElementById('dash-contrato-pulantes');
+    var elPessoasNota = document.getElementById('dash-contrato-pessoas-nota');
+    var elPulantesNota = document.getElementById('dash-contrato-pulantes-nota');
+    var elPessoasSub = document.getElementById('dash-pessoas-contrato');
+    var elPulantesSub = document.getElementById('dash-pulantes-contrato');
+    if (elPessoas) elPessoas.textContent = pessoas + ' / ' + c.pessoas;
+    if (elPulantes) elPulantes.textContent = pulantes + ' / ' + c.pulantes;
+    if (elPessoasNota) elPessoasNota.textContent = textoSaldoContrato(pessoas, c.pessoas, 'pessoas');
+    if (elPulantesNota) elPulantesNota.textContent = textoSaldoContrato(pulantes, c.pulantes, 'pulantes');
+    if (elPessoasSub) elPessoasSub.textContent = pessoas + ' de ' + c.pessoas + ' · ' + textoSaldoContrato(pessoas, c.pessoas, 'pessoas');
+    if (elPulantesSub) elPulantesSub.textContent = pulantes + ' de ' + c.pulantes + ' · ' + textoSaldoContrato(pulantes, c.pulantes, 'pulantes');
+  }
+
   function renderTotaisEsperados(tot) {
     var el = document.getElementById('chart-totais');
     if (!el) return;
     var pessoas = tot.pessoas || 0;
+    var c = contratoFesta();
     if (!pessoas) {
       el.innerHTML = '<p class="chart-empty">Sem dados ainda.</p>';
       return;
     }
-    var maxBar = Math.max(tot.adultos, tot.criancas, tot.naoContados || 0, 1);
+    var maxBar = Math.max(tot.adultos, tot.criancas, tot.naoContados || 0, c.pessoas, c.pulantes, 1);
     function linha(label, valor, cor, nota) {
       var h = Math.max(8, Math.round((valor / maxBar) * 100));
       return (
@@ -927,10 +990,15 @@
     }
     el.innerHTML =
       '<div class="totais-resumo">' +
-        '<div><span>Total esperado</span><strong>' + pessoas + '</strong></div>' +
-        '<div><span>Adultos</span><strong>' + tot.adultos + '</strong></div>' +
-        '<div><span>Crianças</span><strong>' + tot.criancas + '</strong></div>' +
+        '<div><span>Pessoas agora</span><strong>' + pessoas + '</strong></div>' +
+        '<div><span>Contrato</span><strong>' + c.pessoas + '</strong></div>' +
+        '<div><span>Pulantes</span><strong>' + tot.criancas + '/' + c.pulantes + '</strong></div>' +
       '</div>' +
+      '<p class="totais-nota" style="margin-bottom:8px">' +
+        esc('Contrato: ' + c.pessoas + ' pessoas · ' + c.pulantes + ' pulantes (crianças). ' +
+          textoSaldoContrato(pessoas, c.pessoas, 'pessoas') + ' · ' +
+          textoSaldoContrato(tot.criancas, c.pulantes, 'pulantes') + '.') +
+      '</p>' +
       avisoNaoContados +
       linha('Responsáveis no total', tot.responsaveis, '#1f5c2e',
         tot.famLiberadasPaiMae
@@ -938,7 +1006,7 @@
             ' liberada' + (tot.famLiberadasPaiMae === 1 ? '' : 's') + ': pai e mãe entram no total')
           : 'No convite, 1 responsável por família') +
       linha('Outros adultos', tot.extras, '#0b4a7a', tot.extras ? 'Acompanhantes no cadastro' : 'Nenhum acompanhante extra') +
-      linha('Crianças / meias', tot.criancas, '#b45309', '') +
+      linha('Pulantes (crianças)', tot.criancas, '#b45309', 'Contrato: ' + c.pulantes + ' · ' + textoSaldoContrato(tot.criancas, c.pulantes, 'pulantes')) +
       (tot.naoContados
         ? linha('Pai/mãe não contabilizados', tot.naoContados, '#8a1f1f',
           'Cadastrados na planilha, mas não entram no total (só 1 responsável sem liberar)')
@@ -1203,6 +1271,7 @@
     if (elCri) elCri.textContent = String(criancas);
     if (elAduPct) elAduPct.textContent = cadastrados ? ' ' + pct(adultos, cadastrados) : '';
     if (elCriPct) elCriPct.textContent = cadastrados ? ' ' + pct(criancas, cadastrados) : '';
+    renderContratoDash(cadastrados, criancas);
     if (elAduDet) {
       if (naoContados) {
         elAduDet.textContent = naoContados + ' pai/mãe fora do total';
@@ -1742,7 +1811,8 @@
       '</header>' +
       '<div class="resumo">' +
         '<div class="card"><strong>Famílias</strong><span>' + familias.length + '</span></div>' +
-        '<div class="card"><strong>Pessoas esperadas</strong><span>' + tot.pessoas + ' · ' + tot.adultos + ' adultos · ' + tot.criancas + ' crianças' +
+        htmlCardsContrato(tot) +
+        '<div class="card"><strong>Pessoas esperadas</strong><span>' + tot.pessoas + ' · ' + tot.adultos + ' adultos · ' + tot.criancas + ' pulantes' +
           (tot.famLiberadasPaiMae ? (' · ' + tot.famLiberadasPaiMae + ' pai+mãe liberados') : '') +
           (tot.famTravadasPaiMae ? (' · ' + tot.famTravadasPaiMae + ' contam 1 (−' + tot.naoContados + ')') : '') +
         '</span></div>' +
@@ -2161,12 +2231,21 @@
     var checks = getChecksLocais();
 
     if (tabelaResumoEl) {
+      var c = contratoFesta();
       tabelaResumoEl.innerHTML =
+        '<div class="box">' +
+          '<strong>Contrato Jump</strong>' +
+          'Pessoas: ' + tot.pessoas + ' / ' + c.pessoas +
+            ' <span class="pct">(' + textoSaldoContrato(tot.pessoas, c.pessoas, 'pessoas') + ')</span><br>' +
+          'Pulantes: ' + tot.criancas + ' / ' + c.pulantes +
+            ' <span class="pct">(' + textoSaldoContrato(tot.criancas, c.pulantes, 'pulantes') + ')</span><br>' +
+          '<span class="pct">Pulantes = crianças · Pessoas = adultos + crianças</span>' +
+        '</div>' +
         '<div class="box">' +
           '<strong>Totais esperados</strong>' +
           'Pessoas: ' + tot.pessoas + '<br>' +
           'Adultos: ' + tot.adultos + ' <span class="pct">(' + pct(tot.adultos, tot.pessoas) + ')</span><br>' +
-          'Crianças: ' + tot.criancas + ' <span class="pct">(' + pct(tot.criancas, tot.pessoas) + ')</span>' +
+          'Pulantes/crianças: ' + tot.criancas + ' <span class="pct">(' + pct(tot.criancas, tot.pessoas) + ')</span>' +
           (tot.famLiberadasPaiMae
             ? ('<br><span class="pct">' + tot.famLiberadasPaiMae + ' família' + (tot.famLiberadasPaiMae === 1 ? '' : 's') + ' liberada' + (tot.famLiberadasPaiMae === 1 ? '' : 's') + ': pai e mãe no total</span>')
             : '') +
@@ -2178,13 +2257,13 @@
           '<strong>Confirmados</strong>' +
           'Pessoas: ' + tot.confTotal + ' <span class="pct">(' + pct(tot.confTotal, tot.pessoas) + ')</span><br>' +
           'Adultos: ' + tot.confAdultos + '<br>' +
-          'Crianças: ' + tot.confCriancas +
+          'Pulantes: ' + tot.confCriancas +
         '</div>' +
         '<div class="box">' +
           '<strong>Não confirmaram</strong>' +
           'Pessoas: ' + tot.naoConfTotal + ' <span class="pct">(' + pct(tot.naoConfTotal, tot.pessoas) + ')</span><br>' +
           'Adultos: ' + tot.naoConfAdultos + '<br>' +
-          'Crianças: ' + tot.naoConfCriancas +
+          'Pulantes: ' + tot.naoConfCriancas +
         '</div>';
     }
 
@@ -2370,7 +2449,8 @@
         '<p class="meta">Gerado em ' + agora + '</p>' +
       '</header>' +
       '<div class="resumo">' +
-        '<div class="card"><strong>Totais esperados</strong><span>' + tot.pessoas + ' pessoas · ' + tot.adultos + ' adultos · ' + tot.criancas + ' crianças' +
+        htmlCardsContrato(tot) +
+        '<div class="card"><strong>Totais esperados</strong><span>' + tot.pessoas + ' pessoas · ' + tot.adultos + ' adultos · ' + tot.criancas + ' pulantes' +
           (tot.famLiberadasPaiMae ? (' · ' + tot.famLiberadasPaiMae + ' pai+mãe liberados') : '') +
           (tot.famTravadasPaiMae ? (' · ' + tot.famTravadasPaiMae + ' contam 1 (−' + tot.naoContados + ')') : '') +
         '</span></div>' +
