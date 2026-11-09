@@ -1681,6 +1681,166 @@
     return pessoas;
   }
 
+  // Lista esperada p/ PDF: confirmado mostra só quem vai; pendente deixa pai/mãe claros (conta 1).
+  function pessoasEsperadasPdf(f) {
+    var cont = contarAdultosFamilia(f);
+    var liberado = familiaAcompanhantesLiberados(f);
+    var confirmada = familiaConfirmou(f);
+    var pendente = !!(f && f.status !== 'confirmado' && f.status !== 'presente' && f.status !== 'nao_vai');
+    var temPai = !!(f && String(f.nome_pai || '').trim());
+    var temMae = !!(f && String(f.nome_mae || '').trim());
+    var pessoas = [];
+
+    if (confirmada) {
+      if (temPai && temMae && !liberado) {
+        pessoas.push({
+          papel: 'Responsável',
+          tipo: 'resp',
+          nome: 'Pai/mãe: escolher 1 na porta',
+          detalhe: String(f.nome_pai).trim() + ' / ' + String(f.nome_mae).trim() + ' · conta 1 adulto',
+          confirmado: true,
+          ck: '☑'
+        });
+      } else {
+        if (temPai) {
+          pessoas.push({
+            papel: 'Pai',
+            tipo: 'resp',
+            nome: String(f.nome_pai).trim(),
+            confirmado: true,
+            ck: '☑'
+          });
+        }
+        if (temMae) {
+          pessoas.push({
+            papel: 'Mãe',
+            tipo: 'resp',
+            nome: String(f.nome_mae).trim(),
+            confirmado: true,
+            ck: '☑'
+          });
+        }
+      }
+      (f.adultos || []).forEach(function (nome) {
+        pessoas.push({
+          papel: 'Adulto',
+          tipo: 'adulto',
+          nome: nome,
+          confirmado: true,
+          ck: '☑'
+        });
+      });
+    } else if (pendente) {
+      if (temPai && temMae) {
+        pessoas.push({
+          papel: 'Responsável',
+          tipo: 'resp-pendente',
+          nome: 'Pai / mãe ainda não confirmado',
+          detalhe: String(f.nome_pai).trim() + ' / ' + String(f.nome_mae).trim() + ' · conta 1 adulto',
+          confirmado: false,
+          ck: '☐'
+        });
+      } else if (temPai) {
+        pessoas.push({
+          papel: 'Pai',
+          tipo: 'resp',
+          nome: String(f.nome_pai).trim() + ' · ainda não confirmou',
+          confirmado: false,
+          ck: '☐'
+        });
+      } else if (temMae) {
+        pessoas.push({
+          papel: 'Mãe',
+          tipo: 'resp',
+          nome: String(f.nome_mae).trim() + ' · ainda não confirmou',
+          confirmado: false,
+          ck: '☐'
+        });
+      }
+      (f.adultos || []).forEach(function (nome) {
+        pessoas.push({
+          papel: 'Adulto',
+          tipo: 'adulto',
+          nome: nome + ' · pré-cadastro',
+          confirmado: false,
+          ck: '☐'
+        });
+      });
+    } else {
+      // nao_vai: mantém nomes para referência, sem tratar como esperado
+      if (temPai) pessoas.push({ papel: 'Pai', tipo: 'resp', nome: String(f.nome_pai).trim(), ck: '☐', confirmado: false });
+      if (temMae) pessoas.push({ papel: 'Mãe', tipo: 'resp', nome: String(f.nome_mae).trim(), ck: '☐', confirmado: false });
+      (f.adultos || []).forEach(function (nome) {
+        pessoas.push({ papel: 'Adulto', tipo: 'adulto', nome: nome, ck: '☐', confirmado: false });
+      });
+    }
+
+    (f.filhos || []).forEach(function (nome, idx) {
+      pessoas.push({
+        papel: 'Pulante ' + (idx + 1),
+        tipo: 'crianca',
+        nome: nome,
+        confirmado: confirmada,
+        ck: confirmada ? '☑' : '☐'
+      });
+    });
+
+    return {
+      pessoas: pessoas,
+      adultos: cont.adultos,
+      criancas: (f.filhos || []).length,
+      pessoasTotal: cont.adultos + (f.filhos || []).length,
+      liberado: liberado,
+      confirmada: confirmada,
+      pendente: pendente
+    };
+  }
+
+  function htmlLinhaPessoaPdf(p) {
+    return (
+      '<div class="p-linha' + (p.tipo === 'crianca' ? ' kid' : '') + (p.tipo === 'resp-pendente' ? ' pend' : '') + (p.confirmado ? ' ok' : '') + '">' +
+        '<span class="ck">' + (p.ck || '☐') + '</span>' +
+        '<span class="papel">' + esc(p.papel || '') + '</span>' +
+        '<span class="nm">' + esc(p.nome || '') + '</span>' +
+        (p.detalhe ? ('<span class="det">' + esc(p.detalhe) + '</span>') : '') +
+      '</div>'
+    );
+  }
+
+  function htmlCoroaTotaisPdf(tot) {
+    var c = contratoFesta();
+    return (
+      '<div class="coroa">' +
+        '<div class="coroa-item"><span>Adultos</span><strong>' + tot.adultos + '</strong></div>' +
+        '<div class="coroa-item"><span>Pulantes (clientes)</span><strong>' + tot.criancas + '</strong></div>' +
+        '<div class="coroa-item"><span>Pessoas</span><strong>' + tot.pessoas + '</strong></div>' +
+        '<div class="coroa-item"><span>Contrato</span><strong>' + c.pessoas + ' / ' + c.pulantes + '</strong>' +
+          '<em>' + textoSaldoContrato(tot.pessoas, c.pessoas, 'pessoas') + ' · ' +
+            textoSaldoContrato(tot.criancas, c.pulantes, 'pulantes') + '</em></div>' +
+      '</div>'
+    );
+  }
+
+  function cssCoroaPdf() {
+    return (
+      '.coroa{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}' +
+      '.coroa-item{flex:1;min-width:120px;border:2px solid #1f5c2e;background:#eef7ea;padding:8px 10px;border-radius:6px}' +
+      '.coroa-item span{display:block;font-size:8.5pt;text-transform:uppercase;letter-spacing:.04em;color:#1f5c2e;font-weight:700}' +
+      '.coroa-item strong{display:block;margin-top:2px;font-size:16pt;line-height:1.1}' +
+      '.coroa-item em{display:block;margin-top:2px;font-style:normal;font-size:8.5pt;color:#444}' +
+      '.p-linha{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 8px;padding:4px 0;border-bottom:1px dotted #d0d8cc}' +
+      '.p-linha:last-child{border-bottom:0}' +
+      '.p-linha .ck{font-size:13pt;line-height:1;color:#1f5c2e;width:18px;flex-shrink:0}' +
+      '.p-linha.ok .ck{color:#0b6b2a}' +
+      '.p-linha.pend{background:#fff8e1;margin:2px -4px;padding:4px}' +
+      '.p-linha .papel{font-size:8.5pt;text-transform:uppercase;letter-spacing:.03em;color:#666;min-width:72px}' +
+      '.p-linha .nm{font-size:11pt;font-weight:600;color:#111}' +
+      '.p-linha .det{flex:1 1 100%;font-size:8.5pt;color:#666;padding-left:26px}' +
+      '.legenda-pdf{margin:10px 0 0;font-size:9pt;color:#555}' +
+      '.fam.pendente header,.porta-row.st-pre_cadastro{background:#fffaf0}'
+    );
+  }
+
   function getChecksLocais() {
     try {
       return JSON.parse(localStorage.getItem('artur_presenca_checks') || '{}') || {};
@@ -1796,34 +1956,24 @@
     var agora = new Date().toLocaleString('pt-BR');
 
     var blocos = familias.map(function (f, i) {
-      var adultos = pessoasDoTelefone(f).filter(function (p) { return p.tipo !== 'crianca'; });
-      var criancas = pessoasDoTelefone(f).filter(function (p) { return p.tipo === 'crianca'; });
+      var esp = pessoasEsperadasPdf(f);
       var titulo = nomeFamilia(f) || ('Família ' + (i + 1));
-      var qtd = contarAdultosFamilia(f).adultos + criancas.length;
-
-      function linhaPessoa(p) {
-        return (
-          '<li class="' + (p.tipo === 'crianca' ? 'kid' : 'adulto') + '">' +
-            '<span class="ck">☐</span>' +
-            '<span class="papel">' + esc(p.papel) + '</span>' +
-            '<span class="nm">' + esc(p.nome) + '</span>' +
-          '</li>'
-        );
-      }
+      var statusTxt = familiaConfirmou(f)
+        ? ('Confirmou · ' + esp.adultos + ' adulto' + (esp.adultos === 1 ? '' : 's') + ' · ' + esp.criancas + ' pulante' + (esp.criancas === 1 ? '' : 's'))
+        : ('Ainda não confirmou · conta ' + esp.adultos + ' adulto' + (esp.adultos === 1 ? '' : 's') + ' · ' + esp.criancas + ' pulante' + (esp.criancas === 1 ? '' : 's'));
 
       return (
-        '<article class="fam">' +
+        '<article class="fam' + (esp.pendente ? ' pendente' : ' ok') + '">' +
           '<header>' +
             '<span class="num">' + (i + 1) + '</span>' +
             '<div class="tit">' +
               '<strong>' + esc(titulo) + '</strong>' +
-              '<em>' + qtd + ' pessoa' + (qtd === 1 ? '' : 's') + ' · ' + esc(statusPdfLabel(f.status)) + '</em>' +
+              '<em>' + esc(statusTxt) + '</em>' +
             '</div>' +
           '</header>' +
-          '<ul class="pessoas">' +
-            adultos.map(linhaPessoa).join('') +
-            criancas.map(linhaPessoa).join('') +
-          '</ul>' +
+          '<div class="pessoas">' +
+            esp.pessoas.map(htmlLinhaPessoaPdf).join('') +
+          '</div>' +
         '</article>'
       );
     }).join('');
@@ -1839,24 +1989,25 @@
         '<p class="sub">Lista de presença · 25/11/2026 · 17h45–21h30</p>' +
         '<p class="meta">Gerado em ' + agora + '</p>' +
       '</header>' +
+      htmlCoroaTotaisPdf(tot) +
       '<div class="resumo">' +
         '<div class="card"><strong>Famílias</strong><span>' + familias.length + '</span></div>' +
         htmlCardsContrato(tot) +
-        '<div class="card"><strong>Pessoas esperadas</strong><span>' + tot.pessoas + ' · ' + tot.adultos + ' adultos · ' + tot.criancas + ' pulantes' +
-          (tot.famLiberadasPaiMae ? (' · ' + tot.famLiberadasPaiMae + ' pai+mãe liberados') : '') +
-          (tot.famTravadasPaiMae ? (' · ' + tot.famTravadasPaiMae + ' contam 1 (−' + tot.naoContados + ')') : '') +
-        '</span></div>' +
-        '<div class="card"><strong>Confirmados</strong><span>' + tot.confTotal + ' (' + pct(tot.confTotal, tot.pessoas) + ')</span></div>' +
-        '<div class="card card-warn"><strong>Não confirmaram</strong><span>' + tot.naoConfTotal + ' (' + pct(tot.naoConfTotal, tot.pessoas) + ')</span></div>' +
+        '<div class="card"><strong>Confirmados</strong><span>' + tot.confTotal + ' pessoas (' + pct(tot.confTotal, tot.pessoas) + ')</span></div>' +
+        '<div class="card card-warn"><strong>Ainda não confirmaram</strong><span>' + tot.naoConfTotal + ' pessoas · pai/mãe conta 1 até confirmar</span></div>' +
       '</div>' +
+      '<p class="legenda-pdf">☑ já confirmado no convite · ☐ ainda não confirmou / marcar na porta · pai+mãe sem liberar = 1 adulto</p>' +
       '<div class="grade">' + blocos + '</div>';
 
     var cssExtra =
+      cssCoroaPdf() +
       '.grade{display:grid;grid-template-columns:1fr 1fr;gap:10px}' +
       '.resumo .card-warn{background:#fff8e1;border-color:#e0c36a}' +
       '.fam{border:1.5px solid #2d4a2a;border-radius:6px;overflow:hidden;background:#fff;' +
         'page-break-inside:avoid;break-inside:avoid;-webkit-column-break-inside:avoid}' +
+      '.fam.pendente{border-color:#c9a227}' +
       '.fam header{display:flex;gap:10px;align-items:center;background:#e8f2e4;border-bottom:1px solid #b7cbb0;padding:8px 10px}' +
+      '.fam.pendente header{background:#fff3cd}' +
       '.fam .num{width:28px;height:28px;border-radius:50%;background:#1f5c2e;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:11pt;flex-shrink:0}' +
       '.fam .tit{min-width:0}' +
       '.fam .tit strong{display:block;font-size:12pt;color:#10240f}' +
@@ -2417,41 +2568,25 @@
   }
 
   function gerarPdfTabela() {
-    var ordenadas = ordenarPorTelefone(window.__familias || []);
+    var ordenadas = ordenarPorTelefone(window.__familias || []).filter(function (f) {
+      return f.status !== 'nao_vai';
+    });
     var tot = contagemTabela(ordenadas);
     var agora = new Date().toLocaleString('pt-BR');
 
-    function linhaPessoaPdf(papel, nome) {
-      if (!nome) return '';
-      return (
-        '<div class="p-linha">' +
-          '<span class="ck">☐</span>' +
-          '<span class="papel">' + esc(papel) + '</span>' +
-          '<span class="nm">' + esc(nome) + '</span>' +
-        '</div>'
-      );
-    }
-
     var body = ordenadas.map(function (f, i) {
-      var nA = contarAdultosFamilia(f).adultos;
-      var kids = f.filhos || [];
-      var nC = kids.length;
-      var pessoasHtml =
-        linhaPessoaPdf('Pai', f.nome_pai || '') +
-        linhaPessoaPdf('Mãe', f.nome_mae || '') +
-        (f.adultos || []).map(function (nome) {
-          return linhaPessoaPdf('Adulto', nome);
-        }).join('') +
-        kids.map(function (nome, idx) {
-          return linhaPessoaPdf('Filho ' + (idx + 1), nome);
-        }).join('');
+      var esp = pessoasEsperadasPdf(f);
+      var badge = familiaConfirmou(f)
+        ? ('OK · ' + esp.adultos + 'A · ' + esp.criancas + 'P')
+        : ('Pend. · 1A até confirmar');
 
       return (
-        '<div class="porta-row st-' + esc(f.status || '') + '">' +
+        '<div class="porta-row st-' + esc(f.status || '') + (esp.pendente ? ' pendente' : ' ok') + '">' +
           '<div class="c num">' + (i + 1) + '</div>' +
-          '<div class="c qtd">' + (nA + nC) + '</div>' +
-          '<div class="pessoas">' + pessoasHtml + '</div>' +
-          '<div class="col-status"><span class="pdf-badge">' + esc(statusPdfLabel(f.status)) + '</span></div>' +
+          '<div class="c qtd">' + esp.pessoasTotal +
+            '<small>' + esp.adultos + 'A · ' + esp.criancas + 'P</small></div>' +
+          '<div class="pessoas">' + esp.pessoas.map(htmlLinhaPessoaPdf).join('') + '</div>' +
+          '<div class="col-status"><span class="pdf-badge">' + esc(badge) + '</span></div>' +
         '</div>'
       );
     }).join('');
@@ -2475,35 +2610,35 @@
       '<header class="topo">' +
         '<p class="topo-marca">Jump Trampolim Park · Vitória-ES</p>' +
         '<h1>Artur · 7 anos — Lista da porta</h1>' +
-        '<p class="sub">25/11/2026 · 17h45–21h30 · marque ☐ na entrada</p>' +
+        '<p class="sub">25/11/2026 · 17h45–21h30 · ☑ confirmado · ☐ marcar na porta</p>' +
         '<p class="meta">Gerado em ' + agora + '</p>' +
       '</header>' +
+      htmlCoroaTotaisPdf(tot) +
       '<div class="resumo">' +
         htmlCardsContrato(tot) +
-        '<div class="card"><strong>Totais esperados</strong><span>' + tot.pessoas + ' pessoas · ' + tot.adultos + ' adultos · ' + tot.criancas + ' pulantes' +
-          (tot.famLiberadasPaiMae ? (' · ' + tot.famLiberadasPaiMae + ' pai+mãe liberados') : '') +
-          (tot.famTravadasPaiMae ? (' · ' + tot.famTravadasPaiMae + ' contam 1 (−' + tot.naoContados + ')') : '') +
-        '</span></div>' +
         '<div class="card"><strong>Confirmados</strong><span>' + tot.confTotal + ' (' + pct(tot.confTotal, tot.pessoas) + ')</span></div>' +
-        '<div class="card card-warn"><strong>Não confirmaram</strong><span>' + tot.naoConfTotal + ' (' + pct(tot.naoConfTotal, tot.pessoas) + ')</span></div>' +
-        '<div class="card"><strong>Não vão</strong><span>' + tot.naoVaiTotal + ' (' + pct(tot.naoVaiTotal, tot.pessoas) + ')</span></div>' +
+        '<div class="card card-warn"><strong>Ainda não confirmaram</strong><span>' + tot.naoConfTotal + ' · pai/mãe = 1 adulto</span></div>' +
         '<div class="card"><strong>Famílias</strong><span>' + ordenadas.length + '</span></div>' +
       '</div>' +
+      '<p class="legenda-pdf">Quem confirmou aparece com ☑. Pai+mãe sem liberar: só 1 caixa de responsável. Pendente: “Pai / mãe ainda não confirmado (conta 1 adulto)”.</p>' +
       '<div class="porta-wrap">' +
         '<div class="porta-head">' +
           '<div class="c">#</div>' +
           '<div class="c">Qtd</div>' +
-          '<div>Pessoas</div>' +
+          '<div>Pessoas (esperado)</div>' +
           '<div class="col-status">Status</div>' +
         '</div>' +
         '<div class="porta-body">' + body + '</div>' +
       '</div>' +
-      '<p class="legenda">Linhas em branco no final para chegadas sem cadastro.</p>';
+      '<p class="legenda">Linhas em branco no final para chegadas sem cadastro. A = adultos · P = pulantes.</p>';
 
     var cssExtra =
+      cssCoroaPdf() +
       '.sheet{font-size:11pt;padding:12px 24px 20px 12px;box-sizing:border-box}' +
       '.topo h1{font-size:18pt}' +
       '.resumo .card-warn{background:#fff8e1;border-color:#e0c36a}' +
+      '.porta-row.pendente{background:#fffaf0}' +
+      '.porta-row .qtd small{display:block;font-size:8pt;font-weight:600;color:#555;margin-top:2px}' +
       '.porta-wrap{border:2px solid #2d4a2a;background:#fff;overflow:visible;box-sizing:border-box;margin:0 2px 0 0}' +
       '.porta-head,.porta-row{display:grid;grid-template-columns:52px 52px 1fr 90px;align-items:stretch}' +
       '.porta-head{background:#1f5c2e;color:#fff;font-size:10pt;font-weight:700}' +
