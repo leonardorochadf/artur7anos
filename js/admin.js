@@ -779,17 +779,18 @@
   }
 
   function htmlCardsContrato(tot) {
+    // Mantido vazio: o resumo do contrato fica só na coroa, para não repetir e confundir.
+    return '';
+  }
+
+  function htmlNotaContratoPdf() {
     var c = contratoFesta();
-    var pessoas = tot && tot.pessoas != null ? tot.pessoas : 0;
-    var pulantes = tot && tot.criancas != null ? tot.criancas : 0;
     return (
-      '<div class="card"><strong>Contrato · pessoas</strong><span>' +
-        pessoas + ' / ' + c.pessoas + ' · ' + textoSaldoContrato(pessoas, c.pessoas, 'pessoas') +
-      '</span></div>' +
-      '<div class="card"><strong>Contrato · pulantes</strong><span>' +
-        pulantes + ' / ' + c.pulantes + ' · ' + textoSaldoContrato(pulantes, c.pulantes, 'pulantes') +
-        ' (crianças)' +
-      '</span></div>'
+      '<div class="contrato-nota">' +
+        '<strong>Contrato Jump</strong> · até <strong>' + c.pessoas + ' pessoas</strong> no local ' +
+        '(adultos + crianças). ' +
+        'Até <strong>' + c.pulantes + ' pulantes</strong> = só crianças que pulam. Adulto não é pulante.' +
+      '</div>'
     );
   }
 
@@ -801,11 +802,12 @@
       '*Data:* 25/11 · Jump Trampolim Park · 17h45-21h30',
       '',
       '*Contrato Jump*',
-      '- Quantidade de pessoas: *' + c.pessoas + '* (adultos + criancas)',
-      '- Numero de pulantes: *' + c.pulantes + '* (criancas)',
+      '- Limite de pessoas no local: *' + c.pessoas + '* (adultos + criancas)',
+      '- Pulantes (info): ate *' + c.pulantes + '* criancas que pulam. Adulto nao e pulante.',
       '',
       '*Agora no cadastro (esperado)*',
       '- Pessoas: *' + s.pessoas + '* de ' + c.pessoas + ' · ' + textoSaldoContrato(s.pessoas, c.pessoas, 'pessoas'),
+      '- Adultos: *' + s.adultos + '* (nao pulam)',
       '- Pulantes/criancas: *' + s.criancas + '* de ' + c.pulantes + ' · ' + textoSaldoContrato(s.criancas, c.pulantes, 'pulantes'),
       '- Adultos: ' + s.adultos,
       '',
@@ -1006,13 +1008,13 @@
       elPessoasNota.textContent = pctPes + ' do contrato · ' + textoSaldoContrato(pessoas, c.pessoas, 'pessoas');
     }
     if (elPulantesNota) {
-      elPulantesNota.textContent = pctPul + ' do contrato · ' + textoSaldoContrato(pulantes, c.pulantes, 'pulantes');
+      elPulantesNota.textContent = pctPul + ' dos pulantes · ' + textoSaldoContrato(pulantes, c.pulantes, 'pulantes') + ' (info)';
     }
     if (elPessoasSub) {
       elPessoasSub.textContent = pctPes + ' de ' + c.pessoas + ' · ' + textoSaldoContrato(pessoas, c.pessoas, 'pessoas');
     }
     if (elPulantesSub) {
-      elPulantesSub.textContent = pctPul + ' de ' + c.pulantes + ' · ' + textoSaldoContrato(pulantes, c.pulantes, 'pulantes');
+      elPulantesSub.textContent = pctPul + ' de ' + c.pulantes + ' · ' + textoSaldoContrato(pulantes, c.pulantes, 'pulantes') + ' · info';
     }
     if (elPessoasPct) elPessoasPct.textContent = ' ' + pctPes;
     if (elPulantesPct) elPulantesPct.textContent = ' ' + pctPul;
@@ -1995,23 +1997,36 @@
   function htmlCoroaTotaisPdf(tot) {
     var c = contratoFesta();
     return (
+      htmlNotaContratoPdf() +
       '<div class="coroa">' +
-        '<div class="coroa-item"><span>Adultos</span><strong>' + tot.adultos + '</strong></div>' +
-        '<div class="coroa-item"><span>Pulantes (clientes)</span><strong>' + tot.criancas + '</strong></div>' +
-        '<div class="coroa-item"><span>Pessoas</span><strong>' + tot.pessoas + '</strong></div>' +
-        '<div class="coroa-item"><span>Contrato</span><strong>' + c.pessoas + ' / ' + c.pulantes + '</strong>' +
-          '<em>' + textoSaldoContrato(tot.pessoas, c.pessoas, 'pessoas') + ' · ' +
-            textoSaldoContrato(tot.criancas, c.pulantes, 'pulantes') + '</em></div>' +
+        '<div class="coroa-item destaque">' +
+          '<span>Pessoas no cadastro</span>' +
+          '<strong>' + tot.pessoas + ' <small>/ ' + c.pessoas + '</small></strong>' +
+          '<em>' + textoSaldoContrato(tot.pessoas, c.pessoas, 'pessoas') + ' no limite do contrato</em>' +
+        '</div>' +
+        '<div class="coroa-item">' +
+          '<span>Adultos</span>' +
+          '<strong>' + tot.adultos + '</strong>' +
+          '<em>não pulam</em>' +
+        '</div>' +
+        '<div class="coroa-item">' +
+          '<span>Pulantes (crianças)</span>' +
+          '<strong>' + tot.criancas + ' <small>/ ' + c.pulantes + '</small></strong>' +
+          '<em>' + textoSaldoContrato(tot.criancas, c.pulantes, 'pulantes') + ' · info do contrato</em>' +
+        '</div>' +
       '</div>'
     );
   }
 
   function cssCoroaPdf() {
     return (
+      '.contrato-nota{margin:0 0 10px;padding:8px 10px;border:1.5px solid #2d4a2a;background:#fffdf4;font-size:9.5pt;line-height:1.4;color:#10240f}' +
       '.coroa{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}' +
-      '.coroa-item{flex:1;min-width:120px;border:2px solid #1f5c2e;background:#eef7ea;padding:8px 10px;border-radius:6px}' +
+      '.coroa-item{flex:1;min-width:140px;border:2px solid #1f5c2e;background:#eef7ea;padding:8px 10px;border-radius:6px}' +
+      '.coroa-item.destaque{background:#d7f0d8;border-width:2.5px}' +
       '.coroa-item span{display:block;font-size:8.5pt;text-transform:uppercase;letter-spacing:.04em;color:#1f5c2e;font-weight:700}' +
       '.coroa-item strong{display:block;margin-top:2px;font-size:16pt;line-height:1.1}' +
+      '.coroa-item strong small{font-size:11pt;font-weight:700;opacity:.75}' +
       '.coroa-item em{display:block;margin-top:2px;font-style:normal;font-size:8.5pt;color:#444}' +
       '.p-linha{display:table;width:100%;table-layout:fixed;padding:5px 4px;border-bottom:1px dotted #d0d8cc;box-sizing:border-box}' +
       '.p-linha:last-child{border-bottom:0}' +

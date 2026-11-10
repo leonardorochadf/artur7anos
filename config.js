@@ -12,7 +12,9 @@ window.ARTUR_CONFIG = {
     cep: '29055-650',
     mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Jump+Trampolim+Park+Rômulo+Samorini+46+Vitória'
   },
-  // Contrato Jump: pessoas = adultos + crianças; pulantes = crianças
+  // Contrato Jump:
+  // pessoas = limite no local (adultos + crianças)
+  // pulantes = informação: quantas crianças podem pular (adulto não é pulante)
   contrato: {
     pessoas: 85,
     pulantes: 50
