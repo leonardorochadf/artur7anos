@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=62" />
+  <link rel="stylesheet" href="styles.css?v=69" />
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4KXBY80XL"></script>
   <script>
@@ -131,6 +131,61 @@
         </div>
       </section>
 
+      <section class="section" id="secao-atividade-recente">
+        <h2>Atividade recente</h2>
+        <div class="panel">
+          <p class="rsvp-hint" style="margin-top:0">Relatório de quem se cadastrou, atualizou o cadastro ou acessou o convite.</p>
+          <div class="relatorio-filtros">
+            <label class="relatorio-filtro">
+              <span>Período</span>
+              <select id="relatorio-periodo">
+                <option value="7">Última semana</option>
+                <option value="14" selected>Últimas 2 semanas</option>
+                <option value="30">Últimos 30 dias</option>
+                <option value="0">Tudo</option>
+              </select>
+            </label>
+            <label class="relatorio-filtro">
+              <span>Mostrar</span>
+              <select id="relatorio-tipo">
+                <option value="tudo">Tudo (cadastro, atualização ou acesso)</option>
+                <option value="cadastros">Só novos cadastros</option>
+                <option value="atualizacoes">Só atualizações</option>
+                <option value="acessos">Só acessos no convite</option>
+              </select>
+            </label>
+            <label class="relatorio-filtro">
+              <span>Ordenar</span>
+              <select id="relatorio-ordem">
+                <option value="atividade">Mais recente (qualquer atividade)</option>
+                <option value="cadastro">Cadastro mais recente</option>
+                <option value="atualizacao">Atualização mais recente</option>
+                <option value="acesso">Acesso mais recente</option>
+                <option value="nome">Nome A–Z</option>
+              </select>
+            </label>
+          </div>
+          <div class="relatorio-resumo" id="relatorio-resumo" aria-live="polite"></div>
+          <p id="relatorio-resultado" class="busca-resultado"></p>
+          <div class="table-wrap">
+            <table class="dados-table logs-table" id="tabela-atividade-recente">
+              <thead>
+                <tr>
+                  <th>Família</th>
+                  <th>Celular</th>
+                  <th>Status</th>
+                  <th>Cadastro</th>
+                  <th>Atualização</th>
+                  <th>Último acesso</th>
+                  <th>O que aconteceu</th>
+                </tr>
+              </thead>
+              <tbody id="relatorio-recente-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <section class="section">
         <h2>Buscar</h2>
         <div class="panel">
@@ -243,58 +298,13 @@
       </section>
 
       <section class="section" id="secao-graficos-logs">
-        <h2>Cadastros e acessos</h2>
         <div class="panel">
-          <div class="chart-grid chart-grid-3" id="dash-graficos">
-            <div class="chart-card">
-              <h3 class="chart-title">Total esperado</h3>
-              <div class="chart-totais" id="chart-totais" aria-live="polite"></div>
-            </div>
-            <div class="chart-card">
-              <h3 class="chart-title">Cadastros por dia</h3>
-              <div class="chart-bars" id="chart-cadastros" aria-live="polite"></div>
-            </div>
-            <div class="chart-card">
-              <h3 class="chart-title">Acessos por dia</h3>
-              <div class="chart-bars" id="chart-acessos" aria-live="polite"></div>
-            </div>
-          </div>
-
-          <label for="busca-logs" style="margin-top:14px">Pesquisar nos registros</label>
-          <input id="busca-logs" type="search" placeholder="Telefone, nome, data..." autocomplete="off" />
-          <p id="busca-logs-resultado" class="busca-resultado">Filtra as tabelas abaixo enquanto você digita.</p>
-
-          <h3 class="chart-title" style="margin-top:14px">Registros de cadastros</h3>
-          <div class="table-wrap">
-            <table class="dados-table logs-table" id="tabela-cadastros-log">
-              <thead>
-                <tr>
-                  <th>Data cadastro</th>
-                  <th>Celular</th>
-                  <th>Família</th>
-                  <th>Adultos extras / Filhos</th>
-                  <th>Status</th>
-                  <th>Último acesso</th>
-                </tr>
-              </thead>
-              <tbody id="tabela-cadastros-log-body"></tbody>
-            </table>
-          </div>
-
-          <h3 class="chart-title" style="margin-top:14px">Registros de acessos</h3>
-          <div class="table-wrap">
-            <table class="dados-table logs-table" id="tabela-acessos-log">
-              <thead>
-                <tr>
-                  <th>Data/hora</th>
-                  <th>Celular usado</th>
-                  <th>Família</th>
-                  <th>Celulares da família</th>
-                </tr>
-              </thead>
-              <tbody id="tabela-acessos-log-body"></tbody>
-            </table>
-          </div>
+          <button type="button" class="logs-open-card" id="btn-abrir-logs" aria-label="Abrir Cadastros e acessos">
+            <span class="logs-open-kicker">Relatórios</span>
+            <span class="logs-open-titulo">Cadastros e acessos</span>
+            <span class="logs-open-sub" id="logs-open-resumo">Toque aqui para abrir outra tela e navegar nos cadastros, atualizações e acessos.</span>
+            <span class="logs-open-cta">Abrir outra tela →</span>
+          </button>
         </div>
       </section>
 
@@ -345,6 +355,108 @@
     </div>
   </div>
 
+  <div id="tela-logs" class="tela-logs hidden" role="dialog" aria-modal="true" aria-labelledby="tela-logs-titulo">
+    <aside class="tela-logs-side">
+      <div class="tela-logs-side-topo">
+        <p class="tela-logs-kicker">Relatórios</p>
+        <h2 id="tela-logs-titulo">Cadastros e acessos</h2>
+        <p id="tela-logs-sub">Escolha o que quer ver</p>
+      </div>
+      <nav class="tela-logs-tabs" aria-label="Navegação do relatório">
+        <button type="button" class="tela-logs-tab ativo" data-logs-tab="resumo">
+          <strong>Resumo</strong>
+          <span>Totais e gráficos</span>
+        </button>
+        <button type="button" class="tela-logs-tab" data-logs-tab="cadastros">
+          <strong>Cadastros</strong>
+          <span>Lista completa</span>
+        </button>
+        <button type="button" class="tela-logs-tab" data-logs-tab="acessos">
+          <strong>Acessos</strong>
+          <span>Quem entrou no convite</span>
+        </button>
+      </nav>
+      <button type="button" class="btn btn-wood btn-block" id="btn-fechar-logs">← Voltar ao admin</button>
+    </aside>
+
+    <div class="tela-logs-main">
+      <div class="tela-logs-toolbar">
+        <div class="tela-logs-busca">
+          <label for="busca-logs">Pesquisar nos registros</label>
+          <input id="busca-logs" type="search" placeholder="Telefone, nome, data..." autocomplete="off" />
+          <p id="busca-logs-resultado" class="busca-resultado">Filtra as tabelas enquanto você digita.</p>
+        </div>
+      </div>
+
+      <div class="tela-logs-body">
+        <div class="tela-logs-panel" data-logs-panel="resumo">
+          <div class="tela-logs-atalhos">
+            <button type="button" class="btn btn-grass" data-logs-jump="cadastros">Ver lista de cadastros</button>
+            <button type="button" class="btn btn-secondary" data-logs-jump="acessos">Ver lista de acessos</button>
+          </div>
+          <div class="chart-grid chart-grid-logs" id="dash-graficos">
+            <div class="chart-card">
+              <h3 class="chart-title">Total esperado</h3>
+              <div class="chart-totais" id="chart-totais" aria-live="polite"></div>
+            </div>
+            <div class="chart-card">
+              <h3 class="chart-title">Cadastros por dia</h3>
+              <p class="chart-scroll-hint">Deslize para o lado para ver todos os dias</p>
+              <div class="chart-bars chart-bars-wide" id="chart-cadastros" aria-live="polite"></div>
+            </div>
+            <div class="chart-card">
+              <h3 class="chart-title">Acessos por dia</h3>
+              <p class="chart-scroll-hint">Deslize para o lado para ver todos os dias</p>
+              <div class="chart-bars chart-bars-wide" id="chart-acessos" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tela-logs-panel hidden" data-logs-panel="cadastros">
+          <div class="tela-logs-panel-head">
+            <h3 class="chart-title">Registros de cadastros</h3>
+            <p class="rsvp-hint">Role a tabela para navegar. Cabeçalho fica fixo.</p>
+          </div>
+          <div class="table-wrap tela-logs-table-wrap">
+            <table class="dados-table logs-table" id="tabela-cadastros-log">
+              <thead>
+                <tr>
+                  <th>Data cadastro</th>
+                  <th>Celular</th>
+                  <th>Família</th>
+                  <th>Adultos extras / Filhos</th>
+                  <th>Status</th>
+                  <th>Último acesso</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-cadastros-log-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tela-logs-panel hidden" data-logs-panel="acessos">
+          <div class="tela-logs-panel-head">
+            <h3 class="chart-title">Registros de acessos</h3>
+            <p class="rsvp-hint">Role a tabela para navegar. Cabeçalho fica fixo.</p>
+          </div>
+          <div class="table-wrap tela-logs-table-wrap">
+            <table class="dados-table logs-table" id="tabela-acessos-log">
+              <thead>
+                <tr>
+                  <th>Data/hora</th>
+                  <th>Celular usado</th>
+                  <th>Família</th>
+                  <th>Celulares da família</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-acessos-log-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="modal-dash-lista" class="modal-confirm hidden" role="dialog" aria-modal="true" aria-labelledby="modal-dash-titulo">
     <div class="modal-confirm-backdrop" data-dash-fechar></div>
     <div class="modal-confirm-box modal-dash-box">
@@ -387,6 +499,6 @@
   </div>
 
   <script src="js/api.js?v=8"></script>
-  <script src="js/admin.js?v=59"></script>
+  <script src="js/admin.js?v=67"></script>
 </body>
 </html>

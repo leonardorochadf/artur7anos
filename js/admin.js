@@ -47,6 +47,18 @@
   var tabelaAcessosLogBody = document.getElementById('tabela-acessos-log-body');
   var tabelaMissaoLogBody = document.getElementById('tabela-missao-log-body');
   var buscaLogsTimer = null;
+  var relatorioPeriodoEl = document.getElementById('relatorio-periodo');
+  var relatorioTipoEl = document.getElementById('relatorio-tipo');
+  var relatorioOrdemEl = document.getElementById('relatorio-ordem');
+  var relatorioResumoEl = document.getElementById('relatorio-resumo');
+  var relatorioResultadoEl = document.getElementById('relatorio-resultado');
+  var relatorioRecenteBody = document.getElementById('relatorio-recente-body');
+  var telaLogs = document.getElementById('tela-logs');
+  var btnAbrirLogs = document.getElementById('btn-abrir-logs');
+  var btnFecharLogs = document.getElementById('btn-fechar-logs');
+  var logsOpenResumo = document.getElementById('logs-open-resumo');
+  var telaLogsSub = document.getElementById('tela-logs-sub');
+  var logsAbaAtual = 'resumo';
   var telaLogin = document.getElementById('tela-login');
   var telaApp = document.getElementById('tela-app');
   var logado = false;
@@ -277,6 +289,28 @@
       return m ? m[1] : '';
     }
     return d.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  }
+
+  function dataMs(iso) {
+    if (!iso) return 0;
+    var d = new Date(iso);
+    return isNaN(d.getTime()) ? 0 : d.getTime();
+  }
+
+  function dentroPeriodoDias(iso, dias) {
+    var ms = dataMs(iso);
+    if (!ms) return false;
+    if (!dias) return true;
+    return ms >= (Date.now() - dias * 86400000);
+  }
+
+  function maxDataMs() {
+    var max = 0;
+    for (var i = 0; i < arguments.length; i++) {
+      var ms = dataMs(arguments[i]);
+      if (ms > max) max = ms;
+    }
+    return max;
   }
 
   function diaCurto(isoDia) {
@@ -898,7 +932,7 @@
 
   function statusLabel(status) {
     var map = {
-      pre_cadastro: 'Pré-cadastro',
+      pre_cadastro: 'Pendente',
       confirmado: 'Confirmou',
       presente: 'No local',
       nao_vai: 'Não vai'
@@ -946,7 +980,7 @@
     var checks = getChecksLocais();
     var n = 0;
     pessoasDoTelefone(f).forEach(function (p) {
-      if (checks[p.key]) n += 1;
+      if (pessoaTemCheck(f, p, checks)) n += 1;
     });
     return n;
   }
@@ -1556,7 +1590,168 @@
     return map;
   }
 
+  function renderRelatorioRecente() {
+    if (!relatorioRecenteBody) return;
+    var dias = relatorioPeriodoEl ? parseInt(relatorioPeriodoEl.value, 10) : 14;
+    if (isNaN(dias)) dias = 14;
+    var tipo = (relatorioTipoEl && relatorioTipoEl.value) || 'tudo';
+    var ordem = (relatorioOrdemEl && relatorioOrdemEl.value) || 'atividade';
+    var familias = window.__familias || [];
+
+    var novos = 0;
+    var atualizados = 0;
+    var acessaram = 0;
+
+    var linhas = familias.map(function (f) {
+      var cadOk = dentroPeriodoDias(f.criado_em, dias);
+      var atMs = dataMs(f.atualizado_em);
+      var crMs = dataMs(f.criado_em);
+      // Atualização real: data de update depois do cadastro (com margem de 1 min)
+      var atualizouDeVerdade = atMs && (!crMs || atMs > crMs + 60000);
+      var atOk = atualizouDeVerdade && dentroPeriodoDias(f.atualizado_em, dias);
+      var acOk = dentroPeriodoDias(f.ultimo_acesso_em, dias);
+      if (cadOk) novos += 1;
+      if (atOk) atualizados += 1;
+      if (acOk) acessaram += 1;
+
+      var entra = false;
+      if (tipo === 'cadastros') entra = cadOk;
+      else if (tipo === 'atualizacoes') entra = atOk;
+      else if (tipo === 'acessos') entra = acOk;
+      else entra = cadOk || atOk || acOk;
+
+      if (!entra) return null;
+
+      var tags = [];
+      if (cadOk) tags.push({ cls: 'novo', txt: 'Novo cadastro' });
+      if (atOk) tags.push({ cls: 'atualizou', txt: 'Atualizou' });
+      if (acOk) tags.push({ cls: 'acessou', txt: 'Acessou' });
+
+      return {
+        f: f,
+        tags: tags,
+        sortAtividade: maxDataMs(f.criado_em, f.atualizado_em, f.ultimo_acesso_em),
+        sortCadastro: dataMs(f.criado_em),
+        sortAtualizacao: dataMs(f.atualizado_em),
+        sortAcesso: dataMs(f.ultimo_acesso_em),
+        sortNome: (nomeFamilia(f) || '').toLowerCase()
+      };
+    }).filter(Boolean);
+
+    linhas.sort(function (a, b) {
+      if (ordem === 'nome') return a.sortNome.localeCompare(b.sortNome, 'pt-BR');
+      if (ordem === 'cadastro') return b.sortCadastro - a.sortCadastro;
+      if (ordem === 'atualizacao') return b.sortAtualizacao - a.sortAtualizacao;
+      if (ordem === 'acesso') return b.sortAcesso - a.sortAcesso;
+      return b.sortAtividade - a.sortAtividade;
+    });
+
+    if (relatorioResumoEl) {
+      relatorioResumoEl.innerHTML =
+        '<div class="relatorio-chip"><strong>' + novos + '</strong><span>novos cadastros</span></div>' +
+        '<div class="relatorio-chip"><strong>' + atualizados + '</strong><span>atualizações</span></div>' +
+        '<div class="relatorio-chip warn"><strong>' + acessaram + '</strong><span>acessos no convite</span></div>' +
+        '<div class="relatorio-chip"><strong>' + linhas.length + '</strong><span>na lista abaixo</span></div>';
+    }
+
+    var labelPeriodo = dias === 0 ? 'todo o período' : (dias === 7 ? 'última semana' : (dias === 14 ? 'últimas 2 semanas' : 'últimos ' + dias + ' dias'));
+    if (relatorioResultadoEl) {
+      relatorioResultadoEl.textContent = linhas.length
+        ? (linhas.length + ' família(s) em ' + labelPeriodo + '.')
+        : ('Nenhuma atividade em ' + labelPeriodo + ' para este filtro.');
+    }
+
+    if (!linhas.length) {
+      relatorioRecenteBody.innerHTML = '<tr><td colspan="7">Nenhuma família neste filtro.</td></tr>';
+      return;
+    }
+
+    relatorioRecenteBody.innerHTML = linhas.map(function (item) {
+      var f = item.f;
+      var tagsHtml = item.tags.length
+        ? ('<div class="relatorio-tags">' + item.tags.map(function (t) {
+          return '<span class="relatorio-tag ' + t.cls + '">' + esc(t.txt) + '</span>';
+        }).join('') + '</div>')
+        : '—';
+      return (
+        '<tr>' +
+          '<td>' + esc(nomeFamilia(f) || '—') + '</td>' +
+          '<td>' + esc(exibirCelulares(f)) + '</td>' +
+          '<td>' + esc(statusLabel(f.status)) + '</td>' +
+          '<td>' + esc(formatarDataHora(f.criado_em)) + '</td>' +
+          '<td>' + esc(formatarDataHora(f.atualizado_em)) + '</td>' +
+          '<td>' + esc(formatarDataHora(f.ultimo_acesso_em)) + '</td>' +
+          '<td>' + tagsHtml + '</td>' +
+        '</tr>'
+      );
+    }).join('');
+  }
+
+  function setAbaLogs(aba) {
+    logsAbaAtual = aba || 'resumo';
+    if (!telaLogs) return;
+    telaLogs.querySelectorAll('.tela-logs-tab').forEach(function (btn) {
+      btn.classList.toggle('ativo', btn.getAttribute('data-logs-tab') === logsAbaAtual);
+    });
+    telaLogs.querySelectorAll('[data-logs-panel]').forEach(function (panel) {
+      var ativo = panel.getAttribute('data-logs-panel') === logsAbaAtual;
+      panel.classList.toggle('hidden', !ativo);
+    });
+    if (telaLogsSub) {
+      var labels = {
+        resumo: 'Totais e gráficos',
+        cadastros: 'Navegue na lista de cadastros',
+        acessos: 'Navegue na lista de acessos'
+      };
+      telaLogsSub.textContent = labels[logsAbaAtual] || 'Escolha o que quer ver';
+    }
+    if (logsAbaAtual !== 'resumo' && buscaLogsInput) {
+      setTimeout(function () { buscaLogsInput.focus(); }, 40);
+    }
+  }
+
+  function hashLogsAtivo() {
+    return (location.hash || '').replace(/^#/, '') === 'logs';
+  }
+
+  function abrirLogs(aba, opts) {
+    opts = opts || {};
+    if (!telaLogs) return;
+    setAbaLogs(aba || logsAbaAtual || 'cadastros');
+    telaLogs.classList.remove('hidden');
+    document.body.classList.add('logs-abertos');
+    window.scrollTo(0, 0);
+    renderTabelasLogs();
+    if (!opts.semHash && !hashLogsAtivo()) {
+      try {
+        history.pushState({ tela: 'logs' }, '', '#logs');
+      } catch (e) {
+        location.hash = 'logs';
+      }
+    }
+  }
+
+  function fecharLogs(opts) {
+    opts = opts || {};
+    if (!telaLogs) return;
+    telaLogs.classList.add('hidden');
+    document.body.classList.remove('logs-abertos');
+    if (!opts.semHash && hashLogsAtivo()) {
+      try {
+        history.pushState({ tela: 'admin' }, '', location.pathname + location.search);
+      } catch (e) {
+        location.hash = '';
+      }
+    }
+  }
+
+  function sincronizarTelaLogsPeloHash() {
+    if (hashLogsAtivo()) abrirLogs(logsAbaAtual || 'cadastros', { semHash: true });
+    else fecharLogs({ semHash: true });
+  }
+
   function renderTabelasLogs() {
+    renderRelatorioRecente();
     var filtro = ((buscaLogsInput && buscaLogsInput.value) || '').trim().toLowerCase();
     var filtroDigitos = ArturApi.onlyDigits(filtro);
     var cadastros = (window.__familias || []).slice().sort(function (a, b) {
@@ -1593,10 +1788,14 @@
       return false;
     });
 
+    var resumoTxt = cadastros.length + ' cadastro(s) · ' + acessos.length + ' acesso(s)';
+    if (logsOpenResumo) {
+      logsOpenResumo.textContent = resumoTxt + '. Toque para abrir em tela cheia.';
+    }
     if (buscaLogsResultado) {
       buscaLogsResultado.textContent = filtro
         ? (cadFiltrados.length + ' cadastro(s) · ' + aceFiltrados.length + ' acesso(s) filtrados.')
-        : (cadastros.length + ' cadastro(s) · ' + acessos.length + ' acesso(s).');
+        : (resumoTxt + '.');
     }
 
     if (tabelaCadastrosLogBody) {
@@ -1610,7 +1809,7 @@
               '<td>' + esc(exibirCelulares(f)) + '</td>' +
               '<td>' + esc(nomeFamilia(f)) + '</td>' +
               '<td>' + esc((f.adultos || []).concat(f.filhos || []).join(', ')) + '</td>' +
-              '<td>' + esc(f.status || '') + '</td>' +
+              '<td>' + esc(statusLabel(f.status)) + '</td>' +
               '<td>' + esc(formatarDataHora(f.ultimo_acesso_em)) + '</td>' +
             '</tr>'
           );
@@ -1681,7 +1880,7 @@
     return pessoas;
   }
 
-  // Lista esperada p/ PDF: confirmado mostra só quem vai; pendente deixa pai/mãe claros (conta 1).
+  // PDF alinhado à tela: confirmou → [x]; pendente → [ ]; pai+mãe sem liberar → [ ] + escolher 1.
   function pessoasEsperadasPdf(f) {
     var cont = contarAdultosFamilia(f);
     var liberado = familiaAcompanhantesLiberados(f);
@@ -1690,105 +1889,61 @@
     var temPai = !!(f && String(f.nome_pai || '').trim());
     var temMae = !!(f && String(f.nome_mae || '').trim());
     var pessoas = [];
-
-    // Família confirmou, mas ainda tem pai+mãe sem liberar = responsável NÃO está definido
     var respIndefinido = !!(confirmada && temPai && temMae && !liberado);
+    var tagOk = 'confirmado';
+    var tagPend = 'pendente';
+    var tagEscolher = 'escolher 1';
 
-    if (confirmada) {
-      if (respIndefinido) {
-        pessoas.push({
-          papel: '',
-          tipo: 'resp-pendente',
-          nome: 'Responsável ainda não definido',
-          detalhe: 'Família confirmou · escolher 1: ' +
-            String(f.nome_pai).trim() + ' (pai) / ' + String(f.nome_mae).trim() +
-            ' (mãe) · conta 1 adulto',
-          confirmado: false,
-          ck: '[ ]'
-        });
-      } else {
-        if (temPai) {
-          pessoas.push({
-            papel: 'Pai',
-            tipo: 'resp',
-            nome: String(f.nome_pai).trim(),
-            confirmado: true,
-            ck: '[x]'
-          });
-        }
-        if (temMae) {
-          pessoas.push({
-            papel: 'Mãe',
-            tipo: 'resp',
-            nome: String(f.nome_mae).trim(),
-            confirmado: true,
-            ck: '[x]'
-          });
-        }
-      }
-      (f.adultos || []).forEach(function (nome) {
-        pessoas.push({
-          papel: 'Adulto',
-          tipo: 'adulto',
-          nome: nome,
-          confirmado: true,
-          ck: '[x]'
-        });
-      });
-    } else if (pendente) {
-      if (temPai && temMae) {
-        pessoas.push({
-          papel: '',
-          tipo: 'resp-pendente',
-          nome: 'Pai / mãe ainda não confirmado',
-          detalhe: String(f.nome_pai).trim() + ' / ' + String(f.nome_mae).trim() + ' · conta 1 adulto',
-          confirmado: false,
-          ck: '[ ]'
-        });
-      } else if (temPai) {
-        pessoas.push({
-          papel: 'Pai',
-          tipo: 'resp',
-          nome: String(f.nome_pai).trim(),
-          detalhe: 'Ainda não confirmou · conta 1 adulto',
-          confirmado: false,
-          ck: '[ ]'
-        });
-      } else if (temMae) {
-        pessoas.push({
-          papel: 'Mãe',
-          tipo: 'resp',
-          nome: String(f.nome_mae).trim(),
-          detalhe: 'Ainda não confirmou · conta 1 adulto',
-          confirmado: false,
-          ck: '[ ]'
-        });
-      }
-      (f.adultos || []).forEach(function (nome) {
-        pessoas.push({
-          papel: 'Adulto',
-          tipo: 'adulto',
-          nome: nome + ' · pré-cadastro',
-          confirmado: false,
-          ck: '[ ]'
-        });
-      });
-    } else {
-      // nao_vai: mantém nomes para referência, sem tratar como esperado
-      if (temPai) pessoas.push({ papel: 'Pai', tipo: 'resp', nome: String(f.nome_pai).trim(), ck: '[ ]', confirmado: false });
-      if (temMae) pessoas.push({ papel: 'Mãe', tipo: 'resp', nome: String(f.nome_mae).trim(), ck: '[ ]', confirmado: false });
-      (f.adultos || []).forEach(function (nome) {
-        pessoas.push({ papel: 'Adulto', tipo: 'adulto', nome: nome, ck: '[ ]', confirmado: false });
+    function pushPessoa(opts) {
+      pessoas.push({
+        papel: opts.papel || '',
+        tipo: opts.tipo || '',
+        nome: opts.nome || '',
+        detalhe: opts.detalhe || '',
+        confirmado: !!opts.confirmado,
+        tag: opts.tag || '',
+        ck: opts.confirmado ? '[x]' : '[ ]'
       });
     }
 
+    if (temPai) {
+      pushPessoa({
+        papel: 'Pai',
+        tipo: respIndefinido || (pendente && temMae) ? 'resp-pendente' : 'resp',
+        nome: String(f.nome_pai).trim(),
+        confirmado: !!(confirmada && !respIndefinido),
+        tag: respIndefinido ? tagEscolher : (confirmada ? tagOk : (pendente ? tagPend : '')),
+        detalhe: (respIndefinido || (pendente && temMae)) ? 'Conta 1 adulto no total (pai + mãe)' : ''
+      });
+    }
+    if (temMae) {
+      pushPessoa({
+        papel: 'Mãe',
+        tipo: respIndefinido || (pendente && temPai) ? 'resp-pendente' : 'resp',
+        nome: String(f.nome_mae).trim(),
+        confirmado: !!(confirmada && !respIndefinido),
+        tag: respIndefinido ? tagEscolher : (confirmada ? tagOk : (pendente ? tagPend : '')),
+        detalhe: ''
+      });
+    }
+
+    (f.adultos || []).forEach(function (nome) {
+      pushPessoa({
+        papel: 'Adulto',
+        tipo: 'adulto',
+        nome: nome,
+        confirmado: !!confirmada,
+        tag: confirmada ? tagOk : (pendente ? tagPend : '')
+      });
+    });
+
     (f.filhos || []).forEach(function (nome) {
-      pessoas.push({
+      pushPessoa({
         papel: '',
         tipo: 'crianca',
         nome: 'Pulante - Criança: ' + nome,
-        confirmado: confirmada,
-        ck: confirmada ? '[x]' : '[ ]'
+        confirmado: !!confirmada,
+        tag: confirmada ? tagOk : (pendente ? tagPend : '')
       });
     });
 
@@ -1808,14 +1963,23 @@
     var classes = 'p-linha' +
       (p.tipo === 'crianca' ? ' kid' : '') +
       (p.tipo === 'resp-pendente' ? ' pend' : '') +
-      (p.confirmado ? ' ok' : '');
+      (p.confirmado ? ' ok' : '') +
+      (!p.confirmado && p.tag === 'pendente' ? ' aguardando' : '');
+    var tagHtml = '';
+    if (p.tag === 'confirmado') {
+      tagHtml = ' <em class="tag-ok">confirmado</em>';
+    } else if (p.tag === 'pendente') {
+      tagHtml = ' <em class="tag-pend">pendente</em>';
+    } else if (p.tag === 'escolher 1') {
+      tagHtml = ' <em class="tag-aviso">(escolher 1)</em>';
+    }
     var titulo;
     if (p.tipo === 'crianca' || !p.papel) {
-      titulo = '<span class="nm nm-full">' + esc(p.nome || '') + '</span>';
+      titulo = '<span class="nm nm-full">' + esc(p.nome || '') + tagHtml + '</span>';
     } else {
       titulo =
         '<span class="papel">' + esc(p.papel) + ':</span> ' +
-        '<span class="nm">' + esc(p.nome || '') + '</span>';
+        '<span class="nm">' + esc(p.nome || '') + tagHtml + '</span>';
     }
     return (
       '<div class="' + classes + '">' +
@@ -1855,7 +2019,8 @@
       '.p-linha .p-body{display:table-cell;vertical-align:top;padding-left:6px}' +
       '.p-linha .p-topo{display:block;line-height:1.25}' +
       '.p-linha.ok .ck{color:#0b6b2a}' +
-      '.p-linha.pend{background:#fff8e1;border:1px solid #e0c36a;margin:3px 0;padding:6px 4px}' +
+      '.p-linha.pend,.p-linha.aguardando{background:#fff8e1}' +
+      '.p-linha.pend{border:1px solid #e0c36a;margin:3px 0;padding:6px 4px}' +
       '.p-linha .papel{display:inline;font-size:9pt;text-transform:none;letter-spacing:0;color:#555;font-weight:700;margin-right:4px}' +
       '.p-linha .nm{display:inline;font-size:11pt;font-weight:600;color:#111;word-wrap:break-word;overflow-wrap:anywhere}' +
       '.p-linha .nm-full{display:block;font-size:10.5pt;font-weight:700;color:#111;word-wrap:break-word;overflow-wrap:anywhere;line-height:1.3}' +
@@ -1863,6 +2028,9 @@
       '.p-linha .nm-full.linha-vazia{border-bottom:1px solid #bbb;min-height:14px}' +
       '.p-linha .det{display:block;margin-top:2px;font-size:8.5pt;color:#555;line-height:1.3;word-wrap:break-word}' +
       '.p-linha .p-body{overflow:visible;word-wrap:break-word}' +
+      '.tag-ok{font-style:normal;font-size:8.5pt;color:#145214;font-weight:700;margin-left:4px}' +
+      '.tag-pend{font-style:normal;font-size:8.5pt;color:#8a6d00;font-weight:700;margin-left:4px}' +
+      '.tag-aviso{font-style:normal;font-size:8.5pt;color:#8a6d00;font-weight:700;margin-left:4px}' +
       '.legenda-pdf{margin:8px 0 12px;padding:8px 10px;border:1px solid #c5d2c0;background:#f7faf6;font-size:9pt;color:#333;line-height:1.45}' +
       '.legenda-pdf strong{color:#1f5c2e}' +
       '.fam.pendente header,.porta-row.st-pre_cadastro{background:#fffaf0}'
@@ -1873,13 +2041,10 @@
     return (
       '<div class="legenda-pdf">' +
         '<strong>Legenda</strong><br>' +
-        '<strong>[x]</strong> = pessoa já definida/confirmada no convite<br>' +
-        '<strong>[ ]</strong> = ainda não definido (marcar/escolher na porta)<br>' +
-        '<strong>Pend.</strong> = família ainda não confirmou presença<br>' +
-        '<strong>OK</strong> = família confirmada e responsável definido<br>' +
-        '<strong>Conf.*</strong> = família confirmou, mas pai e mãe ainda estão os 2 no cadastro sem liberar → <strong>escolher 1 responsável</strong> (conta 1 adulto)<br>' +
-        'Pai + mãe sem liberar: só <strong>1 responsável</strong> no total<br>' +
-        'Pendente com pai e mãe: <strong>"Pai / mãe ainda não confirmado (conta 1 adulto)"</strong><br>' +
+        '<strong>[x] confirmado</strong> = família confirmou no convite<br>' +
+        '<strong>[ ] pendente</strong> = ainda não confirmou (marcar na porta se vier)<br>' +
+        '<strong>(escolher 1)</strong> = confirmou, mas pai e mãe ainda estão os 2 sem liberar → escolher 1 responsável (conta 1 adulto)<br>' +
+        '<strong>Pend.</strong> = família pendente · <strong>OK</strong> = confirmada · <strong>Conf.*</strong> = confirmou com responsável indefinido<br>' +
         '<strong>Pulante - Criança</strong> = criança que pula (cliente do contrato)' +
       '</div>'
     );
@@ -1896,8 +2061,33 @@
   function setCheckLocal(key, value) {
     var map = getChecksLocais();
     if (value) map[key] = true;
-    else delete map[key];
+    else map[key] = false;
     localStorage.setItem('artur_presenca_checks', JSON.stringify(map));
+  }
+
+  // Na tela: se a família confirmou, mostra check nas pessoas já definidas.
+  // Pai+mãe sem liberar: responsável ainda não está definido → não marca pai/mãe.
+  function pessoaConfirmadaNaTela(f, p) {
+    if (!f || !p) return false;
+    if (!familiaConfirmou(f)) return false;
+    var liberado = familiaAcompanhantesLiberados(f);
+    var temPai = !!(f.nome_pai && String(f.nome_pai).trim());
+    var temMae = !!(f.nome_mae && String(f.nome_mae).trim());
+    if (temPai && temMae && !liberado && p.tipo === 'resp') return false;
+    return true;
+  }
+
+  function pessoaTemCheck(f, p, checks) {
+    var map = checks || getChecksLocais();
+    if (p && p.key && Object.prototype.hasOwnProperty.call(map, p.key)) return !!map[p.key];
+    return pessoaConfirmadaNaTela(f, p);
+  }
+
+  function marcarChecksConfirmadosFamilia(f) {
+    if (!familiaConfirmou(f)) return;
+    pessoasDoTelefone(f).forEach(function (p) {
+      if (pessoaConfirmadaNaTela(f, p)) setCheckLocal(p.key, true);
+    });
   }
 
   function familiaTemAlgumCheck(cel) {
@@ -1965,13 +2155,21 @@
 
     listaPresencaEl.innerHTML = ordenadas.map(function (f) {
       var pessoas = pessoasDoTelefone(f);
+      var confirmada = familiaConfirmou(f);
       var linhas = pessoas.map(function (p) {
-        var checked = checks[p.key] ? ' checked' : '';
+        var marcado = confirmada ? pessoaTemCheck(f, p, checks) : false;
+        var checked = marcado ? ' checked' : '';
+        var extra = '';
+        if (confirmada && marcado) {
+          extra = ' <em class="resp-ok">confirmado</em>';
+        } else if (!confirmada) {
+          extra = ' <em class="resp-pendente">pendente</em>';
+        }
         return (
-          '<div class="presenca-linha ' + p.tipo + '">' +
-            '<input type="checkbox" class="presenca-check" data-key="' + esc(p.key) + '" data-cel="' + esc(f.celular) + '"' + checked + ' />' +
+          '<div class="presenca-linha ' + p.tipo + (marcado ? ' marcado' : '') + (confirmada ? '' : ' pendente') + '">' +
+            '<input type="checkbox" class="presenca-check" data-key="' + esc(p.key) + '" data-cel="' + esc(chaveFamilia(f) || f.celular) + '"' + checked + ' />' +
             '<span class="papel">' + esc(p.papel) + ':</span>' +
-            '<span class="nome">' + esc(p.nome) + '</span>' +
+            '<span class="nome">' + esc(p.nome) + extra + '</span>' +
           '</div>'
         );
       }).join('');
@@ -2004,13 +2202,13 @@
       var titulo = nomeFamilia(f) || ('Família ' + (i + 1));
       var statusTxt;
       if (esp.respIndefinido) {
-        statusTxt = 'Família confirmou · responsável ainda não definido (1 adulto) · ' +
+        statusTxt = 'Confirmou · responsável ainda não definido (escolher 1) · ' +
           esp.criancas + ' pulante' + (esp.criancas === 1 ? '' : 's');
       } else if (familiaConfirmou(f)) {
         statusTxt = 'Confirmou · ' + esp.adultos + ' adulto' + (esp.adultos === 1 ? '' : 's') +
           ' · ' + esp.criancas + ' pulante' + (esp.criancas === 1 ? '' : 's');
       } else {
-        statusTxt = 'Ainda não confirmou · ' + esp.adultos + ' adulto' + (esp.adultos === 1 ? '' : 's') +
+        statusTxt = 'Pendente · ' + esp.adultos + ' adulto' + (esp.adultos === 1 ? '' : 's') +
           ' · ' + esp.criancas + ' pulante' + (esp.criancas === 1 ? '' : 's');
       }
 
@@ -2160,12 +2358,15 @@
   function pessoaCelulaHtml(f, nome, tipoKey, checks) {
     if (!nome) return '<td class="pessoa-vazia"></td>';
     var key = (f.celular || '') + '|' + tipoKey + '|' + nome;
-    var marcado = !!checks[key];
+    var tipoPessoa = tipoKey === 'crianca' ? 'crianca' : (tipoKey === 'adulto' ? 'adulto' : 'resp');
+    var p = { key: key, tipo: tipoPessoa, nome: nome };
+    var confirmada = familiaConfirmou(f);
+    var marcado = confirmada ? pessoaTemCheck(f, p, checks) : false;
     return (
-      '<td class="pessoa-cell">' +
+      '<td class="pessoa-cell' + (marcado ? ' marcado' : '') + '">' +
         '<label class="pessoa-check-linha">' +
           '<input type="checkbox" class="presenca-check tabela-check" data-key="' + esc(key) + '" data-cel="' + esc(chaveFamilia(f) || f.celular) + '"' + (marcado ? ' checked' : '') + ' />' +
-          '<span>' + esc(nome) + '</span>' +
+          '<span>' + esc(nome) + (!confirmada && f.status !== 'nao_vai' ? ' <em class="resp-pendente">pendente</em>' : '') + '</span>' +
         '</label>' +
       '</td>'
     );
@@ -2185,7 +2386,7 @@
 
   function statusPdfLabel(status) {
     var map = {
-      pre_cadastro: 'Pré-cad.',
+      pre_cadastro: 'Pend.',
       confirmado: 'Conf.',
       presente: 'Pres.',
       nao_vai: 'Não'
@@ -2671,7 +2872,7 @@
       '<header class="topo">' +
         '<p class="topo-marca">Jump Trampolim Park · Vitória-ES</p>' +
         '<h1>Artur · 7 anos — Lista da porta</h1>' +
-        '<p class="sub">25/11/2026 · 17h45–21h30 · [x] confirmado · [ ] marcar na porta</p>' +
+        '<p class="sub">25/11/2026 · 17h45–21h30 · [x] confirmado · [ ] pendente</p>' +
         '<p class="meta">Gerado em ' + agora + '</p>' +
       '</header>' +
       htmlCoroaTotaisPdf(tot) +
@@ -2897,13 +3098,26 @@
     listaEl.innerHTML = filtered.map(function (f) {
       var checks = getChecksLocais();
       var celKey = chaveFamilia(f);
+      var liberado = familiaAcompanhantesLiberados(f);
+      var respIndef = !!(familiaConfirmou(f) && f.nome_pai && f.nome_mae && !liberado);
       var pessoas = pessoasDoTelefone(f).map(function (p) {
-        var checked = checks[p.key] ? ' checked' : '';
+        var confirmada = familiaConfirmou(f);
+        // Sem confirmação: não marca check automático — fica pendente.
+        var marcado = confirmada ? pessoaTemCheck(f, p, checks) : false;
+        var checked = marcado ? ' checked' : '';
+        var extra = '';
+        if (respIndef && p.tipo === 'resp') {
+          extra = ' <em class="resp-aviso">(escolher 1)</em>';
+        } else if (confirmada && marcado) {
+          extra = ' <em class="resp-ok">confirmado</em>';
+        } else if (!confirmada && f.status !== 'nao_vai') {
+          extra = ' <em class="resp-pendente">pendente</em>';
+        }
         return (
-          '<div class="presenca-linha ' + p.tipo + '">' +
+          '<div class="presenca-linha ' + p.tipo + (marcado ? ' marcado' : '') + (confirmada ? '' : ' pendente') + '">' +
             '<input type="checkbox" class="presenca-check lista-check" data-key="' + esc(p.key) + '" data-cel="' + esc(celKey) + '"' + checked + ' />' +
             '<span class="papel">' + esc(p.papel) + ':</span>' +
-            '<span class="nome">' + esc(p.nome) + '</span>' +
+            '<span class="nome">' + esc(p.nome) + extra + '</span>' +
           '</div>'
         );
       }).join('');
@@ -2971,6 +3185,10 @@
         try {
           if (act === 'confirmar') {
             await ArturApi.adminStatus(senha(), cel, 'confirmado');
+            if (familia) {
+              familia.status = 'confirmado';
+              marcarChecksConfirmadosFamilia(familia);
+            }
             setStatus('Família confirmada (vão à festa).', 'ok');
             await refresh(false);
             return;
@@ -3070,6 +3288,7 @@
         setProgressoVisual(92);
       }
       mostrarApp();
+      sincronizarTelaLogsPeloHash();
       window.__configConvite = data.config || window.__configConvite || {};
       if (checkLiberarGeral) {
         checkLiberarGeral.checked = !!(window.__configConvite.liberar_acompanhantes_geral);
@@ -3204,9 +3423,38 @@
   }
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
+    if (telaLogs && !telaLogs.classList.contains('hidden')) {
+      fecharLogs();
+      return;
+    }
     var m = document.getElementById('modal-dash-lista');
     if (m && !m.classList.contains('hidden')) fecharModalDashLista();
   });
+
+  if (btnAbrirLogs) {
+    btnAbrirLogs.addEventListener('click', function () {
+      abrirLogs('cadastros');
+    });
+  }
+  if (btnFecharLogs) {
+    btnFecharLogs.addEventListener('click', function () {
+      fecharLogs();
+    });
+  }
+  if (telaLogs) {
+    telaLogs.querySelectorAll('.tela-logs-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setAbaLogs(btn.getAttribute('data-logs-tab'));
+      });
+    });
+    telaLogs.querySelectorAll('[data-logs-jump]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setAbaLogs(btn.getAttribute('data-logs-jump'));
+      });
+    });
+  }
+  window.addEventListener('popstate', sincronizarTelaLogsPeloHash);
+  window.addEventListener('hashchange', sincronizarTelaLogsPeloHash);
 
   if (checkTodosExcluir) {
     checkTodosExcluir.addEventListener('change', function () {
@@ -3233,6 +3481,11 @@
       buscaLogsInput.addEventListener(evName, agendarFiltroLogs);
     });
   }
+
+  [relatorioPeriodoEl, relatorioTipoEl, relatorioOrdemEl].forEach(function (el) {
+    if (!el) return;
+    el.addEventListener('change', renderRelatorioRecente);
+  });
 
   var checkPaiEl = document.getElementById('check-pai');
   var checkMaeEl = document.getElementById('check-mae');
@@ -3265,11 +3518,4 @@
     btnScrollBottom.addEventListener('click', function () {
       var y = Math.max(
         document.documentElement.scrollHeight,
-        document.body.scrollHeight
-      );
-      window.scrollTo(0, y);
-      document.documentElement.scrollTop = y;
-      document.body.scrollTop = y;
-    });
-  }
-})();
+        document.body.scrollHeight
