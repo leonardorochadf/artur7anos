@@ -3518,4 +3518,12 @@
     btnScrollBottom.addEventListener('click', function () {
       var y = Math.max(
         document.documentElement.scrollHeight,
-        document.body.scrollHeight
+        document.body.scrollHeight
+      );
+      window.scrollTo(0, y);
+      document.documentElement.scrollTop = y;
+      document.body.scrollTop = y;
+    });
+  }
+})();
+
