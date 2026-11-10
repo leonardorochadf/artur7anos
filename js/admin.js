@@ -553,8 +553,20 @@
       .replace(/>/g, '&gt;');
   }
 
+  // Pendentes de confirmação primeiro; depois confirmados/presentes; "não vão" por último.
+  // Dentro de cada grupo, ordena por telefone.
+  function prioridadeOrdenacaoFamilia(f) {
+    if (!f) return 9;
+    if (f.status === 'nao_vai') return 2;
+    if (f.status === 'confirmado' || f.status === 'presente') return 1;
+    return 0;
+  }
+
   function ordenarPorTelefone(familias) {
     return (familias || []).slice().sort(function (a, b) {
+      var pa = prioridadeOrdenacaoFamilia(a);
+      var pb = prioridadeOrdenacaoFamilia(b);
+      if (pa !== pb) return pa - pb;
       return String(a.celular || '').localeCompare(String(b.celular || ''), 'pt-BR', { numeric: true });
     });
   }
