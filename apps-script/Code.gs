@@ -1,6 +1,6 @@
 /**
  * Backend: Google Apps Script + planilha do Artur 7 anos
- * Versao: v8.10-missao-energetica
+ * Versao: v8.12-filhos-sexo-escola
  *
  * - Varios celulares por familia (coluna celular: "fone1 | fone2")
  * - ultimo_acesso_em atualizado a cada busca/confirmacao
@@ -10,6 +10,8 @@
  * - convite pode limpar pai OU mae (sempre resta 1 responsavel)
  * - celular_chave permite trocar o numero usado no acesso
  * - liberar_acompanhantes (por familia) + flag geral: convite pode incluir outro adulto
+ * - filhos com sexo (menino/menina) e flag escola do Artur
+ *   formato na planilha: "Nome :: menino :: escola | Nome2 :: menina"
  */
 
 var ABA = 'Familias';
@@ -17,7 +19,7 @@ var ABA_ACESSOS = 'Acessos';
 var ABA_MISSAO = 'MissaoEnergetica';
 var ADMIN_SENHA_FIXA = '19122019@';
 var SHEET_ID_FIXO = '1ZFZ_UjSaF4BXecf0TizKXLt8EeCpErpPwmqWQJBGyok';
-var VERSAO = 'v8.11-liberar-acompanhantes';
+var VERSAO = 'v8.12-filhos-sexo-escola';
 var PROP_LIBERAR_ACOMPANHANTES = 'liberar_acompanhantes_geral';
 var MAX_ACOMPANHANTES_CONVITE = 1;
 
@@ -354,7 +356,7 @@ function salvarFamilia(body, isPre) {
 
   var celularGravar = juntarCelulares(celulares);
   var nomes = montarNomes(body, null);
-  var filhos = normalizarListaNomes(body.filhos);
+  var filhos = normalizarFilhosDetalhe(body.filhos);
   var adultos = normalizarListaNomes(body.adultos);
   var pediuNaoVai = String(body.status || '').toLowerCase() === 'nao_vai';
   var liberarAcomp = false;
@@ -413,7 +415,7 @@ function salvarFamilia(body, isPre) {
         ? 'admin+convidado'
         : 'convidado';
       if (pediuNaoVai && !filhos.length) {
-        filhos = atual.filhos;
+        filhos = normalizarFilhosDetalhe(atual.filhos);
       }
       if (pediuNaoVai && !adultos.length && atual.adultos) {
         adultos = atual.adultos;
@@ -428,7 +430,7 @@ function salvarFamilia(body, isPre) {
       '', // celular gravado em seguida como texto puro
       pai,
       mae,
-      filhos.join(' | '),
+      serializarFilhos(filhos),
       status,
       origem,
       qtdMeias,
@@ -459,7 +461,7 @@ function salvarFamilia(body, isPre) {
     '', // celular gravado em seguida como texto puro
     pai,
     mae,
-    filhos.join(' | '),
+    serializarFilhos(filhos),
     status,
     origem,
     qtdMeias,
@@ -612,7 +614,7 @@ function buscar(q, celularRaw) {
         familia.nome_pai + ' ' +
         familia.nome_mae + ' ' +
         familia.nome_responsavel + ' ' +
-        familia.filhos.join(' ') + ' ' +
+        nomesDosFilhos(familia.filhos).join(' ') + ' ' +
         (familia.adultos || []).join(' ') + ' ' +
         familia.celulares.join(' ')
       ).toLowerCase();
@@ -1012,7 +1014,7 @@ function mapRow(row) {
       row[0],
       pai,
       mae,
-      String(row[3] || '').split('|').map(function (s) { return s.trim(); }).filter(Boolean),
+      normalizarFilhosDetalhe(String(row[3] || '')),
       String(row[4] || '').trim(),
       String(row[5] || '').trim(),
       Number(row[6] || 0),
@@ -1032,7 +1034,7 @@ function mapRow(row) {
     row[0],
     limparTexto(p[0] || ''),
     limparTexto(p[1] || ''),
-    String(row[2] || '').split('|').map(function (s) { return s.trim(); }).filter(Boolean),
+    normalizarFilhosDetalhe(String(row[2] || '')),
     String(row[3] || '').trim(),
     String(row[4] || '').trim(),
     Number(row[5] || 0),
@@ -1127,8 +1129,101 @@ function normalizarListaNomes(lista) {
   return [];
 }
 
+function normalizarSexoFilho(v) {
+  var t = String(v || '').toLowerCase().trim();
+  if (t === 'menino' || t === 'm' || t === 'boy' || t === 'masculino') return 'menino';
+  if (t === 'menina' || t === 'f' || t === 'girl' || t === 'feminino') return 'menina';
+  return '';
+}
+
+function parseFilhoToken(raw) {
+  var s = limparTexto(raw);
+  if (!s) return null;
+  var parts = s.split('::').map(function (p) { return limparTexto(p); }).filter(Boolean);
+  if (!parts.length) return null;
+  var nome = parts[0];
+  var sexo = '';
+  var escola = false;
+  for (var i = 1; i < parts.length; i++) {
+    var t = String(parts[i] || '').toLowerCase();
+    var sx = normalizarSexoFilho(t);
+    if (sx) {
+      sexo = sx;
+      continue;
+    }
+    if (t === 'escola' || t === 'escola_artur' || t === '1' || t === 'sim' || t === 'true') {
+      escola = true;
+    }
+  }
+  return { nome: nome, sexo: sexo, escola_artur: escola };
+}
+
+function normalizarFilhosDetalhe(lista) {
+  var out = [];
+  function pushItem(item) {
+    if (!item) return;
+    if (typeof item === 'string') {
+      // Pode vir "A | B" (legado) ou "A :: menino :: escola"
+      if (item.indexOf('|') >= 0 && item.indexOf('::') < 0) {
+        String(item).split('|').forEach(function (part) {
+          var p = parseFilhoToken(part);
+          if (p && p.nome) out.push(p);
+        });
+        return;
+      }
+      var uno = parseFilhoToken(item);
+      if (uno && uno.nome) out.push(uno);
+      return;
+    }
+    if (typeof item === 'object') {
+      var nome = limparTexto(item.nome || item.name || '');
+      if (!nome) return;
+      out.push({
+        nome: nome,
+        sexo: normalizarSexoFilho(item.sexo || item.genero || ''),
+        escola_artur: flagSim(item.escola_artur || item.escola || item.da_escola)
+      });
+    }
+  }
+
+  if (!lista) return out;
+  if (typeof lista === 'string') {
+    // Separar filhos por | ; preservar :: dentro do token
+    var buf = '';
+    var chars = String(lista);
+    for (var i = 0; i < chars.length; i++) {
+      var ch = chars.charAt(i);
+      if (ch === '|') {
+        pushItem(buf);
+        buf = '';
+      } else {
+        buf += ch;
+      }
+    }
+    pushItem(buf);
+    return out;
+  }
+  if (Object.prototype.toString.call(lista) === '[object Array]') {
+    lista.forEach(pushItem);
+  }
+  return out;
+}
+
+function serializarFilhos(lista) {
+  return normalizarFilhosDetalhe(lista).map(function (f) {
+    var bits = [f.nome];
+    if (f.sexo) bits.push(f.sexo);
+    if (f.escola_artur) bits.push('escola');
+    return bits.join(' :: ');
+  }).join(' | ');
+}
+
 function normalizarFilhos(filhos) {
-  return normalizarListaNomes(filhos);
+  return normalizarFilhosDetalhe(filhos).map(function (f) { return f.nome; });
+}
+
+function nomesDosFilhos(lista) {
+  return normalizarFilhosDetalhe(lista).map(function (f) { return f.nome; });
 }
 
 function limparTexto(v) {

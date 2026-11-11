@@ -19,6 +19,11 @@ window.ARTUR_CONFIG = {
     pessoas: 85,
     pulantes: 50
   },
+  // Meta da turma/escola do Artur (informação para o dashboard)
+  escolaArtur: {
+    meninos: 6,
+    meninas: 9
+  },
   termo: {
     url: 'https://app.zapsign.com.br/verificar/doc/e440701a-7736-4045-9634-9fd567c039fb',
     titulo: 'Termo de responsabilidade'

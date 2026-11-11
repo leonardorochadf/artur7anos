@@ -316,23 +316,66 @@
     }
   }
 
+  function detalhesFilho(item) {
+    if (!item) return { nome: '', sexo: '', escola_artur: false };
+    if (typeof item === 'string') {
+      if (!String(item).trim()) return { nome: '', sexo: '', escola_artur: false };
+      var parts = String(item).split('::').map(function (p) { return p.trim(); }).filter(Boolean);
+      var nome = parts[0] || '';
+      var sexo = '';
+      var escola = false;
+      for (var i = 1; i < parts.length; i++) {
+        var t = parts[i].toLowerCase();
+        if (t === 'menino' || t === 'm') sexo = 'menino';
+        else if (t === 'menina' || t === 'f') sexo = 'menina';
+        else if (t === 'escola' || t === '1' || t === 'sim') escola = true;
+      }
+      return { nome: nome, sexo: sexo, escola_artur: escola };
+    }
+    var sx = String(item.sexo || '').toLowerCase();
+    return {
+      nome: String(item.nome || '').trim(),
+      sexo: sx === 'menina' ? 'menina' : (sx === 'menino' ? 'menino' : ''),
+      escola_artur: !!item.escola_artur
+    };
+  }
+
   function kidInput(value) {
+    var d = detalhesFilho(value);
     var row = document.createElement('div');
-    row.className = 'kid-row';
+    row.className = 'kid-row kid-row-rich';
     row.innerHTML =
-      '<input type="text" class="kid-name" placeholder="Nome do(a) filho(a)" maxlength="60" />' +
+      '<div class="kid-fields">' +
+        '<input type="text" class="kid-name" placeholder="Nome do(a) filho(a)" maxlength="60" />' +
+        '<div class="kid-meta">' +
+          '<select class="kid-sexo" aria-label="Sexo">' +
+            '<option value="">Sexo</option>' +
+            '<option value="menino">Menino</option>' +
+            '<option value="menina">Menina</option>' +
+          '</select>' +
+          '<label class="kid-escola-label">' +
+            '<input type="checkbox" class="kid-escola" />' +
+            '<span>Escola do Artur</span>' +
+          '</label>' +
+        '</div>' +
+      '</div>' +
       '<button type="button" class="btn btn-danger remove-kid" aria-label="Remover">X</button>';
-    var input = row.querySelector('input');
-    input.value = value || '';
+    var input = row.querySelector('.kid-name');
+    var sexoEl = row.querySelector('.kid-sexo');
+    var escolaEl = row.querySelector('.kid-escola');
+    input.value = d.nome || '';
+    sexoEl.value = d.sexo || '';
+    escolaEl.checked = !!d.escola_artur;
     row.querySelector('.remove-kid').addEventListener('click', function () {
       row.remove();
       atualizarVisibilidadeListas();
       marcarFormularioSujo();
       salvarAoSairDoCampo();
     });
-    input.addEventListener('input', function () {
-      marcarFormularioSujo();
-    });
+    function marcar() { marcarFormularioSujo(); }
+    input.addEventListener('input', marcar);
+    sexoEl.addEventListener('change', marcar);
+    escolaEl.addEventListener('change', marcar);
     input.addEventListener('keydown', function (e) {
       if (e.key !== 'Enter') return;
       e.preventDefault();
@@ -472,17 +515,32 @@
 
   function getFilhos() {
     if (!kidsBox) return [];
-    return Array.prototype.map.call(kidsBox.querySelectorAll('.kid-name'), function (el) {
-      return el.value.trim();
+    return Array.prototype.map.call(kidsBox.querySelectorAll('.kid-row'), function (row) {
+      var nome = ((row.querySelector('.kid-name') || {}).value || '').trim();
+      if (!nome) return null;
+      var sexoEl = row.querySelector('.kid-sexo');
+      var escolaEl = row.querySelector('.kid-escola');
+      return {
+        nome: nome,
+        sexo: sexoEl ? sexoEl.value : '',
+        escola_artur: !!(escolaEl && escolaEl.checked)
+      };
     }).filter(Boolean);
   }
 
   function setFilhos(list) {
     if (!kidsBox) return;
     kidsBox.innerHTML = '';
-    var nomes = normalizarListaNomes(list);
-    nomes.forEach(function (nome) {
-      kidsBox.appendChild(kidInput(nome));
+    var itens = [];
+    if (!list) itens = [];
+    else if (Array.isArray(list)) itens = list;
+    else if (typeof list === 'string') itens = normalizarListaNomes(list);
+    if (!itens.length) {
+      atualizarVisibilidadeListas();
+      return;
+    }
+    itens.forEach(function (item) {
+      kidsBox.appendChild(kidInput(item));
     });
     atualizarVisibilidadeListas();
   }

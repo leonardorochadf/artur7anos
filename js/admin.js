@@ -439,20 +439,84 @@
     });
   }
 
+  function nomeDoFilho(item) {
+    if (!item) return '';
+    if (typeof item === 'string') {
+      return String(item).split('::')[0].trim();
+    }
+    return String(item.nome || '').trim();
+  }
+
+  function detalhesFilho(item) {
+    if (!item) return { nome: '', sexo: '', escola_artur: false };
+    if (typeof item === 'string') {
+      if (!item.trim()) return { nome: '', sexo: '', escola_artur: false };
+      var parts = String(item).split('::').map(function (p) { return p.trim(); }).filter(Boolean);
+      var nome = parts[0] || '';
+      var sexo = '';
+      var escola = false;
+      for (var i = 1; i < parts.length; i++) {
+        var t = parts[i].toLowerCase();
+        if (t === 'menino' || t === 'm') sexo = 'menino';
+        else if (t === 'menina' || t === 'f') sexo = 'menina';
+        else if (t === 'escola' || t === '1' || t === 'sim') escola = true;
+      }
+      return { nome: nome, sexo: sexo, escola_artur: escola };
+    }
+    var sx = String(item.sexo || '').toLowerCase();
+    return {
+      nome: String(item.nome || '').trim(),
+      sexo: sx === 'menina' ? 'menina' : (sx === 'menino' ? 'menino' : ''),
+      escola_artur: !!item.escola_artur
+    };
+  }
+
+  function nomesFilhos(f) {
+    return ((f && f.filhos) || []).map(nomeDoFilho).filter(Boolean);
+  }
+
+  function metaEscolaArtur() {
+    var cfg = (window.ARTUR_CONFIG && window.ARTUR_CONFIG.escolaArtur) || {};
+    return {
+      meninos: Number(cfg.meninos) > 0 ? Number(cfg.meninos) : 6,
+      meninas: Number(cfg.meninas) > 0 ? Number(cfg.meninas) : 9
+    };
+  }
+
   function kidInput(value, checked) {
+    var d = detalhesFilho(value);
     var row = document.createElement('div');
-    row.className = 'kid-row';
+    row.className = 'kid-row kid-row-rich has-check';
     row.innerHTML =
       '<input type="checkbox" class="presenca-check kid-check" />' +
-      '<input type="text" class="kid-name" placeholder="Nome do(a) filho(a)" maxlength="60" />' +
+      '<div class="kid-fields">' +
+        '<input type="text" class="kid-name" placeholder="Nome do(a) filho(a)" maxlength="60" />' +
+        '<div class="kid-meta">' +
+          '<select class="kid-sexo" aria-label="Sexo">' +
+            '<option value="">Sexo</option>' +
+            '<option value="menino">Menino</option>' +
+            '<option value="menina">Menina</option>' +
+          '</select>' +
+          '<label class="kid-escola-label">' +
+            '<input type="checkbox" class="kid-escola" />' +
+            '<span>Escola do Artur</span>' +
+          '</label>' +
+        '</div>' +
+      '</div>' +
       '<button type="button" class="btn btn-danger remove-kid">X</button>';
     var input = row.querySelector('.kid-name');
+    var sexoEl = row.querySelector('.kid-sexo');
+    var escolaEl = row.querySelector('.kid-escola');
     var check = row.querySelector('.kid-check');
-    input.value = value || '';
+    input.value = d.nome || '';
+    sexoEl.value = d.sexo || '';
+    escolaEl.checked = !!d.escola_artur;
     check.checked = !!checked;
     row.querySelector('.remove-kid').addEventListener('click', function () {
       if (kidsBox.querySelectorAll('.kid-row').length === 1) {
         input.value = '';
+        sexoEl.value = '';
+        escolaEl.checked = false;
         check.checked = false;
         return;
       }
@@ -465,8 +529,17 @@
   }
 
   function getFilhos() {
-    return Array.prototype.map.call(kidsBox.querySelectorAll('.kid-name'), function (el) {
-      return el.value.trim();
+    return Array.prototype.map.call(kidsBox.querySelectorAll('.kid-row'), function (row) {
+      var nome = (row.querySelector('.kid-name') || {}).value || '';
+      nome = String(nome).trim();
+      if (!nome) return null;
+      var sexoEl = row.querySelector('.kid-sexo');
+      var escolaEl = row.querySelector('.kid-escola');
+      return {
+        nome: nome,
+        sexo: sexoEl ? sexoEl.value : '',
+        escola_artur: !!(escolaEl && escolaEl.checked)
+      };
     }).filter(Boolean);
   }
 
@@ -474,9 +547,11 @@
     var map = checksMap || getChecksLocais();
     var cel = celular || ArturApi.onlyDigits(celularInput.value);
     kidsBox.innerHTML = '';
-    (list && list.length ? list : ['']).forEach(function (n) {
-      var key = cel + '|crianca|' + n;
-      kidsBox.appendChild(kidInput(n, !!map[key]));
+    var itens = list && list.length ? list : [''];
+    itens.forEach(function (item) {
+      var d = item === '' ? { nome: '', sexo: '', escola_artur: false } : detalhesFilho(item);
+      var key = cel + '|crianca|' + (d.nome || '');
+      kidsBox.appendChild(kidInput(d, !!(d.nome && map[key])));
     });
   }
 
@@ -821,7 +896,12 @@
       '- Pessoas: *' + s.pessoas + '* de ' + c.pessoas + ' · ' + textoSaldoContrato(s.pessoas, c.pessoas, 'pessoas'),
       '- Adultos: *' + s.adultos + '* (nao pulam)',
       '- Pulantes/criancas: *' + s.criancas + '* de ' + c.pulantes + ' · ' + textoSaldoContrato(s.criancas, c.pulantes, 'pulantes'),
-      '- Adultos: ' + s.adultos,
+      '',
+      '*Escola do Artur*',
+      '- Meninos: *' + (s.escolaMeninos || 0) + '* de ' + (s.metaEscolaMeninos || 6),
+      '- Meninas: *' + (s.escolaMeninas || 0) + '* de ' + (s.metaEscolaMeninas || 9),
+      '- Total escola: *' + (s.escolaTotal || 0) + '* de ' + ((s.metaEscolaMeninos || 6) + (s.metaEscolaMeninas || 9)),
+      (s.criancasSemSexo ? ('- Sem sexo informado: *' + s.criancasSemSexo + '*') : '- Sexo informado em todas as criancas'),
       '',
       '*Familias:* ' + s.familias,
       '- Confirmaram (vao): ' + s.famConf + ' · ' + s.confPessoas + ' pessoas',
@@ -997,6 +1077,84 @@
       if (pessoaTemCheck(f, p, checks)) n += 1;
     });
     return n;
+  }
+
+  function agregarCriancasDashboard(familias) {
+    var meta = metaEscolaArtur();
+    var tot = {
+      meninos: 0,
+      meninas: 0,
+      semSexo: 0,
+      escolaMeninos: 0,
+      escolaMeninas: 0,
+      escolaSemSexo: 0,
+      escolaTotal: 0,
+      foraEscola: 0,
+      total: 0,
+      metaMeninos: meta.meninos,
+      metaMeninas: meta.meninas,
+      metaTotal: meta.meninos + meta.meninas
+    };
+    (familias || []).forEach(function (f) {
+      if (!familiaEntraNoEsperado(f)) return;
+      (f.filhos || []).forEach(function (item) {
+        var d = detalhesFilho(item);
+        if (!d.nome) return;
+        tot.total += 1;
+        if (d.sexo === 'menino') tot.meninos += 1;
+        else if (d.sexo === 'menina') tot.meninas += 1;
+        else tot.semSexo += 1;
+        if (d.escola_artur) {
+          tot.escolaTotal += 1;
+          if (d.sexo === 'menino') tot.escolaMeninos += 1;
+          else if (d.sexo === 'menina') tot.escolaMeninas += 1;
+          else tot.escolaSemSexo += 1;
+        } else {
+          tot.foraEscola += 1;
+        }
+      });
+    });
+    return tot;
+  }
+
+  function renderEscolaArturDash(familias) {
+    var tot = agregarCriancasDashboard(familias);
+    var elMen = document.getElementById('dash-escola-meninos');
+    var elMeninas = document.getElementById('dash-escola-meninas');
+    var elTotal = document.getElementById('dash-escola-total');
+    var elMenNota = document.getElementById('dash-escola-meninos-nota');
+    var elMeninasNota = document.getElementById('dash-escola-meninas-nota');
+    var elTotalNota = document.getElementById('dash-escola-total-nota');
+    var elBarMen = document.getElementById('dash-escola-meninos-bar');
+    var elBarMeninas = document.getElementById('dash-escola-meninas-bar');
+    var elGeral = document.getElementById('dash-criancas-sexo');
+    var elPendSexo = document.getElementById('dash-criancas-sem-sexo');
+
+    if (elMen) elMen.textContent = tot.escolaMeninos + ' / ' + tot.metaMeninos;
+    if (elMeninas) elMeninas.textContent = tot.escolaMeninas + ' / ' + tot.metaMeninas;
+    if (elTotal) elTotal.textContent = tot.escolaTotal + ' / ' + tot.metaTotal;
+    if (elMenNota) {
+      elMenNota.textContent = textoSaldoContrato(tot.escolaMeninos, tot.metaMeninos, 'meninos') +
+        (tot.escolaSemSexo ? (' · ' + tot.escolaSemSexo + ' sem sexo') : '');
+    }
+    if (elMeninasNota) {
+      elMeninasNota.textContent = textoSaldoContrato(tot.escolaMeninas, tot.metaMeninas, 'meninas');
+    }
+    if (elTotalNota) {
+      elTotalNota.textContent = textoSaldoContrato(tot.escolaTotal, tot.metaTotal, 'da escola') +
+        ' · fora da escola: ' + tot.foraEscola;
+    }
+    if (elBarMen) elBarMen.style.width = barraContratoPct(tot.escolaMeninos, tot.metaMeninos) + '%';
+    if (elBarMeninas) elBarMeninas.style.width = barraContratoPct(tot.escolaMeninas, tot.metaMeninas) + '%';
+    if (elGeral) {
+      elGeral.textContent = tot.meninos + ' meninos · ' + tot.meninas + ' meninas · total ' + tot.total;
+    }
+    if (elPendSexo) {
+      elPendSexo.textContent = tot.semSexo
+        ? (tot.semSexo + ' criança(s) ainda sem sexo informado')
+        : 'Todas as crianças com sexo informado';
+      elPendSexo.classList.toggle('warn', tot.semSexo > 0);
+    }
   }
 
   function renderContratoDash(pessoas, pulantes) {
@@ -1349,6 +1507,7 @@
     if (elAdu) elAdu.textContent = String(adultos);
     if (elCri) elCri.textContent = String(criancas);
     if (elAduPct) elAduPct.textContent = cadastrados ? ' ' + pct(adultos, cadastrados) : '';
+    renderEscolaArturDash(lista);
     renderContratoDash(cadastrados, criancas);
     if (elAduDet) {
       if (naoContados) {
@@ -1410,6 +1569,7 @@
       naoContados: naoContados,
       listaPaiMae: listaPaiMae
     });
+    var escolaDash = agregarCriancasDashboard(lista);
     renderStatusWhatsapp(montarMensagemStatusWhatsapp({
       pessoas: cadastrados,
       adultos: adultos,
@@ -1430,6 +1590,12 @@
       famTravadasPaiMae: famTravadasPaiMae,
       naoContados: naoContados,
       pctConf: qtdFamilias ? pct(famConf, qtdFamilias) : null,
+      escolaMeninos: escolaDash.escolaMeninos,
+      escolaMeninas: escolaDash.escolaMeninas,
+      escolaTotal: escolaDash.escolaTotal,
+      metaEscolaMeninos: escolaDash.metaMeninos,
+      metaEscolaMeninas: escolaDash.metaMeninas,
+      criancasSemSexo: escolaDash.semSexo,
       atualizadoEm: new Date().toLocaleString('pt-BR')
     }));
     renderMissaoDash();
@@ -1562,8 +1728,15 @@
 
     if (f.filhos && f.filhos.length) {
       html += '<p class="dash-lista-grupo">Filhos:</p>';
-      f.filhos.forEach(function (n) {
-        if (n) html += '<p class="dash-lista-linha dash-lista-item-nome">- ' + esc(n) + '</p>';
+      f.filhos.forEach(function (item) {
+        var d = detalhesFilho(item);
+        if (!d.nome) return;
+        var tags = [];
+        if (d.sexo === 'menino') tags.push('Menino');
+        if (d.sexo === 'menina') tags.push('Menina');
+        if (d.escola_artur) tags.push('Escola Artur');
+        html += '<p class="dash-lista-linha dash-lista-item-nome">- ' + esc(d.nome) +
+          (tags.length ? (' <em>(' + esc(tags.join(' · ')) + ')</em>') : '') + '</p>';
       });
     }
 
@@ -1780,7 +1953,7 @@
         formatarDataHora(f.ultimo_acesso_em),
         exibirCelulares(f),
         nomeFamilia(f),
-        (f.filhos || []).join(' '),
+        nomesFilhos(f).join(' '),
         f.status
       ].join(' ').toLowerCase();
       if (blob.indexOf(filtro) !== -1) return true;
@@ -1822,7 +1995,7 @@
               '<td>' + esc(formatarDataHora(f.criado_em)) + '</td>' +
               '<td>' + esc(exibirCelulares(f)) + '</td>' +
               '<td>' + esc(nomeFamilia(f)) + '</td>' +
-              '<td>' + esc((f.adultos || []).concat(f.filhos || []).join(', ')) + '</td>' +
+              '<td>' + esc((f.adultos || []).concat(nomesFilhos(f)).join(', ')) + '</td>' +
               '<td>' + esc(statusLabel(f.status)) + '</td>' +
               '<td>' + esc(formatarDataHora(f.ultimo_acesso_em)) + '</td>' +
             '</tr>'
@@ -1884,11 +2057,13 @@
       });
     });
     ((f.filhos || []).slice(0, 5)).forEach(function (kid) {
+      var nome = nomeDoFilho(kid);
+      if (!nome) return;
       pessoas.push({
         papel: 'Criança',
         tipo: 'crianca',
-        nome: kid,
-        key: (f.celular || '') + '|crianca|' + kid
+        nome: nome,
+        key: (f.celular || '') + '|crianca|' + nome
       });
     });
     return pessoas;
@@ -1951,11 +2126,17 @@
       });
     });
 
-    (f.filhos || []).forEach(function (nome) {
+    (f.filhos || []).forEach(function (item) {
+      var d = detalhesFilho(item);
+      if (!d.nome) return;
+      var extra = [];
+      if (d.sexo === 'menino') extra.push('Menino');
+      if (d.sexo === 'menina') extra.push('Menina');
+      if (d.escola_artur) extra.push('Escola Artur');
       pushPessoa({
         papel: '',
         tipo: 'crianca',
-        nome: 'Pulante - Criança: ' + nome,
+        nome: 'Pulante - Criança: ' + d.nome + (extra.length ? (' (' + extra.join(' · ') + ')') : ''),
         confirmado: !!confirmada,
         tag: confirmada ? tagOk : (pendente ? tagPend : '')
       });
@@ -2754,7 +2935,7 @@
       var adultos = f.adultos || [];
       var cols = '';
       for (var k = 0; k < colsFilhos; k++) {
-        cols += pessoaCelulaHtml(f, kids[k] || '', 'crianca', checks);
+        cols += pessoaCelulaHtml(f, nomeDoFilho(kids[k] || '') || '', 'crianca', checks);
       }
       var adultosHtml = '';
       if (!adultos.length) {
@@ -3083,7 +3264,7 @@
         var phones = celularesDaFamilia(f).join(' ');
         if (phones.indexOf(filtroDigitos) !== -1) return true;
       }
-      var blob = [f.nome_pai, f.nome_mae, f.nome_responsavel, (f.adultos || []).join(' '), (f.filhos || []).join(' '), f.status].join(' ').toLowerCase();
+      var blob = [f.nome_pai, f.nome_mae, f.nome_responsavel, (f.adultos || []).join(' '), nomesFilhos(f).join(' '), f.status].join(' ').toLowerCase();
       return blob.indexOf(filtro) !== -1;
     });
 
@@ -3323,8 +3504,8 @@
       renderLista(window.__familias);
       var apiVer = data.versao || '';
       window.__apiVersao = apiVer;
-      if (apiVer && !/v8\.(9|10|11)|v8\.1[0-9]|missao-energetica|liberar-acompanhantes|filhos-opcional|check-confirma|celular-55/.test(apiVer)) {
-        var avisoApi = 'API desatualizada (' + apiVer + '). Abra o site com Ctrl+F5 e republiche o Apps Script.';
+      if (apiVer && !/v8\.(9|10|11|12)|v8\.1[0-9]|missao-energetica|liberar-acompanhantes|filhos-sexo|filhos-opcional|check-confirma|celular-55/.test(apiVer)) {
+        var avisoApi = 'API desatualizada (' + apiVer + '). Abra o site com Ctrl+F5 e republiche o Apps Script (v8.12).';
         setStatus(avisoApi, 'err');
         if (fromLogin) setLoginStatus(avisoApi, 'err');
       } else {

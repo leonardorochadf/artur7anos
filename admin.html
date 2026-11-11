@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=69" />
+  <link rel="stylesheet" href="styles.css?v=70" />
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4KXBY80XL"></script>
   <script>
@@ -20,7 +20,7 @@
     gtag('js', new Date());
     gtag('config', 'G-Y4KXBY80XL');
   </script>
-  <script src="config.js?v=11"></script>
+  <script src="config.js?v=12"></script>
   <script src="js/analytics.js?v=2"></script>
 </head>
 <body>
@@ -78,6 +78,33 @@
             </div>
             <p class="dash-contrato-legenda">Contrato: até <strong>85 pessoas</strong> (adulto + criança). Destas, até <strong>50 pulantes</strong> = crianças que pulam. Adulto não é pulante.</p>
           </div>
+
+          <div class="dash-escola" id="dash-escola" aria-live="polite">
+            <p class="dash-contrato-titulo">Escola do Artur</p>
+            <p class="dash-escola-meta">Meta da turma: 6 meninos · 9 meninas (15 no total)</p>
+            <div class="dash-contrato-grid">
+              <div class="dash-contrato-item">
+                <span>Meninos da escola</span>
+                <strong id="dash-escola-meninos">0 / 6</strong>
+                <div class="dash-contrato-barra"><span id="dash-escola-meninos-bar" style="width:0%"></span></div>
+                <em id="dash-escola-meninos-nota">restam 6</em>
+              </div>
+              <div class="dash-contrato-item">
+                <span>Meninas da escola</span>
+                <strong id="dash-escola-meninas">0 / 9</strong>
+                <div class="dash-contrato-barra"><span id="dash-escola-meninas-bar" style="width:0%"></span></div>
+                <em id="dash-escola-meninas-nota">restam 9</em>
+              </div>
+              <div class="dash-contrato-item">
+                <span>Total da escola</span>
+                <strong id="dash-escola-total">0 / 15</strong>
+                <em id="dash-escola-total-nota">restam 15</em>
+              </div>
+            </div>
+            <p class="dash-escola-geral" id="dash-criancas-sexo">0 meninos · 0 meninas · total 0</p>
+            <p class="dash-escola-pend" id="dash-criancas-sem-sexo">Informe o sexo de cada criança no cadastro.</p>
+          </div>
+
           <div class="dash-ajuste-pais hidden" id="dash-ajuste-pais" aria-live="polite">
             <p class="dash-ajuste-titulo" id="dash-ajuste-titulo"></p>
             <p class="dash-ajuste-texto" id="dash-ajuste-texto"></p>
@@ -499,6 +526,6 @@
   </div>
 
   <script src="js/api.js?v=8"></script>
-  <script src="js/admin.js?v=70"></script>
+  <script src="js/admin.js?v=71"></script>
 </body>
 </html>
