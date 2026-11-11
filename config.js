@@ -1,6 +1,6 @@
 // Cole aqui a URL do Google Apps Script (Web App) depois de implantar.
 window.ARTUR_CONFIG = {
-  apiUrl: 'https://script.google.com/macros/s/AKfycbyw9R5vQrl2GT7Gi68O0KCy_pIoZhp3oGkpVCUfuqsfcmwugBCFidcOsIPlAVI1fTK9Kg/exec',
+  apiUrl: 'https://script.google.com/macros/s/AKfycby8I_Oez0-LlpfyCt5UEZ49ba0TsT55_Et_Xuv5Hd-23btkMTdaqT3zeoJBpjBftuzv/exec',
   gaId: 'G-Y4KXBY80XL',
   evento: {
     nome: 'Artur',
